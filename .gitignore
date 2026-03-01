@@ -2,6 +2,11 @@
 .pytest_cache/
 .task/
 .venv/
+.direnv/
+.devenv/
+.devenv*
+devenv.local.nix
+devenv.local.yaml
 *.crt
 *.env
 *.iso

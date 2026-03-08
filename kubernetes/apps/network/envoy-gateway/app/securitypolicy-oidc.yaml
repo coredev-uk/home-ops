@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: internal-oidc
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-internal
+  oidc:
+    provider:
+      issuer: https://id.hera.ac
+    clientID: envoy-internal
+    clientSecret:
+      name: envoy-oidc-secret
+    redirectURL: https://home.hera.ac/oauth2/callback
+    logoutPath: /logout
+    cookieDomain: hera.ac
+    scopes:
+      - openid
+      - profile
+      - email
+      - groups

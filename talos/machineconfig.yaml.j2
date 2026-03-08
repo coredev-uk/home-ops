@@ -51,11 +51,6 @@ machine:
       model: Patriot M.2 P300 128GB
     image: factory.talos.dev/metal-installer/1363def95c4c8cb47ffd79fe4ab94910fccb5aee790d205f9280834779229a1b:v1.12.4
     wipe: false
-  kernel:
-    modules:
-      - name: nbd
-      - name: thunderbolt
-      - name: thunderbolt_net
   kubelet:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true

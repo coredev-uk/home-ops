@@ -12,6 +12,13 @@ spec:
   values:
     controllers:
       qbittorrent:
+        annotations:
+          k8s.v1.cni.cncf.io/networks: |-
+            [{
+              "name": "vpn",
+              "namespace": "kube-system",
+              "ips": ["192.168.30.15/24"]
+            }]
         containers:
           app:
             image:

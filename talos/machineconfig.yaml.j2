@@ -2,9 +2,9 @@
 version: v1alpha1
 machine:
   ca:
-    crt: op://kubernetes/talos/MACHINE_CA_CRT
+    crt: op://kubernetes/talos/MACHINE/CA_CRT
     {% if ENV.IS_CONTROLLER %}
-    key: op://kubernetes/talos/MACHINE_CA_KEY
+    key: op://kubernetes/talos/MACHINE/CA_KEY
     {% endif %}
   features:
     apidCheckExtKeyUsage: true
@@ -85,12 +85,12 @@ machine:
     sunrpc.tcp_slot_table_entries: "128"
     user.max_user_namespaces: "11255"
     vm.nr_hugepages: "1024"
-  token: op://kubernetes/talos/MACHINE_TOKEN
+  token: op://kubernetes/talos/MACHINE/TOKEN
 cluster:
   ca:
-    crt: op://kubernetes/talos/CLUSTER_CA_CRT
+    crt: op://kubernetes/talos/CLUSTER/CA_CRT
     {% if ENV.IS_CONTROLLER %}
-    key: op://kubernetes/talos/CLUSTER_CA_KEY
+    key: op://kubernetes/talos/CLUSTER/CA_KEY
     {% endif %}
   clusterName: main
   controlPlane:
@@ -102,7 +102,7 @@ cluster:
         disabled: true
       service:
         disabled: false
-  id: op://kubernetes/talos/CLUSTER_ID
+  id: op://kubernetes/talos/CLUSTER/ID
   network:
     cni:
       name: none
@@ -111,12 +111,12 @@ cluster:
       - 10.42.0.0/16
     serviceSubnets:
       - 10.43.0.0/16
-  secret: op://kubernetes/talos/CLUSTER_SECRET
-  token: op://kubernetes/talos/CLUSTER_TOKEN
+  secret: op://kubernetes/talos/CLUSTER/SECRET
+  token: op://kubernetes/talos/CLUSTER/TOKEN
   {% if ENV.IS_CONTROLLER %}
   aggregatorCA:
-    crt: op://kubernetes/talos/CLUSTER_AGGREGATORCA_CRT
-    key: op://kubernetes/talos/CLUSTER_AGGREGATORCA_KEY
+    crt: op://kubernetes/talos/CLUSTER/AGGREGATOR_CA_CRT
+    key: op://kubernetes/talos/CLUSTER/AGGREGATOR_CA_KEY
   allowSchedulingOnControlPlanes: true
   apiServer:
     auditPolicy:
@@ -142,8 +142,8 @@ cluster:
     advertisedSubnets:
       - 192.168.20.0/24
     ca:
-      crt: op://kubernetes/talos/CLUSTER_ETCD_CA_CRT
-      key: op://kubernetes/talos/CLUSTER_ETCD_CA_KEY
+      crt: op://kubernetes/talos/CLUSTER/ETCD_CA_CRT
+      key: op://kubernetes/talos/CLUSTER/ETCD_CA_KEY
     extraArgs:
       listen-metrics-urls: http://0.0.0.0:2381
   proxy:
@@ -170,9 +170,9 @@ cluster:
     extraArgs:
       bind-address: 0.0.0.0
     image: registry.k8s.io/kube-scheduler:v1.35.2
-  secretboxEncryptionSecret: op://kubernetes/talos/CLUSTER_SECRETBOXENCRYPTIONSECRET
+  secretboxEncryptionSecret: op://kubernetes/talos/CLUSTER/SECRET_BOX_ENCRYPTION_SECRET
   serviceAccount:
-    key: op://kubernetes/talos/CLUSTER_SERVICEACCOUNT_KEY
+    key: op://kubernetes/talos/CLUSTER/SERVICE_ACCOUNT_KEY
   {% endif %}
 ---
 apiVersion: v1alpha1

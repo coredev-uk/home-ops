@@ -1,0 +1,368 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: frigate
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: frigate
+  interval: 1h
+  values:
+    controllers:
+      frigate:
+        type: statefulset
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/blakeblackshear/frigate
+              tag: 0.17.0@sha256:5be5ce3b79f8b09a52957afea9d4a23ad62c9f077a05d9047e3404eb78c304a8
+            envFrom:
+              - secretRef:
+                  name: frigate-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/version
+                    port: &port 5000
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/version
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/version
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+            resources:
+              claims:
+                - name: gpu
+              requests:
+                cpu: 500m
+                memory: 4Gi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
+            securityContext:
+              privileged: true
+    defaultPodOptions:
+      resourceClaims:
+        - name: gpu
+          resourceClaimTemplateName: frigate
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    serviceMonitor:
+      app:
+        endpoints:
+          - port: http
+            path: /api/metrics
+            interval: 15s
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.hera.ac"
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+    configMaps:
+      config:
+        data:
+          config.yml: |-
+            mqtt:
+              enabled: false
+
+            detectors:
+              coral:
+                type: edgetpu
+                device: pci
+
+            telemetry:
+              stats:
+                network_bandwidth: true
+
+            go2rtc:
+              streams:
+                front_door:
+                  - "ffmpeg:rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.20.5:554/stream0"
+                  - "ffmpeg:front_door#audio=opus"
+                front_door_sub:
+                  - "ffmpeg:rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.20.5:554/stream1"
+                back_door:
+                  - "ffmpeg:rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.20.6:554/11?action=play&media=video_audio_data#video=copy#audio=aac"
+                  - "ffmpeg:back_door#audio=opus"
+                back_door_sub:
+                  - "ffmpeg:rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.20.6:554/12?action=play&media=video_audio_data"
+                back_garden:
+                  - "ffmpeg:rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.20.7:554/11?action=play&media=video_audio_data#video=copy#audio=aac"
+                  - "ffmpeg:back_garden#audio=opus"
+                back_garden_sub:
+                  - "ffmpeg:rtsp://{FRIGATE_RTSP_USER}:{FRIGATE_RTSP_PASSWORD}@192.168.20.7:554/12?action=play&media=video_audio_data"
+
+            camera_groups:
+              home:
+                cameras:
+                  - front_door
+                  - back_door
+                  - back_garden
+                icon: LuWebcam
+                order: 0
+
+            notifications:
+              enabled: true
+              email: admin@coredev.uk
+
+            auth:
+              enabled: false
+              session_length: 604800
+              trusted_proxies:
+                - 10.244.0.0/16
+
+            proxy:
+              logout_url: https://id.hera.ac/api/oidc/end-session
+              default_role: admin
+              header_map:
+                user: remote-user
+                role: remote-groups
+
+            tls:
+              enabled: false
+
+            objects:
+              track:
+                - person
+                - car
+                - dog
+                - cat
+              filters:
+                car:
+                  threshold: 0.8
+                  min_score: 0.5
+
+            detect:
+              enabled: true
+
+            face_recognition:
+              enabled: true
+              model_size: small
+
+            audio:
+              enabled: false
+
+            record:
+              enabled: true
+              continuous:
+                days: 3
+              motion:
+                days: 7
+              alerts:
+                retain:
+                  days: 30
+                  mode: all
+              detections:
+                retain:
+                  days: 30
+                  mode: all
+
+            snapshots:
+              enabled: true
+              bounding_box: true
+              retain:
+                default: 30
+
+            ffmpeg:
+              hwaccel_args: preset-intel-qsv-h264
+              output_args:
+                record: preset-record-generic-audio-aac
+
+            cameras:
+              front_door:
+                enabled: true
+                webui_url: http://192.168.20.5:8080
+                ffmpeg:
+                  inputs:
+                    - path: rtsp://127.0.0.1:8554/front_door
+                      input_args: preset-rtsp-restream-low-latency
+                      roles:
+                        - record
+                    - path: rtsp://127.0.0.1:8554/front_door_sub
+                      input_args:
+                        - -rtsp_transport
+                        - tcp
+                        - -timeout
+                        - "5000000"
+                        - -analyzeduration
+                        - "10000000"
+                        - -probesize
+                        - "10000000"
+                      roles:
+                        - detect
+                        - audio
+                objects:
+                  track:
+                    - person
+                    - car
+                zones:
+                  entrance:
+                    coordinates: 0.878,0.364,0.958,0.401,0.811,1,0.578,1
+                    objects:
+                      - person
+                    loitering_time: 10
+                    inertia: 3
+                  driveway:
+                    coordinates: 0.65,0.139,0.941,0.244,0.947,0.393,0.802,0.329,0.545,0.201
+                    objects:
+                      - car
+                      - person
+                    inertia: 3
+                    loitering_time: 0
+                review:
+                  alerts:
+                    required_zones:
+                      - entrance
+                      - driveway
+
+              back_door:
+                enabled: true
+                webui_url: http://192.168.20.6
+                ffmpeg:
+                  inputs:
+                    - path: rtsp://127.0.0.1:8554/back_door
+                      input_args: preset-rtsp-restream
+                      roles:
+                        - record
+                    - path: rtsp://127.0.0.1:8554/back_door_sub
+                      input_args: preset-rtsp-restream
+                      roles:
+                        - detect
+                        - audio
+                onvif:
+                  host: 192.168.20.6
+                  port: 8080
+                  user: '{FRIGATE_RTSP_USER}'
+                  password: '{FRIGATE_RTSP_PASSWORD}'
+                objects:
+                  track:
+                    - person
+                    - car
+                zones:
+                  back_entrance:
+                    coordinates: 0.297,0.538,0.344,0.549,0.44,0.584,0.433,0.654,0.411,0.698,0.373,0.761,0.325,0.82,0.242,0.826,0.189,0.814,0.184,0.74,0.194,0.655,0.203,0.621,0.216,0.535
+                    objects:
+                      - person
+                  back_driveway:
+                    coordinates: 0.3,0.476,0.642,0.43,0.566,0.339,0.531,0.296,0.521,0.281,0.493,0.261,0.467,0.257,0.435,0.258,0.405,0.241,0.404,0.315,0.367,0.283,0.312,0.265,0.289,0.27,0.288,0.325
+                    objects:
+                      - car
+                      - person
+                    inertia: 3
+                    loitering_time: 0
+                review:
+                  alerts:
+                    required_zones:
+                      - back_entrance
+                      - back_driveway
+                  detections:
+                    required_zones:
+                      - back_entrance
+                      - back_driveway
+
+              back_garden:
+                enabled: true
+                webui_url: http://192.168.20.7
+                ffmpeg:
+                  inputs:
+                    - path: rtsp://127.0.0.1:8554/back_garden
+                      input_args: preset-rtsp-restream
+                      roles:
+                        - record
+                    - path: rtsp://127.0.0.1:8554/back_garden_sub
+                      input_args: preset-rtsp-restream
+                      roles:
+                        - detect
+                        - audio
+                onvif:
+                  host: 192.168.20.7
+                  port: 8080
+                  user: '{FRIGATE_RTSP_USER}'
+                  password: '{FRIGATE_RTSP_PASSWORD}'
+                objects:
+                  track:
+                    - person
+                    - dog
+                    - cat
+                zones:
+                  garden_main:
+                    coordinates: 0.001,0.997,0,0.585,0.537,0.334,0.83,0.379,0.999,0.482,0.948,0.981
+                    loitering_time: 0
+                  garden_patio:
+                    coordinates: 0.642,0.295,0.852,0.332,0.834,0.382,0.597,0.343
+                    loitering_time: 0
+
+            version: 0.16-0
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /config
+      config-file:
+        type: configMap
+        identifier: config
+        globalMounts:
+          - path: /config/config.yml
+            subPath: config.yml
+      media:
+        type: nfs
+        server: 192.168.20.40
+        path: /var/nfs/shared/Frigate
+        globalMounts:
+          - path: /media/frigate
+      dri:
+        type: hostPath
+        hostPath: /dev/dri
+        globalMounts:
+          - path: /dev/dri
+      coral:
+        type: hostPath
+        hostPath: /dev/apex_0
+        globalMounts:
+          - path: /dev/apex_0
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /dev/shm
+      cache:
+        type: emptyDir
+        sizeLimit: 10Gi
+        globalMounts:
+          - path: /tmp/cache

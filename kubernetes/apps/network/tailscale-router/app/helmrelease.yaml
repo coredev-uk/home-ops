@@ -1,0 +1,85 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tailscale-router
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: tailscale-router
+  interval: 1h
+  values:
+    controllers:
+      tailscale-router:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: tailscale/tailscale
+              tag: v1.84.2@sha256:95e528798bebe75f39b10e74e7051cf51188ee615934f232ba7ad06a3390ffa1
+            env:
+              TS_EXTRA_ARGS: --login-server=http://headscale.network.svc.cluster.local:8080 --advertise-tags=tag:subnet-router --advertise-routes=10.244.0.0/16,10.96.0.0/12,192.168.20.0/24 --accept-dns=false --snat-subnet-routes=true
+              TS_STATE_DIR: /var/lib/tailscale
+              TS_USERSPACE: "false"
+              TS_AUTH_ONCE: "true"
+              TS_DEBUG_FIREWALL_MODE: nftables
+            envFrom:
+              - secretRef:
+                  name: tailscale-router-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["sh", "-c", "tailscale status >/dev/null 2>&1"]
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 24
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["sh", "-c", "out=$(tailscale status 2>/dev/null) || exit 1; echo \"$out\" | grep -q 'Unable to connect to the Tailscale coordination server' && exit 1 || exit 0"]
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["sh", "-c", "out=$(tailscale status 2>/dev/null) || exit 1; echo \"$out\" | grep -q 'Unable to connect to the Tailscale coordination server' && exit 1 || exit 0"]
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 256Mi
+            securityContext:
+              privileged: true
+    persistence:
+      state:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /var/lib/tailscale
+      dev-net-tun:
+        type: hostPath
+        hostPath: /dev/net/tun
+        globalMounts:
+          - path: /dev/net/tun
+      lib-modules:
+        type: hostPath
+        hostPath: /lib/modules
+        globalMounts:
+          - path: /lib/modules
+            readOnly: true

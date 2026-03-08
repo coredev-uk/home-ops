@@ -14,4 +14,6 @@ resources:
   - ./cloudflare-dns/ks.yaml
   - ./echo/ks.yaml
   - ./envoy-gateway/ks.yaml
+  - ./headscale/ks.yaml
+  - ./tailscale-router/ks.yaml
   - ./unifi-dns/ks.yaml

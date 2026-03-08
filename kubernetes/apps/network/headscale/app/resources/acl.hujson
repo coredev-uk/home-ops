@@ -1,0 +1,19 @@
+{
+  "tagOwners": {
+    "tag:subnet-router": ["autogroup:admin"]
+  },
+  "autoApprovers": {
+    "routes": {
+      "10.244.0.0/16": ["tag:subnet-router"],
+      "10.96.0.0/12": ["tag:subnet-router"],
+      "192.168.20.0/24": ["tag:subnet-router"]
+    }
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["*"],
+      "dst": ["*:*"]
+    }
+  ]
+}

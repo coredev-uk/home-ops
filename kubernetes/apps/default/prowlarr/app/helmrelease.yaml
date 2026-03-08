@@ -69,6 +69,49 @@ spec:
                 cpu: 100m
               limits:
                 memory: 1Gi
+          byparr:
+            image:
+              repository: ghcr.io/thephaseless/byparr
+              tag: 2.1.0@sha256:01a46a2865d9a6db5eb8ead04ec0dd33b8fbe233e8565ae70b50d4cc0af4cfb0
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &byparrPort 8191
+                  initialDelaySeconds: 60
+                  periodSeconds: 15
+                  timeoutSeconds: 60
+                  failureThreshold: 40
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *byparrPort
+                  periodSeconds: 900
+                  timeoutSeconds: 30
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *byparrPort
+                  periodSeconds: 30
+                  timeoutSeconds: 10
+                  failureThreshold: 3
+            resources:
+              requests:
+                cpu: 500m
+                memory: 768Mi
+              limits:
+                cpu: 2000m
+                memory: 4Gi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -81,6 +124,8 @@ spec:
         ports:
           http:
             port: *port
+          byparr:
+            port: *byparrPort
     route:
       app:
         hostnames:

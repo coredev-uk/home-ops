@@ -17,10 +17,10 @@ dns:
   override_local_dns: false
   nameservers:
     global:
-      - 192.168.20.20
+      - 192.168.20.1
     split:
       hera.ac:
-        - 192.168.20.20
+        - 192.168.20.1
 
 derp:
   server:

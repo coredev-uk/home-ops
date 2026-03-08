@@ -3,7 +3,7 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: plex-off-deck
+  name: jellyfin-updater
 spec:
   interval: 15m
   layerSelector:

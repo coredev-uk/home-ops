@@ -56,6 +56,7 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+        supplementalGroups: [988]
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
@@ -95,7 +96,7 @@ spec:
       repository:
         type: nfs
         server: expanse.internal
-        path: /mnt/ceres/Kopia
+        path: /var/nfs/shared/Kopia
         globalMounts:
           - path: /repository
       tmpfs:

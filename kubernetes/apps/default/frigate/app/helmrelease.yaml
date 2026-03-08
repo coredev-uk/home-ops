@@ -74,6 +74,7 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+        supplementalGroups: [988]
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
@@ -341,7 +342,7 @@ spec:
             subPath: config.yml
       media:
         type: nfs
-        server: 192.168.20.40
+        server: expanse.internal
         path: /var/nfs/shared/Frigate
         globalMounts:
           - path: /media/frigate

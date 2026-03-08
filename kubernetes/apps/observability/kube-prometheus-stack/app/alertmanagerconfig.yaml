@@ -14,7 +14,7 @@ spec:
           - name: alertname
             value: InfoInhibitor
             matchType: =
-      - receiver: buddy-heartbeat
+      - receiver: status-heartbeat
         groupInterval: 2m
         groupWait: 0s
         repeatInterval: 2m30s
@@ -49,15 +49,15 @@ spec:
 
   receivers:
     - name: blackhole
-    - name: buddy-heartbeat
+    - name: status-heartbeat
       webhookConfigs:
         - httpConfig:
             bearerTokenSecret:
               name: alertmanager-secret
-              key: BUDDY_HEARTBEAT_TOKEN
+              key: STATUS_HEARTBEAT_TOKEN
           urlSecret:
             name: alertmanager-secret
-            key: BUDDY_HEARTBEAT_URL
+            key: STATUS_HEARTBEAT_URL
     - name: pushover
       pushoverConfigs:
         - html: true

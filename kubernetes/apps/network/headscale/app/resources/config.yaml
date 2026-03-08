@@ -35,6 +35,16 @@ database:
   sqlite:
     path: /var/lib/headscale/db.sqlite
 
+oidc:
+  only_start_if_oidc_is_available: true
+  issuer: https://id.hera.ac
+  client_id: headscale
+  client_secret_path: /etc/headscale/secrets/oidc-client-secret
+  pkce:
+    enabled: true
+  scope: ["openid", "profile", "email", "groups"]
+  email_verified_required: false
+
 policy:
   mode: file
   path: /etc/headscale/acl.hujson

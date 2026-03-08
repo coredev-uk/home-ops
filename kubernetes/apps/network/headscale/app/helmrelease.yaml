@@ -93,3 +93,10 @@ spec:
             subPath: config.yaml
           - path: /etc/headscale/acl.hujson
             subPath: acl.hujson
+      oidc-secret:
+        type: secret
+        name: headscale-secret
+        globalMounts:
+          - path: /etc/headscale/secrets/oidc-client-secret
+            subPath: oidc-client-secret
+            readOnly: true

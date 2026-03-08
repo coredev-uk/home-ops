@@ -66,6 +66,8 @@ spec:
             securityContext:
               privileged: true
     defaultPodOptions:
+      nodeSelector:
+        node.kubernetes.io/coral: "true"
       resourceClaims:
         - name: gpu
           resourceClaimTemplateName: frigate

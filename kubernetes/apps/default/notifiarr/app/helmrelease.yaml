@@ -1,0 +1,129 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: notifiarr
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: notifiarr
+  interval: 1h
+  values:
+    controllers:
+      notifiarr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: golift/notifiarr
+              tag: v0.9.4@sha256:88fbfd256b28b7a6edb2ea6cd39ab999168d9e0d58b729bc5a9171d4843ee221
+            env:
+              TZ: Europe/London
+              DN_UPSTREAMS_0: 10.244.0.0/16
+              DN_SONARR_0_NAME: Sonarr
+              DN_SONARR_0_URL: http://sonarr:80
+              DN_RADARR_0_NAME: Radarr
+              DN_RADARR_0_URL: http://radarr:80
+              DN_PROWLARR_0_NAME: Prowlarr
+              DN_PROWLARR_0_URL: http://prowlarr:80
+              DN_SABNZBD_0_NAME: SABnzbd
+              DN_SABNZBD_0_URL: http://sabnzbd:80
+              DN_QBIT_0_NAME: qBittorrent
+              DN_QBIT_0_URL: http://qbittorrent:80
+            envFrom:
+              - secretRef:
+                  name: notifiarr-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/healthcheck
+                    port: &port 5454
+                  initialDelaySeconds: 15
+                  periodSeconds: 5
+                  timeoutSeconds: 5
+                  failureThreshold: 12
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/healthcheck
+                    port: *port
+                  initialDelaySeconds: 60
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/healthcheck
+                    port: *port
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 512Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              runAsNonRoot: true
+              runAsUser: 1000
+              capabilities:
+                drop: ["ALL"]
+                add: ["SYS_RAWIO", "DAC_OVERRIDE"]
+    defaultPodOptions:
+      hostname: hyperion
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    serviceMonitor:
+      app:
+        endpoints:
+          - port: http
+            path: /metrics
+            interval: 60s
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.hera.ac"
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /config
+      proc:
+        type: hostPath
+        hostPath: /proc
+        globalMounts:
+          - path: /proc
+            readOnly: true
+      sys:
+        type: hostPath
+        hostPath: /sys
+        globalMounts:
+          - path: /sys
+            readOnly: true

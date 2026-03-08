@@ -3,7 +3,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: plex
+  name: jellyfin
 spec:
   components:
     - ../../../../components/nfs-scaler
@@ -14,27 +14,11 @@ spec:
     - name: rook-ceph-cluster
       namespace: rook-ceph
   interval: 1h
-  path: ./kubernetes/apps/default/plex/app
+  path: ./kubernetes/apps/default/jellyfin/app
   postBuild:
     substitute:
-      APP: plex
+      APP: jellyfin
       VOLSYNC_CAPACITY: 50Gi
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  targetNamespace: default
-  wait: false
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: plex-tools
-spec:
-  interval: 1h
-  path: ./kubernetes/apps/default/plex/tools
   prune: true
   sourceRef:
     kind: GitRepository

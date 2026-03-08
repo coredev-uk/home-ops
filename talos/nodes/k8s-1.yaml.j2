@@ -1,6 +1,8 @@
 ---
 machine:
   type: controlplane
+  nodeTaints:
+    coral-tpu: "true:NoSchedule"
   nodeLabels:
     topology.kubernetes.io/zone: m
 ---

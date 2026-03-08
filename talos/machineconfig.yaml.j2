@@ -48,7 +48,7 @@ machine:
         wsize=1048576
   install:
     diskSelector:
-      model: Samsung SSD 870
+      model: Patriot M.2 P300 128GB
     image: factory.talos.dev/metal-installer/1363def95c4c8cb47ffd79fe4ab94910fccb5aee790d205f9280834779229a1b:v1.12.4
     wipe: false
   kernel:
@@ -64,7 +64,7 @@ machine:
     image: ghcr.io/siderolabs/kubelet:v1.35.2
     nodeIP:
       validSubnets:
-        - 192.168.42.0/24
+        - 192.168.20.0/24
   nodeLabels:
     node.kubernetes.io/gpu: "true"
     topology.kubernetes.io/region: main
@@ -145,7 +145,7 @@ cluster:
     disabled: true
   etcd:
     advertisedSubnets:
-      - 192.168.42.0/24
+      - 192.168.20.0/24
     ca:
       crt: op://kubernetes/talos/CLUSTER_ETCD_CA_CRT
       key: op://kubernetes/talos/CLUSTER_ETCD_CA_KEY
@@ -181,45 +181,9 @@ cluster:
   {% endif %}
 ---
 apiVersion: v1alpha1
-kind: LinkAliasConfig
-name: net0
-selector:
-  match: link.driver == "igc" && mac(link.permanent_addr).startsWith("88:ae:dd:72:")
----
-apiVersion: v1alpha1
-kind: BondConfig
-name: bond0
-links:
-  - net0
-bondMode: active-backup
-mtu: 9000
----
-apiVersion: v1alpha1
 kind: DHCPv4Config
-name: bond0
+name: eth0
 clientIdentifier: mac
----
-apiVersion: v1alpha1
-kind: VLANConfig
-name: bond0.70
-vlanID: 70
-parent: bond0
-mtu: 9000
----
-apiVersion: v1alpha1
-kind: VLANConfig
-name: bond0.90
-vlanID: 90
-parent: bond0
-mtu: 9000
----
-apiVersion: v1alpha1
-kind: UserVolumeConfig
-name: local-hostpath
-provisioning:
-  diskSelector:
-    match: disk.model == "Corsair MP600 MICRO" && !system_disk
-  minSize: 1TB
 ---
 apiVersion: v1alpha1
 kind: WatchdogTimerConfig

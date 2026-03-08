@@ -35,7 +35,7 @@ spec:
           limits:
             memory: 8Gi # Required for bootstrap
       storage:
-        devicePathFilter: /dev/disk/by-id/nvme-Micron_7450_MTFDKBA800TFS_.*
+        devicePathFilter: /dev/disk/by-id/nvme-CT1000P3PSSD8.*
         useAllDevices: false
         useAllNodes: true
     monitoring:

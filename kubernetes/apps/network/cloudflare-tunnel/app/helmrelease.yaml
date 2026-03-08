@@ -71,7 +71,14 @@ spec:
         data:
           config.yaml: |-
             ingress:
-              - hostname: "*.hera.ac"
+              - hostname: id.hera.ac
+                originRequest:
+                  http2Origin: true
+                  keepAliveTimeout: 3600s
+                  originServerName: external.hera.ac
+                  tcpKeepAlive: 7200s
+                service: https://envoy-external.{{ .Release.Namespace }}.svc.cluster.local:443
+              - hostname: frigate.hera.ac
                 originRequest:
                   http2Origin: true
                   keepAliveTimeout: 3600s

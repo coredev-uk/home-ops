@@ -16,6 +16,7 @@ resources:
   - ./deduparr/ks.yaml
   - ./jellyfin/ks.yaml
   - ./prowlarr/ks.yaml
+  - ./pocket-id/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./qui/ks.yaml
   - ./radarr/ks.yaml

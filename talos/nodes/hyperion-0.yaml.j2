@@ -2,6 +2,7 @@
 machine:
   type: controlplane
   nodeLabels:
+    node.kubernetes.io/coral: "true"
     topology.kubernetes.io/zone: m
 ---
 apiVersion: v1alpha1

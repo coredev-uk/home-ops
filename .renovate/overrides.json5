@@ -13,5 +13,12 @@
       matchPackageNames: ["/factory\\.talos\\.dev/"],
       overridePackageName: "ghcr.io/siderolabs/installer",
     },
+    {
+      description: "Delay Talos installer updates until release settles",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/siderolabs/installer"],
+      minimumReleaseAge: "3 days",
+      prCreation: "not-pending",
+    },
   ],
 }

@@ -175,6 +175,13 @@ cluster:
     key: op://kubernetes/talos/CLUSTER/SERVICE_ACCOUNT_KEY
   {% endif %}
 ---
+{% if ENV.IS_CONTROLLER %}
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: 192.168.20.29
+link: eth0
+---
+{% endif %}
 apiVersion: v1alpha1
 kind: DHCPv4Config
 name: eth0

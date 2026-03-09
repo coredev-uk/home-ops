@@ -518,7 +518,10 @@ pages:
                     url: https://requests.hera.ac
                     icon: sh:jellyseerr-light
                   - title: UniFi
-                    url: https://unifi.ui.com
+                    url: https://unifi.internal
+                    icon: si:ubiquiti
+                  - title: UNAS
+                    url: https://expanse.internal
                     icon: si:ubiquiti
 
               - title: Identity & Monitoring

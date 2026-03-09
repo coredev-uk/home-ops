@@ -3,12 +3,12 @@
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
-  name: internal-oidc
+  name: protected-oidc
 spec:
   targetRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: envoy-internal
+      name: envoy-protected
   oidc:
     provider:
       issuer: https://id.hera.ac

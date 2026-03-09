@@ -75,7 +75,7 @@ spec:
           - "{{ .Release.Name }}.hera.ac"
           - requests.hera.ac
         parentRefs:
-          - name: envoy-external
+          - name: envoy-internal
             namespace: network
     persistence:
       config:

@@ -22,7 +22,7 @@ spec:
           hostnames:
             - alertmanager.hera.ac
           parentRefs:
-            - name: envoy-internal
+            - name: envoy-protected
               namespace: network
       alertmanagerSpec:
         alertmanagerConfiguration:
@@ -48,7 +48,7 @@ spec:
           hostnames:
             - prometheus.hera.ac
           parentRefs:
-            - name: envoy-internal
+            - name: envoy-protected
               namespace: network
       prometheusSpec:
         externalUrl: https://prometheus.hera.ac

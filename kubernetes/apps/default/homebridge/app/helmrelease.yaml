@@ -76,7 +76,7 @@ spec:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
-          - name: envoy-internal
+          - name: envoy-protected
             namespace: network
     persistence:
       config:

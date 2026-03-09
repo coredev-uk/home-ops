@@ -22,7 +22,7 @@ spec:
         hostnames:
           - victoria-logs.hera.ac
         parentRefs:
-          - name: envoy-internal
+          - name: envoy-protected
             namespace: network
         extraRules:
           - filters:

@@ -19,7 +19,7 @@ spec:
           app:
             image:
               repository: ghcr.io/homebridge/homebridge
-              tag: 2026-03-7@sha256:d9bbd926faf05807068bd46924dee3e03a6cc75e7dfa37a547caf965c6f42e19
+              tag: 2026-03-07@sha256:d9bbd926faf05807068bd46924dee3e03a6cc75e7dfa37a547caf965c6f42e19
             env:
               TZ: Europe/London
             probes:

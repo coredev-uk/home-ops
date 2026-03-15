@@ -25,6 +25,12 @@ spec:
       runAsUser: ${VOLSYNC_PUID:=1000}
       runAsGroup: ${VOLSYNC_PGID:=988}
       fsGroup: ${VOLSYNC_PGID:=988}
+    moverVolumes:
+      - mountPath: /repository
+        volumeSource:
+          nfs:
+            server: ${VOLSYNC_NFS_SERVER:=expanse.internal}
+            path: ${VOLSYNC_NFS_PATH:=/var/nfs/shared/Kopia}
     repository: ${APP}-volsync-secret
     sourceIdentity:
       sourceName: ${APP}

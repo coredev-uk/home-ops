@@ -18,6 +18,7 @@ resources:
   - ./homebridge/ks.yaml
   - ./jellyfin/ks.yaml
   - ./notifiarr/ks.yaml
+  - ./outline/ks.yaml
   - ./prowlarr/ks.yaml
   - ./pocket-id/ks.yaml
   - ./qbittorrent/ks.yaml

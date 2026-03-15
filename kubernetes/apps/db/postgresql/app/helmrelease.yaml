@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: postgresql
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: postgresql
+  interval: 1h
+  values:
+    architecture: standalone
+    auth:
+      username: outline
+      database: outline
+      existingSecret: postgresql-secret
+      secretKeys:
+        adminPasswordKey: postgres-password
+        userPasswordKey: password
+    primary:
+      persistence:
+        enabled: true
+        storageClass: ceph-block
+        size: 8Gi
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 1Gi
+    backup:
+      enabled: true
+      cronjob:
+        schedule: "0 */12 * * *"
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 3
+        ttlSecondsAfterFinished: 86400
+        command:
+          - /bin/sh
+          - -ec
+          - |
+            find "${PGDUMP_DIR}" -type f -name '*.pgdump' -mtime +14 -delete || true
+            PGPASSWORD="${PGPASSWORD:-$(< "$PGPASSWORD_FILE")}" pg_dumpall --clean --if-exists --load-via-partition-root --quote-all-identifiers --no-password --file="${PGDUMP_DIR}/pg_dumpall-$(date '+%Y-%m-%d-%H-%M').pgdump"
+        storage:
+          enabled: true
+          storageClass: ceph-block
+          size: 3Gi

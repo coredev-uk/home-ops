@@ -56,6 +56,19 @@ jobs:
           ref: ${{ matrix.branch == 'default' && github.event.repository.default_branch || '' }}
           token: ${{ steps.app-token.outputs.token }}
 
+      - name: Patch default branch app-template compatibility
+        if: ${{ matrix.branch == 'default' }}
+        run: |-
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path("kubernetes/apps/default/jellyfin/app/helmrelease.yaml")
+          text = p.read_text()
+          needle = "    service:\n      app:\n"
+          if "controller: jellyfin" not in text and needle in text:
+              p.write_text(text.replace(needle, "    service:\n      app:\n        controller: jellyfin\n", 1))
+          PY
+
       - name: Gather Images
         uses: docker://ghcr.io/allenporter/flux-local:v8.1.0
         env:

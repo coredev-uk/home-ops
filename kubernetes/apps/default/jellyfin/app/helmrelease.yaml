@@ -57,6 +57,36 @@ spec:
                 cpu: 100m
               limits:
                 memory: 16Gi
+      updater:
+        type: cronjob
+        cronjob:
+          schedule: 0 5 * * *
+          backoffLimit: 0
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+          ttlSecondsAfterFinished: 3600
+        containers:
+          app:
+            image:
+              repository: quay.io/curl/curl
+              tag: 8.18.0
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            command:
+              - "/bin/sh"
+              - "-c"
+            args:
+              - |
+                INFO=$(curl -s -H "X-Emby-Token: ${API_KEY}" http://127.0.0.1:8096/System/Info)
+                if echo "$INFO" | grep -q '"HasPendingRestart":true'; then
+                  curl -X POST -H "X-Emby-Token: ${API_KEY}" http://127.0.0.1:8096/System/Restart
+                  echo "Jellyfin restarted"
+                fi
+        pod:
+          restartPolicy: Never
+
     defaultPodOptions:
       resourceClaims:
         - name: gpu

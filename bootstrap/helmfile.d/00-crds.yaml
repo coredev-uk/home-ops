@@ -33,4 +33,9 @@ releases:
   - name: kube-prometheus-stack
     namespace: observability
     chart: oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack
-    version: 82.10.4
+    version: 82.10.5
+
+  - name: victoria-metrics-operator-crds
+    namespace: observability
+    chart: oci://ghcr.io/victoriametrics/helm-charts/victoria-metrics-operator-crds
+    version: 0.8.0

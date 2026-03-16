@@ -9,8 +9,22 @@ spec:
     kind: OCIRepository
     name: victoria-metrics-k8s-stack
   interval: 1h
+  valuesFrom:
+    - kind: ConfigMap
+      name: flux-metrics-configmap
+      valuesKey: flux-metrics.yaml
   values:
     fullnameOverride: vmks
+    kubeEtcd:
+      service:
+        selector:
+          component: kube-apiserver # etcd runs on control plane nodes
+    kubeProxy:
+      enabled: false
+    prometheus-node-exporter:
+      fullnameOverride: node-exporter
+    kube-state-metrics:
+      fullnameOverride: kube-state-metrics
     grafana:
       enabled: false
     defaultDashboards:

@@ -32,14 +32,14 @@ tags=$(api_call "${SONARR_API_URL}/tag")
 # Refresh managed tag IDs from tags cache
 refresh_managed_ids() {
     managed_tag_ids_json=$(jq -c --arg pfx "${TAG_PREFIX}" \
-        '[.[] | select(.label | startswith($pfx)) | .id]' <<< "${tags}")
+        '[.[] | select(.label | startswith($pfx)) | .id]' <<<"${tags}")
 }
 refresh_managed_ids
 
 # Ensure a tag exists; sets REPLY to the tag ID (avoids subshell)
 ensure_tag() {
     local label="$1"
-    REPLY=$(jq -r --arg l "${label}" '.[] | select(.label == $l) | .id' <<< "${tags}")
+    REPLY=$(jq -r --arg l "${label}" '.[] | select(.label == $l) | .id' <<<"${tags}")
     if [[ -z "${REPLY}" ]]; then
         REPLY=$(api_call -X POST --data-binary "{\"label\":\"${label}\"}" \
             "${SONARR_API_URL}/tag" | jq -r '.id')
@@ -56,8 +56,8 @@ tag_series() {
 
     # Get all episode files for the series and extract unique resolutions
     mapfile -t resolutions < <(
-        api_call "${SONARR_API_URL}/episodefile?seriesId=${sid}" \
-            | jq -r '[.[].quality.quality.resolution] | unique | .[] | select(. > 0) | "\(.)p"'
+        api_call "${SONARR_API_URL}/episodefile?seriesId=${sid}" |
+            jq -r '[.[].quality.quality.resolution] | unique | .[] | select(. > 0) | "\(.)p"'
     )
 
     # Ensure tags exist and collect their IDs
@@ -68,7 +68,7 @@ tag_series() {
     done
 
     local add_json
-    if (( ${#active_tag_ids[@]} == 0 )); then
+    if ((${#active_tag_ids[@]} == 0)); then
         add_json='[]'
     else
         add_json=$(printf '%s\n' "${active_tag_ids[@]}" | jq -R 'tonumber' | jq -s '.')
@@ -80,15 +80,15 @@ tag_series() {
     fi
 
     local title
-    title=$(jq -r '.title' <<< "${series_json}")
+    title=$(jq -r '.title' <<<"${series_json}")
     echo "Processing ${title} (${sid})..."
 
     # Remove all managed resolution: tags, then add active ones
     local updated current_tags new_tags
     updated=$(jq --argjson remove "${managed_tag_ids_json}" --argjson add "${add_json}" \
-        '.tags = ([.tags[] | select(IN($remove[]) | not)] + $add | unique)' <<< "${series_json}")
-    current_tags=$(jq -c '.tags' <<< "${series_json}")
-    new_tags=$(jq -c '.tags' <<< "${updated}")
+        '.tags = ([.tags[] | select(IN($remove[]) | not)] + $add | unique)' <<<"${series_json}")
+    current_tags=$(jq -c '.tags' <<<"${series_json}")
+    new_tags=$(jq -c '.tags' <<<"${updated}")
 
     if [[ "${current_tags}" == "${new_tags}" ]]; then
         echo "  No changes needed for ${title} (${sid})"
@@ -97,7 +97,7 @@ tag_series() {
 
     local tag_labels
     tag_labels=$(jq -r --argjson ids "${add_json}" \
-        '[.[] | select(.id as $i | $ids | index($i)) | .label] | join(", ")' <<< "${tags}")
+        '[.[] | select(.id as $i | $ids | index($i)) | .label] | join(", ")' <<<"${tags}")
     echo "  Tagging ${title} (${sid}) with: ${tag_labels:-none}"
     api_call -X PUT --data-binary "${updated}" \
         "${SONARR_API_URL}/series/${sid}" >/dev/null
@@ -110,11 +110,11 @@ if [[ -n "${SERIES_ID}" ]]; then
 else
     echo "No series ID provided, processing all series..."
     all_series=$(api_call "${SONARR_API_URL}/series")
-    count=$(jq 'length' <<< "${all_series}")
+    count=$(jq 'length' <<<"${all_series}")
 
-    for (( i = 0; i < count; i++ )); do
-        series_json=$(jq -c ".[$i]" <<< "${all_series}")
-        sid=$(jq -r '.id' <<< "${series_json}")
+    for ((i = 0; i < count; i++)); do
+        series_json=$(jq -c ".[$i]" <<<"${all_series}")
+        sid=$(jq -r '.id' <<<"${series_json}")
         tag_series "${sid}" "${series_json}"
     done
     echo "Finished processing ${count} series"

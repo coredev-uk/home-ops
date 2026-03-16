@@ -30,6 +30,7 @@ releases:
     chart: oci://ghcr.io/home-operations/charts-mirror/keda
     version: 2.19.0
 
+  # Required while third-party charts still render ServiceMonitor/PodMonitor/PrometheusRule resources.
   - name: prometheus-operator-crds
     namespace: observability
     chart: oci://ghcr.io/prometheus-community/charts/prometheus-operator-crds

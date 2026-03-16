@@ -24,7 +24,8 @@ This is a practical, single-cluster setup focused on reliability and straightfor
 | Device | Qty | CPU | Memory | Storage | Role | Misc Hardware |
 |---|---:|---|---|---|---|---|
 | Beelink SEi14 (`hyperion-0`) | 1 | Intel Core Ultra 5 125H | 32GB DDR5 | 1TB NVMe M.2 (Ceph), 128GB NVMe M.2 (Talos) | Kubernetes node | Google Coral TPU A+E |
-| Beelink EQ14 (`hyperion-1`, `hyperion-2`) | 2 | Intel Twin Lake N150 | 16GB DDR4 each | 1TB NVMe M.2 (Ceph), 128GB NVMe M.2 (Talos) | Kubernetes nodes | - |
+| Lenovo ThinkCentre M720q (`hyperion-1`) | 1 | Intel Core i5-8400T | 16GB DDR4 | 1TB SSD (Ceph), 256GB SSD (Talos) | Kubernetes node | - |
+| Lenovo ThinkCentre M920q (`hyperion-2`) | 1 | Intel Core i5-8500T | 16GB DDR4 | 1TB SSD (Ceph), 128GB SSD (Talos) | Kubernetes node | - |
 | UniFi UNAS 2 | 1 | - | - | 2x 2TB Seagate IronWolf HDD | NAS | - |
 
 ## Repository Layout

@@ -76,7 +76,8 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-        supplementalGroups: [988]
+        supplementalGroups:
+          - 988
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
@@ -93,6 +94,7 @@ spec:
       app:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
+          - "cctv.hera.ac"
         parentRefs:
           - name: envoy-external
             namespace: network

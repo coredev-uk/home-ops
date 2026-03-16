@@ -1,6 +1,9 @@
 ---
 machine:
   type: controlplane
+  install:
+    diskSelector:
+      serial: P300NDBB2510091860
   nodeLabels:
     node.kubernetes.io/coral: "true"
     topology.kubernetes.io/zone: m
@@ -8,3 +11,13 @@ machine:
 apiVersion: v1alpha1
 kind: HostnameConfig
 hostname: hyperion-0
+---
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: 192.168.20.29
+link: eth0
+---
+apiVersion: v1alpha1
+kind: DHCPv4Config
+name: eth0
+clientIdentifier: mac

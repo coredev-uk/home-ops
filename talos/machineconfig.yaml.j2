@@ -47,8 +47,6 @@ machine:
         rsize=1048576
         wsize=1048576
   install:
-    diskSelector:
-      model: Patriot M.2 P300 128GB
     image: factory.talos.dev/metal-installer/1363def95c4c8cb47ffd79fe4ab94910fccb5aee790d205f9280834779229a1b:v1.12.5
     wipe: false
   kubelet:
@@ -174,18 +172,6 @@ cluster:
   serviceAccount:
     key: op://kubernetes/talos/CLUSTER/SERVICE_ACCOUNT_KEY
   {% endif %}
----
-{% if ENV.IS_CONTROLLER %}
-apiVersion: v1alpha1
-kind: Layer2VIPConfig
-name: 192.168.20.29
-link: eth0
----
-{% endif %}
-apiVersion: v1alpha1
-kind: DHCPv4Config
-name: eth0
-clientIdentifier: mac
 ---
 apiVersion: v1alpha1
 kind: WatchdogTimerConfig

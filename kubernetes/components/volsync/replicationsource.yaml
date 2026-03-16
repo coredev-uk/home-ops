@@ -20,7 +20,7 @@ spec:
     parallelism: 2
     repository: ${APP}-volsync-secret
     moverVolumes:
-      - mountPath: /repository
+      - mountPath: repository
         volumeSource:
           nfs:
             server: ${VOLSYNC_NFS_SERVER:=expanse.internal}

@@ -26,7 +26,7 @@ spec:
       runAsGroup: ${VOLSYNC_PGID:=988}
       fsGroup: ${VOLSYNC_PGID:=988}
     moverVolumes:
-      - mountPath: /repository
+      - mountPath: repository
         volumeSource:
           nfs:
             server: ${VOLSYNC_NFS_SERVER:=expanse.internal}

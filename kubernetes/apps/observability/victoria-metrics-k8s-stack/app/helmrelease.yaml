@@ -1,0 +1,46 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-metrics-k8s-stack
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: victoria-metrics-k8s-stack
+  interval: 1h
+  values:
+    fullnameOverride: vmks
+    grafana:
+      enabled: false
+    defaultDashboards:
+      enabled: false
+    experimentalDashboardsEnabled: false
+    defaultDatasources:
+      enabled: false
+    alertmanager:
+      route:
+        enabled: true
+        hostnames:
+          - alertmanager.hera.ac
+        parentRefs:
+          - name: envoy-protected
+            namespace: network
+      spec:
+        externalURL: https://alertmanager.hera.ac
+        replicaCount: 1
+    vmsingle:
+      route:
+        enabled: true
+        hostnames:
+          - prometheus.hera.ac
+        parentRefs:
+          - name: envoy-protected
+            namespace: network
+      spec:
+        retentionPeriod: 14d
+        storage:
+          storageClassName: ceph-block
+          resources:
+            requests:
+              storage: 50Gi

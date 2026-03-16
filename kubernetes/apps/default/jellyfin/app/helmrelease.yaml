@@ -101,6 +101,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
+        controller: jellyfin
         type: LoadBalancer
         annotations:
           lbipam.cilium.io/ips: 192.168.69.128

@@ -1,6 +1,9 @@
 ---
 machine:
   type: controlplane
+  install:
+    diskSelector:
+      serial: P300NDBB2510091860
   nodeLabels:
     node.kubernetes.io/coral: "true"
     topology.kubernetes.io/zone: m

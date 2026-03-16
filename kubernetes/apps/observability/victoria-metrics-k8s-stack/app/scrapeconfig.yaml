@@ -1,0 +1,47 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmscrapeconfig_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: node-exporter
+spec:
+  staticConfigs:
+    - targets:
+        - expanse.internal:9100
+  path: /metrics
+  relabelConfigs:
+    - action: replace
+      targetLabel: job
+      replacement: node-exporter
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmscrapeconfig_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: smartctl-exporter
+spec:
+  staticConfigs:
+    - targets:
+        - expanse.internal:9633
+  path: /metrics
+  relabelConfigs:
+    - action: replace
+      targetLabel: job
+      replacement: smartctl-exporter
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmscrapeconfig_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMScrapeConfig
+metadata:
+  name: jetkvm
+spec:
+  staticConfigs:
+    - targets:
+        - jetkvm-0.internal
+        - jetkvm-1.internal
+        - jetkvm-2.internal
+  path: /metrics
+  relabelConfigs:
+    - action: replace
+      targetLabel: job
+      replacement: jetkvm

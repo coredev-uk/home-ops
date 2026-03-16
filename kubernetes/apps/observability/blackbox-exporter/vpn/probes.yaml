@@ -1,36 +1,36 @@
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/probe_v1.json
-apiVersion: monitoring.coreos.com/v1
-kind: Probe
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmprobe_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
 metadata:
   name: vpn-icmp
 spec:
   module: icmp
-  prober:
+  vmProberSpec:
     url: blackbox-exporter-vpn.observability.svc.cluster.local:9115
   targets:
     staticConfig:
-      static:
+      targets:
         - 1.1.1.1
-  metricRelabelings:
+  metricRelabelConfigs:
     - targetLabel: service
       replacement: blackbox-exporter-vpn
       action: replace
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/probe_v1.json
-apiVersion: monitoring.coreos.com/v1
-kind: Probe
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmprobe_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
 metadata:
   name: vpn-http
 spec:
   module: http_2xx
-  prober:
+  vmProberSpec:
     url: blackbox-exporter-vpn.observability.svc.cluster.local:9115
   targets:
     staticConfig:
-      static:
+      targets:
         - https://one.one.one.one
-  metricRelabelings:
+  metricRelabelConfigs:
     - targetLabel: service
       replacement: blackbox-exporter-vpn
       action: replace

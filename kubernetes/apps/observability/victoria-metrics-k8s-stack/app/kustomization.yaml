@@ -6,9 +6,9 @@ resources:
   - ./alertmanagerconfig.yaml
   - ./externalsecret.yaml
   - ./grafanadashboard.yaml
+  - ./scrapeconfig.yaml
   - ./helmrelease.yaml
   - ./ocirepository.yaml
-  - ./scrapeconfig.yaml
 configMapGenerator:
   - name: flux-metrics-configmap
     files:

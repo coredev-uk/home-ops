@@ -41,6 +41,7 @@ spec:
           - name: envoy-protected
             namespace: network
       spec:
+        disableNamespaceMatcher: true
         externalURL: https://alertmanager.hera.ac
         replicaCount: 1
     vmsingle:

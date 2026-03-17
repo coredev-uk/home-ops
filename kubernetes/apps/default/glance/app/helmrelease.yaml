@@ -88,7 +88,7 @@ spec:
         hostnames:
           - home.hera.ac
         parentRefs:
-          - name: envoy-protected
+          - name: envoy-internal
             namespace: network
     persistence:
       config-file:

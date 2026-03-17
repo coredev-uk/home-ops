@@ -15,7 +15,7 @@ spec:
     clientID: envoy-internal
     clientSecret:
       name: envoy-oidc-secret
-    redirectURL: https://home.hera.ac/oauth2/callback
+    redirectURL: https://auth.hera.ac/oauth2/callback
     logoutPath: /logout
     cookieDomain: hera.ac
     scopes:

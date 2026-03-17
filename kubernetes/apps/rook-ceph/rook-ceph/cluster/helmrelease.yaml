@@ -40,12 +40,12 @@ spec:
         useAllDevices: false
         useAllNodes: false
         nodes:
-          - name: hyperion-0
-            devices:
-              - name: /dev/disk/by-id/nvme-CT1000P3PSSD8_24014607D6A0
           - name: hyperion-1
             devices:
               - name: /dev/disk/by-id/wwn-0x5001b444a4337ebf
+          - name: hyperion-2
+            devices:
+              - name: /dev/disk/by-id/ata-ESSENCORE_SATA_SSD_ESS3D1P06CNA06100
     monitoring:
       enabled: true
       createPrometheusRules: true
@@ -65,7 +65,7 @@ spec:
         spec:
           failureDomain: host
           replicated:
-            size: 1
+            size: 2
         storageClass:
           enabled: true
           name: ceph-block
@@ -98,12 +98,12 @@ spec:
         spec:
           metadataPool:
             replicated:
-              size: 1
+              size: 2
           dataPools:
             - name: data0
               failureDomain: host
               replicated:
-                size: 1
+                size: 2
           metadataServer:
             activeCount: 1
             activeStandby: true

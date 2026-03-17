@@ -1,6 +1,6 @@
 {
   "tagOwners": {
-    "tag:subnet-router": ["autogroup:admin"]
+    "tag:subnet-router": ["tag:subnet-router"]
   },
   "autoApprovers": {
     "routes": {

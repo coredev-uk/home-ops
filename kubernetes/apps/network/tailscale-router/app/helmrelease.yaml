@@ -15,6 +15,8 @@ spec:
         strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
+        serviceAccount:
+          identifier: tailscale-router
         containers:
           app:
             image:
@@ -67,6 +69,30 @@ spec:
                 memory: 256Mi
             securityContext:
               privileged: true
+    rbac:
+      roles:
+        tailscale-router:
+          type: Role
+          rules:
+            - apiGroups:
+                - ""
+              resources:
+                - secrets
+              verbs:
+                - get
+                - create
+                - update
+                - patch
+            - apiGroups:
+                - ""
+              resources:
+                - events
+              verbs:
+                - get
+                - create
+                - patch
+    serviceAccount:
+      tailscale-router: {}
     persistence:
       state:
         existingClaim: "{{ .Release.Name }}"

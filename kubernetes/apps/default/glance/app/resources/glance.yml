@@ -643,7 +643,7 @@ pages:
               show-grabbed: false
               interval: 20
               timezone: "+00"
-              api-base-url: "http://radarr.radarr.svc.cluster.local:7878"
+              api-base-url: "http://radarr.default.svc.cluster.local"
               key: ${RADARR_API_KEY}
               url: "https://radarr.hera.ac"
 
@@ -658,7 +658,7 @@ pages:
               collapse-after: 2
               show-grabbed: false
               interval: 20
-              api-base-url: "http://sonarr.sonarr.svc.cluster.local:8989"
+              api-base-url: "http://sonarr.default.svc.cluster.local"
               key: ${SONARR_API_KEY}
               url: "https://sonarr.hera.ac"
               timezone: "+00"

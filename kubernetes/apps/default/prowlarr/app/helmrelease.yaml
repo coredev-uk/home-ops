@@ -133,6 +133,10 @@ spec:
         parentRefs:
           - name: envoy-protected
             namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"

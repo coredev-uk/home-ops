@@ -16,7 +16,7 @@ spec:
     auth:
       disable_login_form: "true"
     auth.basic:
-      enabled: "false"
+      enabled: "true"
     auth.anonymous:
       enabled: "false"
     auth.generic_oauth:
@@ -24,6 +24,7 @@ spec:
       name: HyperionID
       allow_sign_up: "true"
       auto_login: "true"
+      skip_org_role_sync: "true"
       scopes: openid profile email groups
       use_pkce: "true"
       use_refresh_token: "true"
@@ -38,7 +39,7 @@ spec:
       plugin_admin_enabled: "false"
     security:
       angular_support_enabled: "true"
-      disable_initial_admin_creation: "true"
+      disable_initial_admin_creation: "false"
     server:
       enable_gzip: "true"
       root_url: https://grafana.hera.ac

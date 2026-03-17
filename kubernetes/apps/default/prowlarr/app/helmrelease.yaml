@@ -80,8 +80,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: &byparrPort 8191
                   initialDelaySeconds: 60
                   periodSeconds: 15
@@ -91,8 +90,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: *byparrPort
                   periodSeconds: 900
                   timeoutSeconds: 30
@@ -101,8 +99,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: *byparrPort
                   periodSeconds: 30
                   timeoutSeconds: 10

@@ -67,6 +67,20 @@ spec:
         - 1.1.1.1
     dnsmasq:
       enableCustomDnsMasq: true
+    monitoring:
+      sidecar:
+        enabled: true
+        image:
+          repository: ekofr/pihole-exporter
+          tag: v1.2.0@sha256:242c53ef3c24b88fcbe8184390b456d05604bd50de5732ca3fd3eb24395585b3
+          pullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
     persistentVolumeClaim:
       enabled: true
       size: 2Gi

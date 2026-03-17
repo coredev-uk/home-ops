@@ -16,7 +16,7 @@ alerting:
 endpoints:
   - name: Ping
     group: status
-    url: icmp://${STATUS_DDNS_HOSTNAME}
+    url: tcp://${STATUS_DDNS_HOSTNAME}:443
     interval: 1m
     ui:
       hide-url: true
@@ -35,14 +35,5 @@ endpoints:
       hide-hostname: true
     conditions:
       - "[STATUS] == 200"
-    alerts:
-      - type: pushover
-
-external-endpoints:
-  - name: Heartbeat
-    group: status
-    token: ${STATUS_HEARTBEAT_TOKEN}
-    heartbeat:
-      interval: 5m
     alerts:
       - type: pushover

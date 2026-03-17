@@ -5,9 +5,6 @@ kind: Kustomization
 metadata:
   name: victoria-metrics-k8s-stack
 spec:
-  dependsOn:
-    - name: rook-ceph-cluster
-      namespace: rook-ceph
   interval: 1h
   path: ./kubernetes/apps/observability/victoria-metrics-k8s-stack/app
   prune: true

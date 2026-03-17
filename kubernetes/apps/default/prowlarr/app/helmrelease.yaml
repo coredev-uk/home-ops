@@ -41,7 +41,11 @@ spec:
             probes:
               liveness:
                 enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
                   periodSeconds: 30
                   timeoutSeconds: 5
                   failureThreshold: 5
@@ -57,7 +61,11 @@ spec:
                   failureThreshold: 5
               startup:
                 enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
                   failureThreshold: 30
                   periodSeconds: 10
             securityContext:
@@ -107,11 +115,11 @@ spec:
                   failureThreshold: 3
             resources:
               requests:
-                cpu: 500m
-                memory: 768Mi
+                cpu: 50m
+                memory: 64Mi
               limits:
-                cpu: 2000m
-                memory: 4Gi
+                cpu: 500m
+                memory: 512Mi
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true

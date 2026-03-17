@@ -21,6 +21,7 @@ spec:
     DNS1: 1.1.1.1
     DNS2: 1.0.0.1
     adlists:
+      # renovate: datasource=github-tags depName=hagezi/dns-blocklists
       - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@v6/adblock/pro.txt
     extraEnvVars:
       TZ: Europe/London

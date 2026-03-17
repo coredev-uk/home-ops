@@ -14,12 +14,6 @@ spec:
       prowlarr:
         annotations:
           reloader.stakater.com/auto: "true"
-          k8s.v1.cni.cncf.io/networks: |-
-            [{
-              "name": "vpn",
-              "namespace": "kube-system",
-              "ips": ["192.168.30.14/24"]
-            }]
         containers:
           app:
             image:
@@ -41,7 +35,11 @@ spec:
             probes:
               liveness:
                 enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
                   periodSeconds: 30
                   timeoutSeconds: 5
                   failureThreshold: 5
@@ -57,7 +55,11 @@ spec:
                   failureThreshold: 5
               startup:
                 enabled: true
+                custom: true
                 spec:
+                  httpGet:
+                    path: /ping
+                    port: *port
                   failureThreshold: 30
                   periodSeconds: 10
             securityContext:
@@ -78,8 +80,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: &byparrPort 8191
                   initialDelaySeconds: 60
                   periodSeconds: 15
@@ -89,8 +90,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: *byparrPort
                   periodSeconds: 900
                   timeoutSeconds: 30
@@ -99,20 +99,26 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /health
+                  tcpSocket:
                     port: *byparrPort
                   periodSeconds: 30
                   timeoutSeconds: 10
                   failureThreshold: 3
             resources:
               requests:
-                cpu: 500m
-                memory: 768Mi
+                cpu: 50m
+                memory: 64Mi
               limits:
-                cpu: 2000m
-                memory: 4Gi
+                cpu: 500m
+                memory: 512Mi
     defaultPodOptions:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |-
+          [{
+            "name": "vpn",
+            "namespace": "kube-system",
+            "ips": ["192.168.30.14/24"]
+          }]
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

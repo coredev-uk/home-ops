@@ -21,7 +21,7 @@ spec:
     DNS1: 1.1.1.1
     DNS2: 1.0.0.1
     adlists:
-      - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt
+      - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@v6/adblock/pro.txt
     extraEnvVars:
       TZ: Europe/London
       FTLCONF_dns_listeningMode: all
@@ -29,7 +29,6 @@ spec:
       FTLCONF_webserver_api_password: ""
     serviceDns:
       type: LoadBalancer
-      loadBalancerIP: 192.168.20.21
       mixedService: false
       extraLabels:
         home-ops.io/lb-pool: pihole

@@ -17,28 +17,61 @@ spec:
   values:
     replicaCount: 1
     admin:
-      existingSecret: pihole-secret
-      passwordKey: PIHOLE_PASSWORD
+      enabled: false
+    image:
+      repository: pihole/pihole
+      tag: 2026.02.0@sha256:ee348529cea9601df86ad94d62a39cad26117e1eac9e82d8876aa0ec7fe1ba27
+      pullPolicy: IfNotPresent
     DNS1: 1.1.1.1
     DNS2: 1.0.0.1
+    adlists:
+      - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.txt
+    extraEnvVars:
+      TZ: Europe/London
+      FTLCONF_dns_listeningMode: all
+      FTLCONF_dns_upstreams: 1.1.1.1;1.0.0.1
+      FTLCONF_webserver_api_password: ""
     serviceDns:
       type: LoadBalancer
-      mixedService: true
-      extraLabels:
-        home-ops.io/lb-pool: pihole
-      annotations:
-        lbipam.cilium.io/ips: 192.168.20.21
-        lbipam.cilium.io/sharing-key: pihole
-    serviceWeb:
-      type: LoadBalancer
       loadBalancerIP: 192.168.20.21
+      mixedService: false
       extraLabels:
         home-ops.io/lb-pool: pihole
       annotations:
         lbipam.cilium.io/ips: 192.168.20.21
-        lbipam.cilium.io/sharing-key: pihole
+    serviceWeb:
+      type: ClusterIP
     serviceDhcp:
       enabled: false
+    probes:
+      liveness:
+        enabled: true
+        type: command
+        command:
+          - /bin/sh
+          - -c
+          - dig @127.0.0.1 cloudflare.com || exit 1
+        initialDelaySeconds: 60
+        failureThreshold: 10
+        timeoutSeconds: 5
+      readiness:
+        enabled: true
+        type: command
+        command:
+          - /bin/sh
+          - -c
+          - dig @127.0.0.1 cloudflare.com || exit 1
+        initialDelaySeconds: 30
+        failureThreshold: 10
+        timeoutSeconds: 5
+    podDnsConfig:
+      enabled: true
+      policy: None
+      nameservers:
+        - 127.0.0.1
+        - 1.1.1.1
+    dnsmasq:
+      enableCustomDnsMasq: true
     persistentVolumeClaim:
       enabled: true
       size: 2Gi

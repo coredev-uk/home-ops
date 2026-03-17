@@ -37,3 +37,23 @@ spec:
     namespace: flux-system
   targetNamespace: volsync-system
   wait: false
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: volsync-monitoring
+spec:
+  dependsOn:
+    - name: volsync
+    - name: victoria-metrics-k8s-stack
+      namespace: observability
+  interval: 1h
+  path: ./kubernetes/apps/volsync-system/volsync/monitoring
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: volsync-system
+  wait: false

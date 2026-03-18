@@ -13,7 +13,8 @@ spec:
   oidc:
     provider:
       issuer: https://id.hera.ac
-    clientID: envoy-internal
+    clientIDRef:
+      name: envoy-oidc-secret
     clientSecret:
       name: envoy-oidc-secret
     redirectURL: https://auth.hera.ac/oauth2/callback

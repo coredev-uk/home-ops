@@ -38,6 +38,9 @@ spec:
         useAllDevices: false
         useAllNodes: false
         nodes:
+          - name: hyperion-0
+            devices:
+              - name: /dev/disk/by-id/nvme-CT1000P3PSSD8_24014607D6A0
           - name: hyperion-1
             devices:
               - name: /dev/disk/by-id/wwn-0x5001b444a4337ebf

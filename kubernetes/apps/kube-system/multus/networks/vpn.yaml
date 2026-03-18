@@ -11,9 +11,9 @@ spec:
       "name": "vpn",
       "plugins": [
         {
-          "type": "macvlan",
+          "type": "ipvlan",
           "master": "eno1.3",
-          "mode": "bridge",
+          "mode": "l2",
           "ipam": {
             "type": "static",
             "routes": [

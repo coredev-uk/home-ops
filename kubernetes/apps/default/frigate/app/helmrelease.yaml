@@ -72,10 +72,10 @@ spec:
         - name: gpu
           resourceClaimTemplateName: frigate
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        runAsNonRoot: false
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
         supplementalGroups:
           - 988
         fsGroupChangePolicy: OnRootMismatch

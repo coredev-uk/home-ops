@@ -13,12 +13,7 @@ spec:
     controllers:
       qbittorrent:
         annotations:
-          k8s.v1.cni.cncf.io/networks: |-
-            [{
-              "name": "vpn",
-              "namespace": "kube-system",
-              "ips": ["192.168.30.15/24"]
-            }]
+          reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
@@ -60,6 +55,13 @@ spec:
               limits:
                 memory: 32Gi
     defaultPodOptions:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |-
+          [{
+            "name": "vpn",
+            "namespace": "kube-system",
+            "ips": ["192.168.30.15/24"]
+          }]
       terminationGracePeriodSeconds: 300
       securityContext:
         runAsNonRoot: true

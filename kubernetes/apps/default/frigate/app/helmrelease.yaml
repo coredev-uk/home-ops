@@ -55,8 +55,7 @@ spec:
                   timeoutSeconds: 5
                   failureThreshold: 3
             resources:
-              claims:
-                - name: gpu
+              claims: []
               requests:
                 cpu: 500m
                 memory: 4Gi
@@ -68,9 +67,7 @@ spec:
     defaultPodOptions:
       nodeSelector:
         node.kubernetes.io/coral: "true"
-      resourceClaims:
-        - name: gpu
-          resourceClaimTemplateName: frigate
+      resourceClaims: []
       securityContext:
         runAsNonRoot: false
         runAsUser: 0

@@ -29,16 +29,5 @@
       ],
       datasourceTemplate: "docker",
     },
-    {
-      customType: "regex",
-      description: "Process annotated adlist versions",
-      managerFilePatterns: [
-        "/\\.yaml(?:\\.j2)?$/",
-      ],
-      matchStrings: [
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*-\\s+https://cdn\\.jsdelivr\\.net/gh/hagezi/dns-blocklists@(?<currentValue>v\\d+)/adblock/pro\\.txt",
-      ],
-      datasourceTemplate: "{{{datasource}}}",
-    },
   ],
 }

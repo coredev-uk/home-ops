@@ -9,18 +9,6 @@ spec:
   blocks:
     - cidr: 192.168.69.0/24
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumloadbalancerippool_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumLoadBalancerIPPool
-metadata:
-  name: pihole
-spec:
-  blocks:
-    - cidr: 192.168.20.21/32
-  serviceSelector:
-    matchLabels:
-      home-ops.io/lb-pool: pihole
----
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpadvertisement_v2.json
 apiVersion: cilium.io/v2
 kind: CiliumBGPAdvertisement

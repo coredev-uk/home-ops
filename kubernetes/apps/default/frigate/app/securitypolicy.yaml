@@ -13,9 +13,9 @@ spec:
     provider:
       issuer: https://id.hera.ac
     clientIDRef:
-      name: frigate-oidc-secret
+      name: frigate-secret
     clientSecret:
-      name: frigate-oidc-secret
+      name: frigate-secret
     redirectURL: https://frigate.hera.ac/oauth2/callback
     logoutPath: /logout
     cookieDomain: hera.ac

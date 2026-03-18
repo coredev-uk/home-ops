@@ -13,6 +13,14 @@ spec:
     csi:
       cephFSKernelMountOptions: ms_mode=prefer-crc
       enableLiveness: true
+      provisionerResources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+      pluginResources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
       serviceMonitor:
         enabled: true
     image:

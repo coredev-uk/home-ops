@@ -31,6 +31,14 @@ spec:
         connections:
           requireMsgr2: true
       resources:
+        mon:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        mgr:
+          requests:
+            cpu: 100m
+            memory: 256Mi
         osd:
           limits:
             memory: 8Gi # Required for bootstrap

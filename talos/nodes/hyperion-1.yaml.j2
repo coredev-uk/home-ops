@@ -20,3 +20,11 @@ apiVersion: v1alpha1
 kind: DHCPv4Config
 name: eno1
 clientIdentifier: mac
+---
+apiVersion: v1alpha1
+kind: VLANConfig
+name: eno1.3
+vlanID: 3
+vlanMode: 802.1q
+parent: eno1
+up: true

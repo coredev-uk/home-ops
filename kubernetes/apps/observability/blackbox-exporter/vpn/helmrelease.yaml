@@ -21,6 +21,15 @@ spec:
           "ips": ["192.168.30.13/24"],
           "mac": "3e:d0:83:c0:8e:13"
         }]
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: NotIn
+                  values:
+                    - hyperion-0
     config:
       modules:
         http_2xx:
@@ -58,23 +67,12 @@ spec:
           annotations:
             summary: |-
               The probe targeting {{ $labels.instance }} is currently having connectivity issues
-    postRenderers:
-      - kustomize:
-          patches:
-            - target:
-                kind: Deployment
-                name: blackbox-exporter-vpn
-              patch: |-
-                - op: remove
-                  path: /spec/strategy/rollingUpdate
-                - op: add
-                  path: /spec/template/spec/affinity
-                  value:
-                    nodeAffinity:
-                      requiredDuringSchedulingIgnoredDuringExecution:
-                        nodeSelectorTerms:
-                          - matchExpressions:
-                              - key: kubernetes.io/hostname
-                                operator: NotIn
-                                values:
-                                  - hyperion-0
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: blackbox-exporter-vpn
+            patch: |-
+              - op: remove
+                path: /spec/strategy/rollingUpdate

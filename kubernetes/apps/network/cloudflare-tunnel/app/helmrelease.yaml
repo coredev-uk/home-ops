@@ -69,7 +69,7 @@ spec:
     configMaps:
       config:
         data:
-          config.yaml: |-
+          config.yml: |-
             ingress:
               - hostname: "*.hera.ac"
                 originRequest:
@@ -84,5 +84,5 @@ spec:
         type: configMap
         identifier: config
         globalMounts:
-          - path: /etc/cloudflared/config.yaml
-            subPath: config.yaml
+          - path: /etc/cloudflared/config.yml
+            subPath: config.yml

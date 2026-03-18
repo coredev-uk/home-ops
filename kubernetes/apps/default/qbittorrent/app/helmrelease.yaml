@@ -62,6 +62,15 @@ spec:
             "namespace": "kube-system",
             "ips": ["192.168.30.15/24"]
           }]
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - hyperion-0
       terminationGracePeriodSeconds: 300
       securityContext:
         runAsNonRoot: true

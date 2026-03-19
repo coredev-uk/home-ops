@@ -154,11 +154,6 @@ spec:
               header_map:
                 user: remote-user
                 role: remote-groups
-              role_map:
-                admin:
-                  - admin
-                viewer:
-                  - viewer
 
             tls:
               enabled: false

@@ -40,6 +40,13 @@ spec:
                 valueFrom:
                   fieldRef:
                     fieldPath: status.hostIP
+            resources:
+              requests:
+                cpu: 500m
+                memory: 512Mi
+              limits:
+                cpu: 2000m
+                memory: 2Gi
             volumeMounts:
               - mountPath: /var/run/secrets/talos.dev
                 name: talos

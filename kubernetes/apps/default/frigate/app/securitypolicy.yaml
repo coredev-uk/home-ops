@@ -24,3 +24,20 @@ spec:
       - profile
       - email
       - groups
+    cookieNames:
+      accessToken: frigate-access-token
+    forwardAccessToken: true
+  jwt:
+    providers:
+      - name: pocket-id
+        issuer: https://id.hera.ac
+        remoteJWKS:
+          uri: https://id.hera.ac/.well-known/jwks.json
+        extractFrom:
+          cookies:
+            - frigate-access-token
+        claimToHeaders:
+          - header: Remote-User
+            claim: preferred_username
+          - header: Remote-Groups
+            claim: groups

@@ -30,7 +30,7 @@ spec:
                 spec:
                   httpGet:
                     path: /api/version
-                    port: &port 5000
+                    port: &port 8971
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 30
@@ -146,14 +146,19 @@ spec:
               enabled: false
               session_length: 604800
               trusted_proxies:
-                - 10.244.0.0/16
+                - 10.42.0.0/16
 
             proxy:
               logout_url: https://id.hera.ac/api/oidc/end-session
-              default_role: admin
+              default_role: viewer
               header_map:
                 user: remote-user
                 role: remote-groups
+              role_map:
+                admin:
+                  - admin
+                viewer:
+                  - viewer
 
             tls:
               enabled: false

@@ -11,6 +11,17 @@ spec:
     - name: envoy-protected
       namespace: network
   rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /admin/
+            statusCode: 302
     - backendRefs:
         - name: pihole-web
           port: 80

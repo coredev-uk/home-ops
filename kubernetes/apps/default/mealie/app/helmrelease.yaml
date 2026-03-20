@@ -24,9 +24,13 @@ spec:
               BASE_URL: https://mealie.hera.ac
               API_PORT: &port 9000
               ALLOW_SIGNUP: "false"
+              ALLOW_PASSWORD_LOGIN: "false"
               OIDC_AUTH_ENABLED: "true"
               OIDC_SIGNUP_ENABLED: "true"
+              OIDC_AUTO_REDIRECT: "true"
               OIDC_ADMIN_GROUP: cluster_admin
+              OIDC_GROUPS_CLAIM: groups
+              OIDC_SCOPES_OVERRIDE: openid profile email groups
               OIDC_CONFIGURATION_URL: https://id.hera.ac/.well-known/openid-configuration
               OIDC_PROVIDER_NAME: HyperionID
             envFrom:

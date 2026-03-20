@@ -41,7 +41,26 @@ spec:
               exit 1
             fi
 
-            psql --username postgres --dbname postgres --set ON_ERROR_STOP=1 --set app_password="${APP_DB_PASSWORD}" <<'EOSQL'
+            POSTGRES_ADMIN_PASSWORD="${POSTGRES_POSTGRES_PASSWORD:-${POSTGRESQL_POSTGRES_PASSWORD:-${APP_DB_PASSWORD}}}"
+            if [[ -z "${POSTGRES_ADMIN_PASSWORD}" ]]; then
+              echo "Unable to resolve postgres admin password" >&2
+              exit 1
+            fi
+
+            PGPASSWORD="${POSTGRES_ADMIN_PASSWORD}" psql --username postgres --dbname postgres --set ON_ERROR_STOP=1 --set app_password="${APP_DB_PASSWORD}" <<'EOSQL'
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'autobrr') THEN
+                CREATE ROLE autobrr LOGIN PASSWORD :'app_password';
+              ELSE
+                ALTER ROLE autobrr WITH LOGIN PASSWORD :'app_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE autobrr OWNER autobrr'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'autobrr')\gexec
+
             DO $$
             BEGIN
               IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mealie') THEN
@@ -54,6 +73,32 @@ spec:
 
             SELECT 'CREATE DATABASE mealie OWNER mealie'
             WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mealie')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'qui') THEN
+                CREATE ROLE qui LOGIN PASSWORD :'app_password';
+              ELSE
+                ALTER ROLE qui WITH LOGIN PASSWORD :'app_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE qui OWNER qui'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'qui')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'seerr') THEN
+                CREATE ROLE seerr LOGIN PASSWORD :'app_password';
+              ELSE
+                ALTER ROLE seerr WITH LOGIN PASSWORD :'app_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE seerr OWNER seerr'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'seerr')\gexec
 
             DO $$
             BEGIN

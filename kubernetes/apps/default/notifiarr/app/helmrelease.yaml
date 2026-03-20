@@ -99,10 +99,7 @@ spec:
             port: *port
     serviceMonitor:
       app:
-        endpoints:
-          - port: http
-            path: /metrics
-            interval: 60s
+        enabled: false
     route:
       app:
         hostnames:

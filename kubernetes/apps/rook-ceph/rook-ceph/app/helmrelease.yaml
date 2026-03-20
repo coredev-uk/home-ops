@@ -22,7 +22,7 @@ spec:
           cpu: 50m
           memory: 128Mi
       serviceMonitor:
-        enabled: true
+        enabled: false
     image:
       repository: ghcr.io/rook/ceph
     monitoring:

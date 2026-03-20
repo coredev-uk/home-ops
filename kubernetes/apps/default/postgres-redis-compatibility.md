@@ -4,7 +4,6 @@ This matrix documents whether each app in `kubernetes/apps/default` exposes envi
 
 | App | Postgres | Redis | Notes |
 | --- | --- | --- | --- |
-| atuin | yes | no | Supports `ATUIN_DB_URI` (migrated in this branch) |
 | autobrr | no | no | No Postgres/Redis env knobs in current deployment values |
 | bazarr | no | no | No Postgres/Redis env knobs in current deployment values |
 | changedetection | no | no | No Postgres/Redis env knobs in current deployment values |
@@ -29,7 +28,6 @@ This matrix documents whether each app in `kubernetes/apps/default` exposes envi
 
 ## Migrated in this branch
 
-- `atuin`: switched from SQLite to centralized PostgreSQL
 - `mealie`: switched from SQLite to centralized PostgreSQL
 - `pocket-id`: switched from SQLite to centralized PostgreSQL
 
@@ -37,7 +35,6 @@ This matrix documents whether each app in `kubernetes/apps/default` exposes envi
 
 `kubernetes/apps/db/postgresql/app/helmrelease.yaml` now includes an `initdb` script that creates roles and databases for:
 
-- `atuin`
 - `mealie`
 - `pocket_id`
 

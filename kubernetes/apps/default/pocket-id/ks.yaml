@@ -7,13 +7,6 @@ metadata:
 spec:
   components:
     - ../../../../components/volsync
-  patches:
-    - patch: |-
-        - op: remove
-          path: /spec/dataSourceRef
-      target:
-        version: v1
-        kind: PersistentVolumeClaim
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph

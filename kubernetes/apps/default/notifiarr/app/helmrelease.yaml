@@ -21,7 +21,7 @@ spec:
               tag: v0.9.5@sha256:a9a1f37f924d740107874675df6b6a5edd87e5f66ca72ad27481a4bdfd42d162
             env:
               TZ: Europe/London
-              DN_UPSTREAMS_0: 10.244.0.0/16
+              DN_UPSTREAMS_0: 10.42.0.0/16
               DN_SONARR_0_NAME: Sonarr
               DN_SONARR_0_URL: http://sonarr:80
               DN_RADARR_0_NAME: Radarr

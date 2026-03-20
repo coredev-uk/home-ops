@@ -14,16 +14,6 @@ spec:
       qbittorrent:
         annotations:
           reloader.stakater.com/auto: "true"
-        pod:
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: NotIn
-                        values:
-                          - hyperion-0
         containers:
           app:
             image:

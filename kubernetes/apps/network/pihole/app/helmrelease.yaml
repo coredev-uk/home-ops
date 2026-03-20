@@ -26,8 +26,6 @@ spec:
     extraEnvVars:
       TZ: Europe/London
       FTLCONF_dns_listeningMode: all
-      FTLCONF_dns_upstreams: 1.1.1.1;1.0.0.1
-      FTLCONF_webserver_api_password: ""
     serviceDns:
       type: LoadBalancer
       mixedService: true

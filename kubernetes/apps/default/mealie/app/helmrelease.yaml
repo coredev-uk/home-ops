@@ -26,6 +26,7 @@ spec:
               ALLOW_SIGNUP: "false"
               OIDC_AUTH_ENABLED: "true"
               OIDC_SIGNUP_ENABLED: "true"
+              OIDC_ADMIN_GROUP: cluster_admin
               OIDC_CONFIGURATION_URL: https://id.hera.ac/.well-known/openid-configuration
               OIDC_PROVIDER_NAME: HyperionID
             envFrom:

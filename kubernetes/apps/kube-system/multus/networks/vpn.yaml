@@ -12,7 +12,7 @@ spec:
       "plugins": [
         {
           "type": "ipvlan",
-          "master": "eno1.3",
+          "master": "net0.3",
           "mode": "l2",
           "ipam": {
             "type": "static",

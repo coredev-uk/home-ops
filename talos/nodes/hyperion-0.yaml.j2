@@ -13,19 +13,27 @@ kind: HostnameConfig
 hostname: hyperion-0
 ---
 apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0
+selector:
+  match: mac(link.permanent_addr) == "b0:41:6f:10:7c:e5"
+---
+apiVersion: v1alpha1
 kind: Layer2VIPConfig
 name: 192.168.20.29
-link: eth0
+link: net0
 ---
 apiVersion: v1alpha1
 kind: DHCPv4Config
-name: eth0
+name: net0
 clientIdentifier: mac
 ---
 apiVersion: v1alpha1
 kind: VLANConfig
-name: eno1.3
+name: net0.3
 vlanID: 3
 vlanMode: 802.1q
-parent: enp171s0
+parent: net0
 up: true
+addresses:
+  - address: 192.168.30.240/24

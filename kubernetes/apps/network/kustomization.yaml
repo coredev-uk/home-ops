@@ -16,4 +16,5 @@ resources:
   - ./envoy-gateway/ks.yaml
   - ./headscale/ks.yaml
   - ./pihole/ks.yaml
+  - ./pihole-dns/ks.yaml
   - ./tailscale-router/ks.yaml

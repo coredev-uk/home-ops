@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app pihole-dns-controller
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: pihole-dns-controller
+  interval: 1h
+  values:
+    fullnameOverride: *app
+    provider:
+      name: pihole
+    extraArgs:
+      - --gateway-namespace=network
+      - --pihole-api-version=6
+      - --pihole-server=http://pihole-web.network.svc.cluster.local
+    triggerLoopOnEvent: true
+    policy: upsert-only
+    registry: noop
+    sources:
+      - gateway-httproute
+      - service
+    domainFilters:
+      - hera.ac
+    serviceMonitor:
+      enabled: true

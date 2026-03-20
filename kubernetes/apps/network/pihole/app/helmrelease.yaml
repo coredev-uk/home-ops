@@ -1,0 +1,93 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: pihole
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: pihole
+      version: 2.35.0
+      sourceRef:
+        kind: HelmRepository
+        name: pihole
+        namespace: network
+  values:
+    replicaCount: 1
+    admin:
+      enabled: false
+    DNS1: 1.1.1.1
+    DNS2: 1.0.0.1
+    adlists:
+      # renovate: datasource=github-tags depName=hagezi/dns-blocklists
+      - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@v6/adblock/pro.txt
+    extraEnvVars:
+      TZ: Europe/London
+      FTLCONF_dns_listeningMode: all
+      FTLCONF_dns_upstreams: 1.1.1.1;1.0.0.1
+      FTLCONF_webserver_api_password: ""
+    serviceDns:
+      type: LoadBalancer
+      mixedService: true
+      externalTrafficPolicy: Cluster
+      annotations:
+        lbipam.cilium.io/ips: 192.168.20.245
+    serviceWeb:
+      type: ClusterIP
+    serviceDhcp:
+      enabled: false
+    probes:
+      liveness:
+        enabled: true
+        type: command
+        command:
+          - /bin/sh
+          - -c
+          - dig @127.0.0.1 cloudflare.com || exit 1
+        initialDelaySeconds: 60
+        failureThreshold: 10
+        timeoutSeconds: 5
+      readiness:
+        enabled: true
+        type: command
+        command:
+          - /bin/sh
+          - -c
+          - dig @127.0.0.1 cloudflare.com || exit 1
+        initialDelaySeconds: 30
+        failureThreshold: 10
+        timeoutSeconds: 5
+    podDnsConfig:
+      enabled: true
+      policy: None
+      nameservers:
+        - 127.0.0.1
+        - 1.1.1.1
+    dnsmasq:
+      enableCustomDnsMasq: true
+    monitoring:
+      sidecar:
+        enabled: true
+        image:
+          repository: ekofr/pihole-exporter
+          tag: v1.2.0@sha256:242c53ef3c24b88fcbe8184390b456d05604bd50de5732ca3fd3eb24395585b3
+          pullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 50m
+            memory: 64Mi
+    persistentVolumeClaim:
+      enabled: true
+      size: 2Gi
+      storageClass: ceph-block
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 1Gi

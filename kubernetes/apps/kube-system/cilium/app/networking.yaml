@@ -7,56 +7,18 @@ metadata:
 spec:
   allowFirstLastIPs: "No"
   blocks:
-    - cidr: 192.168.69.0/24
+    - cidr: 192.168.20.240/28
 ---
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpadvertisement_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumBGPAdvertisement
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliuml2announcementpolicy_v2alpha1.json
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
 metadata:
-  name: l3-bgp-advertisement
-  labels:
-    advertise: bgp
+  name: loadbalancers
 spec:
-  advertisements:
-    - advertisementType: Service
-      service:
-        addresses:
-          - LoadBalancerIP
-      selector:
-        matchExpressions:
-          - {key: somekey, operator: NotIn, values: ["never-used-value"]}
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgppeerconfig_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumBGPPeerConfig
-metadata:
-  name: l3-bgp-peer-config
-spec:
-  families:
-    - afi: ipv4
-      safi: unicast
-      advertisements:
-        matchLabels:
-          advertise: bgp
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/cilium.io/ciliumbgpclusterconfig_v2.json
-apiVersion: cilium.io/v2
-kind: CiliumBGPClusterConfig
-metadata:
-  name: l3-bgp-cluster-config
-spec:
-  nodeSelector:
-    matchLabels:
-      kubernetes.io/os: linux
-  bgpInstances:
-    - name: cilium
-      localASN: 64514
-      peers:
-        - name: unifi
-          peerASN: 64513
-          peerAddress: 192.168.1.1
-          peerConfigRef:
-            name: l3-bgp-peer-config
+  serviceSelector:
+    matchExpressions:
+      - {key: somekey, operator: NotIn, values: ["never-used-value"]}
+  loadBalancerIPs: true
 ---
 apiVersion: v1
 kind: Service
@@ -64,7 +26,7 @@ metadata:
   name: kube-api
   annotations:
     external-dns.alpha.kubernetes.io/hostname: k8s.hera.ac
-    lbipam.cilium.io/ips: 192.168.69.120
+    lbipam.cilium.io/ips: 192.168.20.241
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Local

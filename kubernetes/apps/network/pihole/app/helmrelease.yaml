@@ -30,11 +30,10 @@ spec:
       FTLCONF_webserver_api_password: ""
     serviceDns:
       type: LoadBalancer
-      mixedService: false
-      extraLabels:
-        home-ops.io/lb-pool: pihole
+      mixedService: true
+      externalTrafficPolicy: Cluster
       annotations:
-        lbipam.cilium.io/ips: 192.168.20.21
+        lbipam.cilium.io/ips: 192.168.69.124
     serviceWeb:
       type: ClusterIP
     serviceDhcp:

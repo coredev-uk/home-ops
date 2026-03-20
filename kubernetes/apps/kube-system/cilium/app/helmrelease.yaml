@@ -20,7 +20,7 @@ spec:
       preallocateMaps: true
     bpfClockProbe: true
     bgpControlPlane:
-      enabled: true
+      enabled: false
     cgroup:
       automount:
         enabled: false
@@ -41,10 +41,13 @@ spec:
     ipv4NativeRoutingCIDR: 10.42.0.0/16
     k8sServiceHost: 127.0.0.1
     k8sServicePort: 7445
+    k8sClientRateLimit:
+      qps: 20
+      burst: 40
     kubeProxyReplacement: true
     kubeProxyReplacementHealthzBindAddr: 0.0.0.0:10256
     l2announcements:
-      enabled: false
+      enabled: true
     loadBalancer:
       algorithm: maglev
       mode: dsr

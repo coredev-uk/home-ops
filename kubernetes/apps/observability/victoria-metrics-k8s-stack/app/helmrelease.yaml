@@ -15,10 +15,12 @@ spec:
       valuesKey: flux-metrics.yaml
   values:
     fullnameOverride: vmks
+    defaultRules:
+      groups:
+        etcd:
+          create: false
     kubeEtcd:
-      service:
-        selector:
-          component: kube-apiserver # etcd runs on control plane nodes
+      enabled: false
     kubeProxy:
       enabled: false
     prometheus-node-exporter:

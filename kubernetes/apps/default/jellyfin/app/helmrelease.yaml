@@ -79,9 +79,9 @@ spec:
               - "-c"
             args:
               - |
-                INFO=$(curl -s -H "X-Emby-Token: ${API_KEY}" http://127.0.0.1:8096/System/Info)
+                INFO=$(curl -s -H "X-Emby-Token: $API_KEY" http://jellyfin.default.svc.cluster.local:8096/System/Info)
                 if echo "$INFO" | grep -q '"HasPendingRestart":true'; then
-                  curl -X POST -H "X-Emby-Token: ${API_KEY}" http://127.0.0.1:8096/System/Restart
+                  curl -X POST -H "X-Emby-Token: $API_KEY" http://jellyfin.default.svc.cluster.local:8096/System/Restart
                   echo "Jellyfin restarted"
                 fi
         pod:
@@ -126,12 +126,18 @@ spec:
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
+        advancedMounts:
+          jellyfin:
+            app:
+              - path: /config
       media:
         type: nfs
         server: expanse.internal
         path: /var/nfs/shared/Media
-        globalMounts:
-          - path: /media
-            readOnly: true
+        advancedMounts:
+          jellyfin:
+            app:
+              - path: /media
+                readOnly: true
       tmp:
         type: emptyDir

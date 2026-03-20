@@ -22,7 +22,7 @@ spec:
     DNS2: 1.0.0.1
     adlists:
       # renovate: datasource=github-tags depName=hagezi/dns-blocklists
-      - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@v6/adblock/pro.txt
+      - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@37522026.78.83290/adblock/pro.txt
     extraEnvVars:
       TZ: Europe/London
       FTLCONF_dns_listeningMode: all

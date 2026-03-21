@@ -41,5 +41,6 @@ spec:
         claimToHeaders:
           - header: Remote-User
             claim: preferred_username
+          # Pocket ID groups are array claims; map a custom scalar claim instead.
           - header: Remote-Groups
             claim: frigate_role

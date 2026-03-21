@@ -26,6 +26,7 @@ spec:
       - groups
     cookieNames:
       accessToken: frigate-access-token
+      idToken: frigate-id-token
     forwardAccessToken: true
   jwt:
     providers:
@@ -35,9 +36,10 @@ spec:
           uri: https://id.hera.ac/.well-known/jwks.json
         extractFrom:
           cookies:
+            - frigate-id-token
             - frigate-access-token
         claimToHeaders:
           - header: Remote-User
             claim: preferred_username
           - header: Remote-Groups
-            claim: groups
+            claim: frigate_role

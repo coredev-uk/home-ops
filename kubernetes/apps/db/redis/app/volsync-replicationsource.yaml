@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/volsync.backube/replicationsource_v1alpha1.json
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationSource
+metadata:
+  name: redis-data-redis-master-0
+spec:
+  sourcePVC: redis-data-redis-master-0
+  trigger:
+    schedule: 10 */12 * * *
+  kopia:
+    accessModes:
+      - ReadWriteOnce
+    compression: zstd-fastest
+    copyMethod: Snapshot
+    moverSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+    parallelism: 2
+    repository: redis-data-redis-master-0-volsync-secret
+    moverVolumes:
+      - mountPath: repository
+        volumeSource:
+          nfs:
+            server: expanse.internal
+            path: /var/nfs/shared/Kopia
+    retain:
+      hourly: 24
+      daily: 7
+    storageClassName: ceph-block
+    volumeSnapshotClassName: csi-ceph-blockpool

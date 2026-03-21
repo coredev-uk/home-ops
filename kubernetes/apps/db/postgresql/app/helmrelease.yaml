@@ -107,6 +107,7 @@ spec:
       enabled: true
       cronjob:
         schedule: "0 */12 * * *"
+        concurrencyPolicy: Forbid
         successfulJobsHistoryLimit: 3
         failedJobsHistoryLimit: 3
         ttlSecondsAfterFinished: 86400
@@ -114,8 +115,13 @@ spec:
           - /bin/sh
           - -ec
           - |
-            find "${PGDUMP_DIR}" -type f -name '*.pgdump' -mtime +14 -delete || true
-            PGPASSWORD="${PGPASSWORD:-$(< "$PGPASSWORD_FILE")}" pg_dumpall --clean --if-exists --load-via-partition-root --quote-all-identifiers --no-password --file="${PGDUMP_DIR}/pg_dumpall-$(date '+%Y-%m-%d-%H-%M').pgdump"
+            timestamp="$(date '+%Y-%m-%d-%H-%M')"
+            tmp_file="${PGDUMP_DIR}/.pg_dumpall-${timestamp}.pgdump.tmp"
+            final_file="${PGDUMP_DIR}/pg_dumpall-${timestamp}.pgdump"
+
+            PGPASSWORD="${PGPASSWORD:-$(< "$PGPASSWORD_FILE")}" pg_dumpall --clean --if-exists --load-via-partition-root --quote-all-identifiers --no-password --file="${tmp_file}"
+            mv "${tmp_file}" "${final_file}"
+            find "${PGDUMP_DIR}" -maxdepth 1 -type f -name '*.pgdump' -mtime +14 -delete || true
         storage:
           enabled: true
           storageClass: ceph-block

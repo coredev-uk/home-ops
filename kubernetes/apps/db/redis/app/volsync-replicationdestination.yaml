@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/volsync.backube/replicationdestination_v1alpha1.json
+apiVersion: volsync.backube/v1alpha1
+kind: ReplicationDestination
+metadata:
+  name: redis-data-redis-master-0-dst
+  labels:
+    kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
+spec:
+  trigger:
+    manual: restore-once
+  kopia:
+    accessModes:
+      - ReadWriteOnce
+    cacheAccessModes:
+      - ReadWriteOnce
+    cacheCapacity: 1Gi
+    cacheStorageClassName: openebs-hostpath
+    capacity: 1Gi
+    cleanupCachePVC: true
+    cleanupTempPVC: true
+    copyMethod: Snapshot
+    enableFileDeletion: true
+    moverSecurityContext:
+      runAsUser: 1001
+      runAsGroup: 1001
+      fsGroup: 1001
+    moverVolumes:
+      - mountPath: repository
+        volumeSource:
+          nfs:
+            server: expanse.internal
+            path: /var/nfs/shared/Kopia
+    repository: redis-data-redis-master-0-volsync-secret
+    sourceIdentity:
+      sourceName: redis-data-redis-master-0
+    storageClassName: ceph-block
+    volumeSnapshotClassName: csi-ceph-blockpool

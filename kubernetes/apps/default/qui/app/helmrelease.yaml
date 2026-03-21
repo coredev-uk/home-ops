@@ -8,6 +8,9 @@ spec:
   chartRef:
     kind: OCIRepository
     name: qui
+  dependsOn:
+    - name: postgresql
+      namespace: db
   interval: 1h
   values:
     controllers:

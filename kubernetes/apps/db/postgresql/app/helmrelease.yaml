@@ -19,6 +19,7 @@ spec:
         adminPasswordKey: postgres-password
         userPasswordKey: password
     primary:
+      extraEnvVarsSecret: postgresql-secret
       persistence:
         enabled: true
         storageClass: ceph-block
@@ -29,6 +30,115 @@ spec:
           memory: 256Mi
         limits:
           memory: 1Gi
+      initdb:
+        scripts:
+          01-create-app-databases.sh: |
+            #!/bin/bash
+            set -euo pipefail
+
+            AUTOBRR_DB_PASSWORD="${POSTGRES_AUTOBRR_PASSWORD:-}"
+            MEALIE_DB_PASSWORD="${POSTGRES_MEALIE_PASSWORD:-}"
+            OUTLINE_DB_PASSWORD="${POSTGRES_OUTLINE_PASSWORD:-}"
+            POCKET_ID_DB_PASSWORD="${POSTGRES_POCKET_ID_PASSWORD:-}"
+            QUI_DB_PASSWORD="${POSTGRES_QUI_PASSWORD:-}"
+            SEERR_DB_PASSWORD="${POSTGRES_SEERR_PASSWORD:-}"
+
+            if [[ -z "${AUTOBRR_DB_PASSWORD}" || -z "${MEALIE_DB_PASSWORD}" || -z "${OUTLINE_DB_PASSWORD}" || -z "${POCKET_ID_DB_PASSWORD}" || -z "${QUI_DB_PASSWORD}" || -z "${SEERR_DB_PASSWORD}" ]]; then
+              echo "Unable to resolve one or more application database passwords" >&2
+              exit 1
+            fi
+
+            POSTGRES_ADMIN_PASSWORD="${POSTGRES_ADMIN_PASSWORD:-${POSTGRES_POSTGRES_PASSWORD:-${POSTGRESQL_POSTGRES_PASSWORD:-}}}"
+            if [[ -z "${POSTGRES_ADMIN_PASSWORD}" ]]; then
+              echo "Unable to resolve postgres admin password" >&2
+              exit 1
+            fi
+
+            PGPASSWORD="${POSTGRES_ADMIN_PASSWORD}" psql --username postgres --dbname postgres --set ON_ERROR_STOP=1 \
+              --set autobrr_password="${AUTOBRR_DB_PASSWORD}" \
+              --set mealie_password="${MEALIE_DB_PASSWORD}" \
+              --set outline_password="${OUTLINE_DB_PASSWORD}" \
+              --set pocket_id_password="${POCKET_ID_DB_PASSWORD}" \
+              --set qui_password="${QUI_DB_PASSWORD}" \
+              --set seerr_password="${SEERR_DB_PASSWORD}" <<'EOSQL'
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'autobrr') THEN
+                CREATE ROLE autobrr LOGIN PASSWORD :'autobrr_password';
+              ELSE
+                ALTER ROLE autobrr WITH LOGIN PASSWORD :'autobrr_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE autobrr OWNER autobrr'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'autobrr')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mealie') THEN
+                CREATE ROLE mealie LOGIN PASSWORD :'mealie_password';
+              ELSE
+                ALTER ROLE mealie WITH LOGIN PASSWORD :'mealie_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE mealie OWNER mealie'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'mealie')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'outline') THEN
+                CREATE ROLE outline LOGIN PASSWORD :'outline_password';
+              ELSE
+                ALTER ROLE outline WITH LOGIN PASSWORD :'outline_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE outline OWNER outline'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'outline')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'qui') THEN
+                CREATE ROLE qui LOGIN PASSWORD :'qui_password';
+              ELSE
+                ALTER ROLE qui WITH LOGIN PASSWORD :'qui_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE qui OWNER qui'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'qui')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'seerr') THEN
+                CREATE ROLE seerr LOGIN PASSWORD :'seerr_password';
+              ELSE
+                ALTER ROLE seerr WITH LOGIN PASSWORD :'seerr_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE seerr OWNER seerr'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'seerr')\gexec
+
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'pocket_id') THEN
+                CREATE ROLE pocket_id LOGIN PASSWORD :'pocket_id_password';
+              ELSE
+                ALTER ROLE pocket_id WITH LOGIN PASSWORD :'pocket_id_password';
+              END IF;
+            END
+            $$;
+
+            SELECT 'CREATE DATABASE pocket_id OWNER pocket_id'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'pocket_id')\gexec
+            EOSQL
     backup:
       enabled: true
       cronjob:

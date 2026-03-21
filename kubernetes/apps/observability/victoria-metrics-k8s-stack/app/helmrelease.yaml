@@ -19,6 +19,9 @@ spec:
       groups:
         etcd:
           create: false
+      rules:
+        RecordingRulesNoData:
+          create: false
     kubeEtcd:
       enabled: false
     kubeControllerManager:

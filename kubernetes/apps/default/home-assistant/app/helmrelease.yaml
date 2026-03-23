@@ -21,6 +21,7 @@ spec:
               tag: 2026.3.3@sha256:16c50c92379b507ef0de98ea5371f2a0cabf917991d9f7d1c52f612c5557388a
             env:
               TZ: Europe/London
+              HASS_AUTH_OIDC_DISCOVERY_URL: https://id.hera.ac/.well-known/openid-configuration
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"
@@ -63,6 +64,13 @@ spec:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /config
+      config-file:
+        type: configMap
+        name: "{{ .Release.Name }}-configmap"
+        globalMounts:
+          - path: /config/configuration.yaml
+            subPath: configuration.yaml
+            readOnly: true
       config-cache:
         existingClaim: "{{ .Release.Name }}-cache"
         globalMounts:

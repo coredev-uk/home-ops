@@ -16,7 +16,9 @@ auth_oidc:
   client_id: !env_var HASS_AUTH_OIDC_CLIENT_ID
   client_secret: !env_var HASS_AUTH_OIDC_CLIENT_SECRET ""
   discovery_url: !env_var HASS_AUTH_OIDC_DISCOVERY_URL
-  display_name: Hera SSO
+  display_name: HyperionID
+  roles:
+    admin: cluster_admin
 
 frontend:
   themes: !include_dir_merge_named themes

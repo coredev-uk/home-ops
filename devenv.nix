@@ -3,6 +3,7 @@
 {
   packages = with pkgs; [
     age
+    cloudflared
     curl
     fluxcd
     gum

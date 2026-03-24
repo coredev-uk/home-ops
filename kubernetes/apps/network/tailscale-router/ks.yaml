@@ -8,8 +8,6 @@ spec:
   components:
     - ../../../../components/volsync
   dependsOn:
-    - name: headscale
-      namespace: network
     - name: rook-ceph-cluster
       namespace: rook-ceph
   interval: 1h

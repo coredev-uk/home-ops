@@ -6,13 +6,6 @@ metadata:
   name: cloudflare-tunnel
 spec:
   endpoints:
-    - dnsName: hs.hera.ac
-      recordType: A
-      providerSpecific:
-        - name: cloudflare-proxied
-          value: "false"
-      targets:
-        - 130.162.183.212
     - dnsName: external.hera.ac
       recordType: CNAME
       targets:

@@ -1,0 +1,173 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wireguard-config
+data:
+  wg0.conf: |
+    [Interface]
+    Address = 10.10.0.2/24
+    PrivateKey = PRIVATE_KEY_PLACEHOLDER
+    MTU = 1280
+
+    [Peer]
+    PublicKey = DgY2f+AES0pcdf0oetEIDJfuv6ye2iqbfevovRe9ZmA=
+    Endpoint = 130.162.183.212:51820
+    AllowedIPs = 10.10.0.0/24
+    PersistentKeepalive = 25
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wireguard-proxy-config
+data:
+  nginx.conf: |
+    events {
+      worker_connections 1024;
+    }
+
+    http {
+      resolver 10.43.0.10 valid=10s;
+
+      server {
+        listen 8080;
+        server_name hs.hera.ac;
+
+        location / {
+          set $upstream headscale.network.svc.cluster.local;
+          proxy_pass http://$upstream:8080;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wireguard-client
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wireguard-client
+  template:
+    metadata:
+      labels:
+        app: wireguard-client
+    spec:
+      initContainers:
+        - name: config-init
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              cp /config-template/wg0.conf /config/wg0.conf
+              sed -i "s|PRIVATE_KEY_PLACEHOLDER|$(cat /secrets/privatekey)|g" /config/wg0.conf
+              chmod 600 /config/wg0.conf
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template
+            - name: config
+              mountPath: /config
+            - name: wireguard-keys
+              mountPath: /secrets
+      containers:
+        - name: wireguard
+          image: lscr.io/linuxserver/wireguard:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/London
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: lib-modules
+              mountPath: /lib/modules
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "wg show wg0 | grep -q 'interface: wg0'"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "wg show wg0 | grep -q 'interface: wg0'"
+            periodSeconds: 30
+            failureThreshold: 3
+        - name: proxy
+          image: nginx:1.27-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: headscale
+              containerPort: 8080
+          volumeMounts:
+            - name: proxy-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: config-template
+          configMap:
+            name: wireguard-config
+        - name: config
+          emptyDir: {}
+        - name: wireguard-keys
+          secret:
+            secretName: wireguard-keys
+            defaultMode: 0400
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
+        - name: proxy-config
+          configMap:
+            name: wireguard-proxy-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wireguard-client
+spec:
+  selector:
+    app: wireguard-client
+  ports:
+    - name: headscale
+      port: 8080
+      targetPort: 8080
+      protocol: TCP

@@ -18,3 +18,4 @@ resources:
   - ./pihole/ks.yaml
   - ./pihole-dns/ks.yaml
   - ./tailscale-router/ks.yaml
+  - ./wireguard-client/ks.yaml

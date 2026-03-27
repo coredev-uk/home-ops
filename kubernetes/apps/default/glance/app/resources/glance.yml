@@ -474,6 +474,23 @@ pages:
             location: ${GLANCE_WEATHER_LOCATION}
             show-area-name: true
 
+          - type: server-stats
+            title: Cluster Nodes
+            servers:
+              - type: remote
+                name: hyperion-0
+                url: http://hyperion-0.internal:27973
+              - type: remote
+                name: hyperion-1
+                url: http://hyperion-1.internal:27973
+              - type: remote
+                name: hyperion-2
+                url: http://hyperion-2.internal:27973
+
+          - type: change-detection
+            instance-url: https://changes.hera.ac
+            token: ${CHANGE_DETECTION_API_KEY}
+
           - type: markets
             title: Portfolio
             markets:
@@ -511,6 +528,9 @@ pages:
             groups:
               - title: Core Infrastructure
                 links:
+                  - title: Media Dashboard
+                    url: https://dash.hera.ac
+                    icon: di:autobrr
                   - title: Status
                     url: https://status.hera.ac
                     icon: di:gatus
@@ -571,9 +591,6 @@ pages:
                   - title: Autobrr
                     url: https://autobrr.hera.ac
                     icon: di:autobrr
-                  - title: Dashbrr
-                    url: https://dash.hera.ac
-                    icon: di:autobrr
                   - title: Bazarr
                     url: https://bazarr.hera.ac
                     icon: sh:bazarr-light
@@ -598,7 +615,7 @@ pages:
 
               - title: Home & Security
                 links:
-                  - title: Changes
+                  - title: Change Detection
                     url: https://changes.hera.ac
                     icon: si:changedetection
                   - title: Frigate
@@ -695,6 +712,12 @@ pages:
               key: ${SONARR_API_KEY}
               url: "https://sonarr.hera.ac"
               timezone: "+00"
+
+          - type: dns-stats
+            service: pihole-v6
+            url: http://pihole-web.network.svc.cluster.local
+            password: ""
+            hour-format: "24h"
 
   - name: Formula 1
     columns:

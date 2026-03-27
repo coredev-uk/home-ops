@@ -80,7 +80,7 @@ spec:
         annotations:
           com.dashbrr.service.type: autobrr
           com.dashbrr.service.url: http://autobrr.default.svc.cluster.local
-          com.dashbrr.service.apikey: ${DASHBRR_AUTOBRR_API_KEY}
+          com.dashbrr.service.apikey: $${DASHBRR_AUTOBRR_API_KEY}
           com.dashbrr.service.name: Autobrr
           com.dashbrr.service.enabled: "true"
         ports:

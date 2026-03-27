@@ -1,0 +1,135 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: dashbrr
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: dashbrr
+  dependsOn:
+    - name: postgresql
+      namespace: db
+  interval: 1h
+  values:
+    controllers:
+      dashbrr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          import-services:
+            image:
+              repository: ghcr.io/autobrr/dashbrr
+              tag: v0.3.0
+            command:
+              - /bin/sh
+              - -c
+            args:
+              - |
+                for i in $(seq 1 30); do
+                  dashbrr config import /bootstrap/services.yaml && exit 0
+                  sleep 5
+                done
+                exit 1
+            envFrom:
+              - secretRef:
+                  name: dashbrr-secret
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 128Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+        containers:
+          app:
+            image:
+              repository: ghcr.io/autobrr/dashbrr
+              tag: v0.3.0
+            command:
+              - dashbrr
+              - serve
+            env:
+              TZ: Europe/London
+            envFrom:
+              - secretRef:
+                  name: dashbrr-secret
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &port 80
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  failureThreshold: 30
+                  periodSeconds: 10
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - dash.hera.ac
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+    persistence:
+      bootstrap:
+        type: secret
+        name: dashbrr-services
+        globalMounts:
+          - path: /bootstrap/services.yaml
+            subPath: services.yaml
+            readOnly: true
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

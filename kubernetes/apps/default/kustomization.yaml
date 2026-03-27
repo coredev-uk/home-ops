@@ -12,6 +12,7 @@ resources:
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
   - ./changedetection/ks.yaml
+  - ./dashbrr/ks.yaml
   - ./deduparr/ks.yaml
   - ./frigate/ks.yaml
   - ./glance/ks.yaml

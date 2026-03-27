@@ -37,13 +37,14 @@ spec:
             set -euo pipefail
 
             AUTOBRR_DB_PASSWORD="${POSTGRES_AUTOBRR_PASSWORD:-}"
+            DASHBRR_DB_PASSWORD="${POSTGRES_DASHBRR_PASSWORD:-}"
             MEALIE_DB_PASSWORD="${POSTGRES_MEALIE_PASSWORD:-}"
             OUTLINE_DB_PASSWORD="${POSTGRES_OUTLINE_PASSWORD:-}"
             POCKET_ID_DB_PASSWORD="${POSTGRES_POCKET_ID_PASSWORD:-}"
             QUI_DB_PASSWORD="${POSTGRES_QUI_PASSWORD:-}"
             SEERR_DB_PASSWORD="${POSTGRES_SEERR_PASSWORD:-}"
 
-            if [[ -z "${AUTOBRR_DB_PASSWORD}" || -z "${MEALIE_DB_PASSWORD}" || -z "${OUTLINE_DB_PASSWORD}" || -z "${POCKET_ID_DB_PASSWORD}" || -z "${QUI_DB_PASSWORD}" || -z "${SEERR_DB_PASSWORD}" ]]; then
+            if [[ -z "${AUTOBRR_DB_PASSWORD}" || -z "${DASHBRR_DB_PASSWORD}" || -z "${MEALIE_DB_PASSWORD}" || -z "${OUTLINE_DB_PASSWORD}" || -z "${POCKET_ID_DB_PASSWORD}" || -z "${QUI_DB_PASSWORD}" || -z "${SEERR_DB_PASSWORD}" ]]; then
               echo "Unable to resolve one or more application database passwords" >&2
               exit 1
             fi
@@ -56,11 +57,19 @@ spec:
 
             PGPASSWORD="${POSTGRES_ADMIN_PASSWORD}" psql --username postgres --dbname postgres --set ON_ERROR_STOP=1 \
               --set autobrr_password="${AUTOBRR_DB_PASSWORD}" \
+              --set dashbrr_password="${DASHBRR_DB_PASSWORD}" \
               --set mealie_password="${MEALIE_DB_PASSWORD}" \
               --set outline_password="${OUTLINE_DB_PASSWORD}" \
               --set pocket_id_password="${POCKET_ID_DB_PASSWORD}" \
               --set qui_password="${QUI_DB_PASSWORD}" \
               --set seerr_password="${SEERR_DB_PASSWORD}" <<'EOSQL'
+            SELECT format('CREATE ROLE dashbrr LOGIN PASSWORD %L', :'dashbrr_password')
+            WHERE NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'dashbrr')\gexec
+            SELECT format('ALTER ROLE dashbrr WITH LOGIN PASSWORD %L', :'dashbrr_password')
+            WHERE EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'dashbrr')\gexec
+            SELECT 'CREATE DATABASE dashbrr OWNER dashbrr'
+            WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'dashbrr')\gexec
+
             SELECT format('CREATE ROLE autobrr LOGIN PASSWORD %L', :'autobrr_password')
             WHERE NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'autobrr')\gexec
             SELECT format('ALTER ROLE autobrr WITH LOGIN PASSWORD %L', :'autobrr_password')

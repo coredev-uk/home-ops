@@ -64,11 +64,6 @@ spec:
                 memory: 512Mi
     service:
       app:
-        annotations:
-          com.dashbrr.service.type: general
-          com.dashbrr.service.url: http://headscale.network.svc.cluster.local:8080/health
-          com.dashbrr.service.name: Headscale
-          com.dashbrr.service.enabled: "true"
         ports:
           http:
             port: *httpPort

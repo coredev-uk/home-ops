@@ -513,7 +513,7 @@ pages:
                 links:
                   - title: Status
                     url: https://status.hera.ac
-                    icon: si:uptimekuma
+                    icon: di:gatus
                   - title: UniFi
                     url: https://unifi.internal
                     icon: si:ubiquiti
@@ -546,13 +546,10 @@ pages:
                     icon: mdi:monitor-heart
                   - title: Headscale
                     url: https://hs.hera.ac
-                    icon: mdi:source-branch
+                    icon: si:tailscale
                   - title: Kopia
                     url: https://kopia.hera.ac
                     icon: mdi:backup-restore
-                  - title: Kromgo
-                    url: https://kromgo.hera.ac
-                    icon: mdi:chart-timeline-variant
                   - title: Pi-hole
                     url: https://pihole.hera.ac
                     icon: si:pihole
@@ -576,19 +573,22 @@ pages:
                 links:
                   - title: Autobrr
                     url: https://autobrr.hera.ac
-                    icon: mdi:rss
+                    icon: di:autobrr
+                  - title: Dashbrr
+                    url: https://dash.hera.ac
+                    icon: di:autobrr
                   - title: Bazarr
                     url: https://bazarr.hera.ac
                     icon: sh:bazarr-light
                   - title: Notifiarr
                     url: https://notifiarr.hera.ac
-                    icon: mdi:bell-ring
+                    icon: di:notifiarr
                   - title: Prowlarr
                     url: https://prowlarr.hera.ac
                     icon: sh:prowlarr-light
                   - title: Qui
                     url: https://qui.hera.ac
-                    icon: mdi:playlist-check
+                    icon: di:qui
 
               - title: Downloads
                 links:
@@ -603,7 +603,7 @@ pages:
                 links:
                   - title: Changes
                     url: https://changes.hera.ac
-                    icon: mdi:web-sync
+                    icon: si:changedetection
                   - title: Frigate
                     url: https://frigate.hera.ac
                     icon: si:frigate
@@ -621,7 +621,7 @@ pages:
                     icon: si:outline
                   - title: Mealie
                     url: https://mealie.hera.ac
-                    icon: mdi:silverware-fork-knife
+                    icon: si:mealie
 
           - type: to-do
 

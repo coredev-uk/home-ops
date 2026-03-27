@@ -26,6 +26,16 @@ spec:
               - dashbrr
               - serve
             env:
+              DASHBRR__LISTEN_ADDR: 0.0.0.0:80
+              DASHBRR__DB_TYPE: postgres
+              DASHBRR__DB_HOST: postgresql.db.svc.cluster.local
+              DASHBRR__DB_PORT: "5432"
+              DASHBRR__DB_USER: dashbrr
+              DASHBRR__DB_NAME: dashbrr
+              # Temporary workaround for OIDC login loop: https://github.com/autobrr/dashbrr/issues/86
+              DASHBRR_AUTH_BYPASS: "true"
+              OIDC_ISSUER: https://id.hera.ac
+              OIDC_REDIRECT_URL: https://dash.hera.ac/api/auth/oidc/callback
               TZ: Europe/London
             envFrom:
               - secretRef:

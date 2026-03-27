@@ -69,6 +69,12 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
+        annotations:
+          com.dashbrr.service.type: overseerr
+          com.dashbrr.service.url: http://seerr.default.svc.cluster.local
+          com.dashbrr.service.apikey: ${DASHBRR_OVERSEERR_API_KEY}
+          com.dashbrr.service.name: Seerr
+          com.dashbrr.service.enabled: "true"
         ports:
           http:
             port: *port

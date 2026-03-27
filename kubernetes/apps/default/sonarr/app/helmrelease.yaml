@@ -74,6 +74,12 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
+        annotations:
+          com.dashbrr.service.type: sonarr
+          com.dashbrr.service.url: http://sonarr.default.svc.cluster.local
+          com.dashbrr.service.apikey: ${DASHBRR_SONARR_API_KEY}
+          com.dashbrr.service.name: Sonarr
+          com.dashbrr.service.enabled: "true"
         ports:
           http:
             port: *port

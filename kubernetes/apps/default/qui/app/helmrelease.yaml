@@ -75,6 +75,12 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
+        annotations:
+          com.dashbrr.service.type: qui
+          com.dashbrr.service.url: http://qui.default.svc.cluster.local
+          com.dashbrr.service.apikey: ${DASHBRR_QUI_API_KEY}
+          com.dashbrr.service.name: Qui
+          com.dashbrr.service.enabled: "true"
         ports:
           http:
             port: *port

@@ -541,9 +541,6 @@ pages:
                   - title: Alertmanager
                     url: https://alertmanager.hera.ac
                     icon: si:prometheus
-                  - title: Gatus
-                    url: https://gatus.hera.ac
-                    icon: mdi:monitor-heart
                   - title: Headscale
                     url: https://hs.hera.ac
                     icon: si:tailscale

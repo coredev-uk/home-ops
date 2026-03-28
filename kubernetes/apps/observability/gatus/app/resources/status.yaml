@@ -37,3 +37,8 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: pushover
+
+external-endpoints:
+  - name: heartbeat
+    group: status
+    token: ${STATUS_HEARTBEAT_TOKEN}

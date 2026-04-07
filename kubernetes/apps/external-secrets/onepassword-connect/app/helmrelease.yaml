@@ -5,28 +5,17 @@ kind: HelmRelease
 metadata:
   name: onepassword-connect
 spec:
-  chart:
-    spec:
-      chart: connect
-      version: 2.4.1
-      sourceRef:
-        kind: HelmRepository
-        name: onepassword-connect
-        namespace: external-secrets
+  chartRef:
+    kind: OCIRepository
+    name: onepassword-connect
   interval: 1h
-  install:
-    crds: Skip
-  upgrade:
-    crds: Skip
   values:
     connect:
-      credentialsName: onepassword-connect-secret
-      annotations:
-        reloader.stakater.com/auto: "true"
       api:
         imageRepository: ghcr.io/1password/connect-api
         httpPort: 80
         serviceMonitor:
           enabled: true
+      credentialsName: onepassword-connect-credentials-secret
       sync:
         imageRepository: ghcr.io/1password/connect-sync

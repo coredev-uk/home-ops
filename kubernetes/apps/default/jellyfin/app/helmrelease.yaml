@@ -70,7 +70,7 @@ spec:
           app:
             image:
               repository: quay.io/curl/curl
-              tag: 8.18.0
+              tag: 8.19.0
             envFrom:
               - secretRef:
                   name: "{{ .Release.Name }}-secret"

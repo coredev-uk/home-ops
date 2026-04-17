@@ -11,6 +11,11 @@ spec:
   interval: 1h
   values:
     cephClusterSpec:
+      cephConfig:
+        global:
+          mon_data_avail_warn: "15"
+        osd:
+          bluestore_slow_ops_warn_threshold: "500"
       cleanupPolicy:
         wipeDevicesFromOtherClusters: true
       crashCollector:
@@ -39,6 +44,14 @@ spec:
           requests:
             cpu: 100m
             memory: 256Mi
+        exporter:
+          requests:
+            cpu: 25m
+            memory: 25Mi
+        logcollector:
+          requests:
+            cpu: 50m
+            memory: 40Mi
         osd:
           limits:
             memory: 8Gi # Required for bootstrap

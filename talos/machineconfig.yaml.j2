@@ -31,7 +31,8 @@ machine:
       path: /etc/cri/conf.d/20-customization.part
       content: |
         [plugins."io.containerd.cri.v1.images"]
-          discard_unpacked_layers = false
+          # Previous setting was `false`; after node storage upgrades for hyperion-0, this can be reverted.
+          discard_unpacked_layers = true
         [plugins."io.containerd.cri.v1.runtime"]
           cdi_spec_dirs = ["/var/cdi/static", "/var/cdi/dynamic"]
           device_ownership_from_security_context = true
@@ -54,6 +55,9 @@ machine:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
     extraConfig:
+      # Previously unset (kubelet defaults are high=85/low=80); after storage upgrades for hyperion-0, these can be reverted.
+      imageGCHighThresholdPercent: 70
+      imageGCLowThresholdPercent: 60
       serializeImagePulls: false
     image: ghcr.io/siderolabs/kubelet:v1.35.4
     nodeIP:

@@ -6,7 +6,7 @@ metadata:
   name: blackbox-exporter-lan
 spec:
   interval: 1h
-  path: ./kubernetes/apps/observability/blackbox-exporter/lan
+  path: ./kubernetes/apps/o11y/blackbox-exporter/lan
   prune: true
   sourceRef:
     kind: GitRepository
@@ -25,7 +25,7 @@ spec:
     - name: multus-networks
       namespace: kube-system
   interval: 1h
-  path: ./kubernetes/apps/observability/blackbox-exporter/vpn
+  path: ./kubernetes/apps/o11y/blackbox-exporter/vpn
   prune: true
   sourceRef:
     kind: GitRepository

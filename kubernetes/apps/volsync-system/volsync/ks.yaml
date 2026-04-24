@@ -47,7 +47,7 @@ spec:
   dependsOn:
     - name: volsync
     - name: victoria-metrics-k8s-stack
-      namespace: observability
+      namespace: o11y
   interval: 1h
   path: ./kubernetes/apps/volsync-system/volsync/monitoring
   prune: true

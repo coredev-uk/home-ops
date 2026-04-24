@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmprobe_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: vpn-icmp
+spec:
+  module: icmp
+  vmProberSpec:
+    url: blackbox-exporter-vpn.o11y.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      targets:
+        - 1.1.1.1
+  metricRelabelConfigs:
+    - targetLabel: service
+      replacement: blackbox-exporter-vpn
+      action: replace
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/operator.victoriametrics.com/vmprobe_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMProbe
+metadata:
+  name: vpn-http
+spec:
+  module: http_2xx
+  vmProberSpec:
+    url: blackbox-exporter-vpn.o11y.svc.cluster.local:9115
+  targets:
+    staticConfig:
+      targets:
+        - https://one.one.one.one
+  metricRelabelConfigs:
+    - targetLabel: service
+      replacement: blackbox-exporter-vpn
+      action: replace

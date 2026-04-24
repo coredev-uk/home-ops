@@ -8,6 +8,6 @@ resources:
   - ./externalsecret.yaml
   - ./grafanadashboard.yaml
   - ./helmrelease.yaml
-  - ./observability.yaml
+  - ./o11y.yaml
   - ./ocirepository.yaml
   - ./securitypolicy-oidc.yaml

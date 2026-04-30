@@ -1,11 +1,12 @@
-set positional-arguments := true
-set quiet := true
+set lazy
+set positional-arguments
+set quiet
 set shell := ['bash', '-euo', 'pipefail', '-c']
 
 bootstrap_dir := justfile_dir() + '/bootstrap'
 kubernetes_dir := justfile_dir() + '/kubernetes'
 controller := `talosctl config info -o yaml | yq -e '.endpoints[0]'`
-nodes := `talosctl config info -o yaml | yq -r '.nodes[] | sub("\\.internal$"; "")' | paste -sd' ' -`
+nodes := `talosctl config info -o yaml | yq -e '.nodes | join (" ")'`
 
 [private]
 default: talos kube (kubeconfig "node") wait namespaces resources crds apps kubeconfig
@@ -26,16 +27,8 @@ talos:
 [doc('Install Kubernetes')]
 kube:
     just log info "Running stage..." "stage" "$0"
-    while true; do \
-        if op=$(talosctl -n "{{ controller }}" bootstrap 2>&1); then \
-            just log info "Kubernetes bootstrap completed" "stage" "$0"; \
-            break; \
-        fi; \
-        if [[ "$op" == *"AlreadyExists"* ]]; then \
-            just log info "Kubernetes already bootstrapped, continuing" "stage" "$0"; \
-            break; \
-        fi; \
-        just log info "Kubernetes bootstrap in progress. Retrying in 5 seconds..." "stage" "$0" "output" "$op"; \
+    until op=$(talosctl -n "{{ controller }}" bootstrap 2>&1 || true) && [[ "$op" == *"AlreadyExists"* ]]; do \
+        just log info "Kubernetes bootstrap in progress. Retrying in 5 seconds..." "stage" "$0"; \
         sleep 5; \
     done
 

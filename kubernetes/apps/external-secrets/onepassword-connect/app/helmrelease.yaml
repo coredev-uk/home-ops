@@ -12,8 +12,8 @@ spec:
   values:
     connect:
       api:
-        imageRepository: ghcr.io/1password/connect-api
         httpPort: 80
+        imageRepository: ghcr.io/1password/connect-api
         serviceMonitor:
           enabled: true
       credentialsName: onepassword-connect-credentials-secret

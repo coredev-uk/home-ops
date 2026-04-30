@@ -12,17 +12,6 @@ spec:
   values:
     csi:
       cephFSKernelMountOptions: ms_mode=prefer-crc
-      enableLiveness: true
-      provisionerResources:
-        requests:
-          cpu: 50m
-          memory: 128Mi
-      pluginResources:
-        requests:
-          cpu: 50m
-          memory: 128Mi
-      serviceMonitor:
-        enabled: false
     image:
       repository: ghcr.io/rook/ceph
     monitoring:

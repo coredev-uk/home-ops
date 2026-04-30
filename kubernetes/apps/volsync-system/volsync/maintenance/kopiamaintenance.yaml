@@ -8,5 +8,11 @@ spec:
   enabled: true
   trigger:
     schedule: 30 3,15 * * *
+  moverVolumes:
+    - mountPath: repository
+      volumeSource:
+        nfs:
+          path: /var/nfs/shared/Kopia
+          server: expanse.internal
   repository:
     repository: volsync-maintenance-secret

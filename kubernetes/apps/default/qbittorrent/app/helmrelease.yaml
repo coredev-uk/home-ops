@@ -12,8 +12,6 @@ spec:
   values:
     controllers:
       qbittorrent:
-        annotations:
-          reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
@@ -51,8 +49,7 @@ spec:
               capabilities: {drop: ["ALL"]}
             resources:
               requests:
-                cpu: 50m
-                memory: 256Mi
+                cpu: 100m
               limits:
                 memory: 32Gi
     defaultPodOptions:

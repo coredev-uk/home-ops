@@ -28,7 +28,7 @@ spec:
               PORT: &port 80
             envFrom:
               - secretRef:
-                  name: seerr-secret
+                  name: "{{ .Release.Name }}-secret"
             probes:
               liveness:
                 enabled: true

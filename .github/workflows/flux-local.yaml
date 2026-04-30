@@ -33,12 +33,20 @@ jobs:
     name: Flux Local - Test
     runs-on: ubuntu-latest
     steps:
+      - name: Load Secrets
+        id: load-secrets
+        uses: 1password/load-secrets-action@92467eb28f72e8255933372f1e0707c567ce2259 # v4.0.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          GITHUB_BOT_APP_CLIENT_ID: op://kubernetes/github-bot/GITHUB_BOT_APP_CLIENT_ID
+          GITHUB_BOT_APP_PRIVATE_KEY: op://kubernetes/github-bot/GITHUB_BOT_APP_PRIVATE_KEY
+
       - name: Generate Token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
-          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
+          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -73,12 +81,20 @@ jobs:
           - kustomization
       fail-fast: false
     steps:
+      - name: Load Secrets
+        id: load-secrets
+        uses: 1password/load-secrets-action@92467eb28f72e8255933372f1e0707c567ce2259 # v4.0.0
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+          GITHUB_BOT_APP_CLIENT_ID: op://kubernetes/github-bot/GITHUB_BOT_APP_CLIENT_ID
+          GITHUB_BOT_APP_PRIVATE_KEY: op://kubernetes/github-bot/GITHUB_BOT_APP_PRIVATE_KEY
+
       - name: Generate Token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
         id: app-token
         with:
-          app-id: ${{ secrets.BOT_APP_ID }}
-          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
+          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
 
       - name: Checkout Pull Request Branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -94,18 +110,6 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.repository.default_branch }}
           token: ${{ steps.app-token.outputs.token }}
-
-      - name: Patch default branch app-template compatibility
-        run: |-
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path("default/kubernetes/apps/default/jellyfin/app/helmrelease.yaml")
-          text = p.read_text()
-          needle = "    service:\n      app:\n"
-          if "controller: jellyfin" not in text and needle in text:
-              p.write_text(text.replace(needle, "    service:\n      app:\n        controller: jellyfin\n", 1))
-          PY
 
       - name: Run flux-local diff
         uses: docker://ghcr.io/allenporter/flux-local:v8.1.0
@@ -126,19 +130,9 @@ jobs:
       - name: Generate Diff
         id: diff
         run: |-
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          from pathlib import Path
-
-          limit = 9000
-          text = Path("diff.patch").read_text()
-          output = text[:limit]
-          if len(text) > limit:
-              output += f"\n\n... [diff truncated, total size: {len(text)} bytes]"
-
-          print("diff<<EOF")
-          print(output)
-          print("EOF")
-          PY
+          echo 'diff<<EOF' >> $GITHUB_OUTPUT
+          cat diff.patch >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
       - if: ${{ steps.diff.outputs.diff != '' }}
         name: Add Comment

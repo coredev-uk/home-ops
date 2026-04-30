@@ -25,8 +25,8 @@ spec:
       - mountPath: repository
         volumeSource:
           nfs:
-            path: /var/nfs/shared/Kopia
-            server: expanse.internal
+            path: ${VOLSYNC_NFS_PATH:=/var/nfs/shared/Kopia}
+            server: ${VOLSYNC_NFS_SERVER:=expanse.internal}
     parallelism: 2
     repository: ${APP}-volsync-secret
     retain:

@@ -11,6 +11,7 @@ spec:
   interval: 1h
   values:
     cephClusterSpec:
+      # TODO: Remove warnings when ssd issues fixed
       cephConfig:
         global:
           mon_data_avail_warn: "15"
@@ -27,7 +28,7 @@ spec:
         enabled: true
         urlPrefix: /
         ssl: false
-        prometheusEndpoint: http://vmsingle-vmks.o11y.svc.cluster.local:8428
+        prometheusEndpoint: http://vmsingle-victoria-metrics-cluster.o11y.svc.cluster.local:8428
       mgr:
         modules:
           - name: pg_autoscaler
@@ -36,22 +37,6 @@ spec:
         connections:
           requireMsgr2: true
       resources:
-        mon:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-        mgr:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-        exporter:
-          requests:
-            cpu: 25m
-            memory: 25Mi
-        logcollector:
-          requests:
-            cpu: 50m
-            memory: 40Mi
         osd:
           limits:
             memory: 8Gi # Required for bootstrap

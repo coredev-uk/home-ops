@@ -3,34 +3,36 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicyBinding
 metadata:
-  name: volsync-mover-jitter
+  name: grafana-image-mirror
 spec:
-  policyName: volsync-mover-jitter
+  policyName: grafana-image-mirror
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/refs/heads/master/v1.36.0/mutatingadmissionpolicy-admissionregistration-v1.json
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingAdmissionPolicy
 metadata:
-  name: volsync-mover-jitter
+  name: grafana-image-mirror
 spec:
   matchConstraints:
     resourceRules:
       - apiGroups:
-          - batch
+          - apps
         apiVersions:
           - v1
         operations:
           - CREATE
           - UPDATE
         resources:
-          - jobs
+          - deployments
   matchConditions:
-    - name: has-volsync-job-name-prefix
+    - name: is-grafana-deployment
       expression: >-
-        object.metadata.name.startsWith("volsync-src-")
-    - name: has-volsync-created-by-labels
+        object.metadata.name == "grafana-deployment"
+    - name: has-docker-io-grafana-image
       expression: >-
-        object.metadata.?labels["app.kubernetes.io/created-by"].orValue("") == "volsync"
+        object.spec.template.spec.containers.exists(c,
+          c.image.startsWith("docker.io/grafana/")
+        )
   failurePolicy: Fail
   reinvocationPolicy: IfNeeded
   mutations:
@@ -39,16 +41,8 @@ spec:
         expression: >-
           [
             JSONPatch{
-              op: "add", path: "/spec/template/spec/initContainers",
-              value: []
-            },
-            JSONPatch{
-              op: "add", path: "/spec/template/spec/initContainers/-",
-              value: Object.spec.template.spec.initContainers{
-                name: "jitter",
-                image: "ghcr.io/home-operations/busybox:1.37.0@sha256:026ed7273270ec08f6902b4ae8334c23b473e5394bec3bbbdbfe580c710d50bc",
-                imagePullPolicy: "IfNotPresent",
-                command: ["sh", "-c", "sleep $(shuf -i 0-30 -n 1)"]
-              }
+              op: "replace",
+              path: "/spec/template/spec/containers/0/image",
+              value: "mirror.gcr.io/grafana/" + object.spec.template.spec.containers[0].image.replace("docker.io/grafana/", "")
             }
           ]

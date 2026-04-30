@@ -18,9 +18,9 @@ spec:
     compression: zstd-fastest
     copyMethod: Snapshot
     moverSecurityContext:
-      runAsUser: ${VOLSYNC_PUID:=1000}
-      runAsGroup: ${VOLSYNC_PGID:=1000}
-      fsGroup: ${VOLSYNC_PGID:=1000}
+      runAsUser: ${VOLSYNC_PUID:=988}
+      runAsGroup: ${VOLSYNC_PGID:=988}
+      fsGroup: ${VOLSYNC_PGID:=988}
     moverVolumes:
       - mountPath: repository
         volumeSource:

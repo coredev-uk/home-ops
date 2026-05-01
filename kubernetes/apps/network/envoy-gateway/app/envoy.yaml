@@ -83,7 +83,7 @@ kind: Gateway
 metadata:
   name: envoy-protected
   annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname internal.hera.ac
+    external-dns.alpha.kubernetes.io/target: &hostname protected.hera.ac
     gatus.home-operations.com/endpoint: |-
       group: internal
       guarded: true

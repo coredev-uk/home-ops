@@ -549,17 +549,17 @@ pages:
                   - title: Pocket ID
                     url: https://id.hera.ac
                     icon: sh:pocket-id
-                  - title: Prometheus
-                    url: https://prometheus.hera.ac
+                  - title: Kromgo
+                    url: https://kromgo.hera.ac
                     icon: si:prometheus
                   - title: Victoria Logs
-                    url: https://victoria-logs.hera.ac
+                    url: https://vlogs.hera.ac
                     icon: si:victoriametrics
 
               - title: Ops
                 links:
                   - title: Alertmanager
-                    url: https://alertmanager.hera.ac
+                    url: https://vmalertmanager.hera.ac
                     icon: si:prometheus
                   - title: Headscale
                     url: https://hs.hera.ac

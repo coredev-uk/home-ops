@@ -93,12 +93,12 @@ spec:
       route:
         enabled: true
         hostnames:
-          - vmalertmanager.turbo.ac
+          - vmalertmanager.hera.ac
         parentRefs:
           - name: envoy-internal
             namespace: network
       spec:
-        externalURL: https://vmalertmanager.turbo.ac
+        externalURL: https://vmalertmanager.hera.ac
         image:
           repository: quay.io/prometheus/alertmanager
         securityContext:
@@ -170,13 +170,13 @@ spec:
     vmalert:
       spec:
         extraArgs:
-          external.url: https://vmalert.turbo.ac
+          external.url: https://vmalert.hera.ac
         datasource:
           url: http://vmauth-victoria-metrics-cluster.o11y.svc.cluster.local:8427
       route:
         enabled: true
         hostnames:
-          - vmalert.turbo.ac
+          - vmalert.hera.ac
         parentRefs:
           - name: envoy-internal
             namespace: network
@@ -198,7 +198,7 @@ spec:
       route:
         enabled: true
         hostnames:
-          - vmsingle.turbo.ac
+          - vmsingle.hera.ac
         parentRefs:
           - name: envoy-internal
             namespace: network

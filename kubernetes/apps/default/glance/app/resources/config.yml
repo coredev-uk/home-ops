@@ -3,6 +3,7 @@ server:
   host: 0.0.0.0
   port: 8080
   proxied: true
+  cache-dir: /app/assets/.cache
 
 theme:
   background-color: 210 20 96
@@ -465,13 +466,48 @@ custom-widgets:
 
 pages:
   - name: Home
+    key-bind: "d h"
+    head-widgets:
+      - type: monitor
+        title: Critical Services
+        style: compact
+        show-failing-only: true
+        update-interval: 1m
+        sites:
+          - title: Jellyfin
+            url: https://jellyfin.hera.ac
+            icon: si:jellyfin
+          - title: Seerr
+            url: https://seerr.hera.ac
+            icon: sh:jellyseerr-light
+          - title: Radarr
+            url: https://radarr.hera.ac
+            icon: si:radarr
+          - title: Sonarr
+            url: https://sonarr.hera.ac
+            icon: si:sonarr
+          - title: qBittorrent
+            url: https://qbittorrent.hera.ac
+            icon: si:qbittorrent
+          - title: Home Assistant
+            url: https://hass.hera.ac
+            icon: si:homeassistant
+      - type: markets
+        hide-header: true
+        markets:
+          - symbol: VUSA.L
+            name: S&P 500 ACC
+          - symbol: NVDA
+            name: Nvidia
+          - symbol: BTC-USD
+            name: Bitcoin
     columns:
       - size: small
         widgets:
           - type: calendar
 
           - type: weather
-            location: ${GLANCE_WEATHER_LOCATION}
+            location: ${WEATHER_LOCATION}
             show-area-name: true
 
           - type: server-stats
@@ -634,7 +670,32 @@ pages:
                     url: https://mealie.hera.ac
                     icon: si:mealie
 
+          - type: split-column
+            widgets:
+              - type: latest-media
+                title: Latest Media
+                item-count: 8
+                columns: 4
+                hosts:
+                  - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
+                    public-url: https://jellyfin.hera.ac
+                    token: ${JELLYFIN_API_KEY}
+
+              - type: playing
+                title: Currently Playing
+                hosts:
+                  - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
+                    token: ${JELLYFIN_API_KEY}
+                show-progress-bar: true
+                show-progress-info: true
+                show-paused: false
+                episode-title-format: series
+                update-interval: 30s
+
           - type: to-do
+            id: home-ops
+            storage: server
+            collapse-after: 10
 
           - type: rss
             style: horizontal-cards
@@ -716,7 +777,20 @@ pages:
             password: ""
             hour-format: "24h"
 
+          - type: torrenting
+            title: Active Torrents
+            hosts:
+              - url: http://qbittorrent.default.svc.cluster.local
+                client: qbittorrent
+                username: ${QBITTORRENT_USERNAME}
+                password: ${QBITTORRENT_PASSWORD}
+            hide-completed: true
+            hide-inactive: true
+            collapse-after: 5
+            update-interval: 30s
+
   - name: Formula 1
+    key-bind: "d f"
     columns:
       - size: small
         widgets:

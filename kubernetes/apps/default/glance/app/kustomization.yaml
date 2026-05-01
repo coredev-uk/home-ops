@@ -8,8 +8,8 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
 configMapGenerator:
-  - name: glance-configmap
+  - name: dynacat-configmap
     files:
-      - glance.yml=./resources/glance.yml
+      - dynacat.yml=./resources/config.yml
 generatorOptions:
   disableNameSuffixHash: true

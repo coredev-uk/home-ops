@@ -549,9 +549,6 @@ pages:
                   - title: Pocket ID
                     url: https://id.hera.ac
                     icon: sh:pocket-id
-                  - title: Kromgo
-                    url: https://kromgo.hera.ac
-                    icon: si:prometheus
                   - title: Victoria Logs
                     url: https://vlogs.hera.ac
                     icon: si:victoriametrics

@@ -83,7 +83,7 @@ kind: Gateway
 metadata:
   name: envoy-protected
   annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname internal.hera.ac
+    external-dns.alpha.kubernetes.io/target: &internal-hostname internal.hera.ac
     gatus.home-operations.com/endpoint: |-
       group: internal
       guarded: true
@@ -94,7 +94,7 @@ spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
+      external-dns.alpha.kubernetes.io/hostname: *internal-hostname
       lbipam.cilium.io/ips: 192.168.20.242
   listeners:
     - name: http
@@ -119,10 +119,19 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: envoy-internal
+  annotations:
+    external-dns.alpha.kubernetes.io/target: *internal-hostname
+    gatus.home-operations.com/endpoint: |-
+      group: internal
+      guarded: true
+      ui:
+        hide-hostname: true
+        hide-url: true
 spec:
   gatewayClassName: envoy
   infrastructure:
     annotations:
+      external-dns.alpha.kubernetes.io/hostname: *internal-hostname
       lbipam.cilium.io/ips: 192.168.20.243
   listeners:
     - name: http

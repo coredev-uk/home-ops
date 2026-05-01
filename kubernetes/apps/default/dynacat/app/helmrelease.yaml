@@ -21,8 +21,6 @@ spec:
               tag: 2.2.3
             env:
               TZ: Europe/London
-              SONARR_URL: https://sonarr.hera.ac
-              RADARR_URL: https://radarr.hera.ac
               JELLYFIN_URL: https://jellyfin.hera.ac
               QBITTORRENT_URL: https://qbittorrent.hera.ac
             envFrom:

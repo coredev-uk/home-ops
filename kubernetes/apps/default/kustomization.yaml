@@ -14,8 +14,8 @@ resources:
   - ./changedetection/ks.yaml
   - ./dashbrr/ks.yaml
   - ./deduparr/ks.yaml
+  - ./dynacat/ks.yaml
   - ./frigate/ks.yaml
-  - ./glance/ks.yaml
   - ./home-assistant/ks.yaml
   - ./homebridge/ks.yaml
   - ./jellyfin/ks.yaml

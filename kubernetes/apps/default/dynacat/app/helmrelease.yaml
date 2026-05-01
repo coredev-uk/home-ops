@@ -3,36 +3,36 @@
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: glance
+  name: dynacat
 spec:
   chartRef:
     kind: OCIRepository
-    name: glance
+    name: dynacat
   interval: 1h
   values:
     controllers:
-      glance:
+      dynacat:
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
-              repository: glanceapp/glance
-              tag: v0.8.4@sha256:6df86a7e8868d1eda21f35205134b1962c422957e42a0c44d4717c8e8f741b1a
+              repository: panonim/dynacat
+              tag: 2.2.3
             env:
               TZ: Europe/London
-              SONARR_URL: https://sonarr.hera.ac
-              RADARR_URL: https://radarr.hera.ac
+              JELLYFIN_URL: https://jellyfin.hera.ac
+              QBITTORRENT_URL: https://qbittorrent.hera.ac
             envFrom:
               - secretRef:
-                  name: glance-secret
+                  name: dynacat-secret
             probes:
               startup:
                 enabled: true
                 custom: true
                 spec:
                   httpGet:
-                    path: /
+                    path: /api/healthz
                     port: &port 8080
                   initialDelaySeconds: 15
                   periodSeconds: 5
@@ -43,7 +43,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /
+                    path: /api/healthz
                     port: *port
                   initialDelaySeconds: 60
                   periodSeconds: 30
@@ -54,7 +54,7 @@ spec:
                 custom: true
                 spec:
                   httpGet:
-                    path: /
+                    path: /api/healthz
                     port: *port
                   initialDelaySeconds: 30
                   periodSeconds: 30
@@ -95,5 +95,13 @@ spec:
         type: configMap
         name: "{{ .Release.Name }}-configmap"
         globalMounts:
-          - path: /app/config/glance.yml
-            subPath: glance.yml
+          - path: /app/config/dynacat.yml
+            subPath: dynacat.yml
+      assets:
+        type: emptyDir
+        globalMounts:
+          - path: /app/assets
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

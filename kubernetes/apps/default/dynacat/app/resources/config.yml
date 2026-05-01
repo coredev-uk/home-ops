@@ -1,0 +1,470 @@
+---
+server:
+  host: 0.0.0.0
+  port: 8080
+  proxied: true
+  cache-dir: /app/assets/.cache
+
+auth:
+  secret-key: ${AUTH_SECRET_KEY}
+  disable-password: true
+  oidc:
+    issuer-url: https://id.hera.ac
+    client-id: ${OIDC_CLIENT_ID}
+    client-secret: ${OIDC_CLIENT_SECRET}
+    redirect-url: https://home.hera.ac/api/oidc/callback
+    scopes:
+      - openid
+      - profile
+      - email
+
+theme:
+  background-color: 210 20 96
+  primary-color: 200 90 50
+  contrast-multiplier: 1.2
+
+  presets:
+    catppuccin-mocha:
+      background-color: 240 21 15
+      contrast-multiplier: 1.2
+      primary-color: 217 92 83
+      positive-color: 115 54 76
+      negative-color: 347 70 65
+
+pages:
+  - name: Home
+    key-bind: "d h"
+    head-widgets:
+      - type: monitor
+        title: Critical Services
+        style: compact
+        show-failing-only: true
+        update-interval: 1m
+        sites:
+          - title: Jellyfin
+            url: https://jellyfin.hera.ac
+            icon: si:jellyfin
+          - title: Seerr
+            url: https://seerr.hera.ac
+            icon: sh:jellyseerr-light
+          - title: Radarr
+            url: https://radarr.hera.ac
+            icon: si:radarr
+          - title: Sonarr
+            url: https://sonarr.hera.ac
+            icon: si:sonarr
+          - title: qBittorrent
+            url: https://qbittorrent.hera.ac
+            icon: si:qbittorrent
+          - title: Home Assistant
+            url: https://hass.hera.ac
+            icon: si:homeassistant
+      - type: markets
+        hide-header: true
+        markets:
+          - symbol: VUSA.L
+            name: S&P 500 ACC
+          - symbol: NVDA
+            name: Nvidia
+          - symbol: BTC-USD
+            name: Bitcoin
+    columns:
+      - size: small
+        widgets:
+          - type: calendar
+
+          - type: weather
+            location: ${WEATHER_LOCATION}
+            show-area-name: true
+
+          - type: server-stats
+            title: Cluster Nodes
+            servers:
+              - type: remote
+                name: hyperion-0
+                url: http://hyperion-0.internal:27973
+              - type: remote
+                name: hyperion-1
+                url: http://hyperion-1.internal:27973
+              - type: remote
+                name: hyperion-2
+                url: http://hyperion-2.internal:27973
+
+          - type: change-detection
+            instance-url: https://changes.hera.ac
+            token: ${CHANGE_DETECTION_API_KEY}
+
+          - type: markets
+            title: Portfolio
+            markets:
+              - symbol: VUSA.L
+                name: S&P 500 ACC
+              - symbol: NVDA
+                name: Nvidia
+              - symbol: MAB.L
+                name: Mitchells & Butlers
+
+          - type: markets
+            title: Crypto
+            markets:
+              - symbol: BTC-USD
+                name: Bitcoin
+              - symbol: ETH-USD
+                name: Ethereum
+
+      - size: full
+        widgets:
+          - type: search
+            autofocus: true
+            new-tab: true
+            search-engine: google
+            bangs:
+              - title: YouTube
+                shortcut: "!y"
+                url: https://www.youtube.com/results?search_query={QUERY}
+              - title: Amazon
+                shortcut: "!a"
+                url: https://www.amazon.co.uk/s?k={QUERY}
+
+          - type: bookmarks
+            title: Services
+            groups:
+              - title: Core Infrastructure
+                links:
+                  - title: Media Dashboard
+                    url: https://dash.hera.ac
+                    icon: di:autobrr
+                  - title: Status
+                    url: https://status.hera.ac
+                    icon: di:gatus
+                  - title: UniFi
+                    url: https://unifi.internal
+                    icon: si:ubiquiti
+                  - title: UNAS
+                    url: https://expanse.internal
+                    icon: si:ubiquiti
+
+              - title: Identity & Monitoring
+                links:
+                  - title: Grafana
+                    url: https://grafana.hera.ac
+                    icon: si:grafana
+                  - title: Pocket ID
+                    url: https://id.hera.ac
+                    icon: sh:pocket-id
+                  - title: Victoria Logs
+                    url: https://vlogs.hera.ac
+                    icon: si:victoriametrics
+
+              - title: Ops
+                links:
+                  - title: Alertmanager
+                    url: https://vmalertmanager.hera.ac
+                    icon: si:prometheus
+                  - title: Headscale
+                    url: https://hs.hera.ac
+                    icon: si:tailscale
+                  - title: Kopia
+                    url: https://kopia.hera.ac
+                    icon: mdi:backup-restore
+                  - title: Pi-hole
+                    url: https://pihole.hera.ac
+                    icon: si:pihole
+
+              - title: Media Discovery & Servers
+                links:
+                  - title: Jellyfin
+                    url: https://jellyfin.hera.ac
+                    icon: si:jellyfin
+                  - title: Seerr
+                    url: https://seerr.hera.ac
+                    icon: sh:jellyseerr-light
+                  - title: Radarr
+                    url: https://radarr.hera.ac
+                    icon: si:radarr
+                  - title: Sonarr
+                    url: https://sonarr.hera.ac
+                    icon: si:sonarr
+
+              - title: Media Automation
+                links:
+                  - title: Autobrr
+                    url: https://autobrr.hera.ac
+                    icon: di:autobrr
+                  - title: Bazarr
+                    url: https://bazarr.hera.ac
+                    icon: sh:bazarr-light
+                  - title: Notifiarr
+                    url: https://notifiarr.hera.ac
+                    icon: di:notifiarr
+                  - title: Prowlarr
+                    url: https://prowlarr.hera.ac
+                    icon: sh:prowlarr-light
+                  - title: Qui
+                    url: https://qui.hera.ac
+                    icon: di:qui
+
+              - title: Downloads
+                links:
+                  - title: qBittorrent
+                    url: https://qbittorrent.hera.ac
+                    icon: si:qbittorrent
+                  - title: SABnzbd
+                    url: https://sabnzbd.hera.ac
+                    icon: sh:sabnzbd-light
+
+              - title: Home & Security
+                links:
+                  - title: Change Detection
+                    url: https://changes.hera.ac
+                    icon: si:changedetection
+                  - title: Frigate
+                    url: https://frigate.hera.ac
+                    icon: si:frigate
+                  - title: Home Assistant
+                    url: https://hass.hera.ac
+                    icon: si:homeassistant
+                  - title: Homebridge
+                    url: https://homebridge.hera.ac
+                    icon: si:homebridge
+
+              - title: Personal & Docs
+                links:
+                  - title: Docs
+                    url: https://docs.hera.ac
+                    icon: si:outline
+                  - title: Mealie
+                    url: https://mealie.hera.ac
+                    icon: si:mealie
+
+          - type: playing
+            title: Currently Playing
+            hosts:
+              - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
+                token: ${JELLYFIN_API_KEY}
+            show-progress-bar: true
+            show-progress-info: true
+            show-paused: false
+            episode-title-format: series
+            update-interval: 30s
+
+          - type: to-do
+            id: home-ops
+            storage: server
+            collapse-after: 10
+
+          - type: rss
+            style: horizontal-cards
+            title: Tech News
+            feeds:
+              - url: https://itsfoss.com/rss/
+                title: "It's FOSS"
+              - url: https://www.techradar.com/uk/feeds.xml
+                title: "TechRadar"
+              - url: https://9to5mac.com/feed/
+                title: "9to5Mac"
+              - url: https://hackernewsrss.com/feed.xml
+                title: "HackerNews"
+            limit: 8
+
+          - type: videos
+            style: horizontal-cards
+            title: Video Feed
+            channels:
+              - UCeeFfhMcJa1kjtfZAGskOCA # Tech Linked
+              - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+              - UCsBjURrPoezykLs9EqgamOA # Fireship
+              - UCUyeluBRhGPCW4rPe_UvBZQ # ThePrimeagen
+            limit: 8
+
+          - type: group
+            widgets:
+              - type: reddit
+                subreddit: unixporn
+                show-thumbnails: true
+                limit: 10
+                collapse-after: 5
+              - type: reddit
+                subreddit: technology
+                limit: 10
+                collapse-after: 5
+              - type: reddit
+                subreddit: ubiquiti
+                limit: 10
+                collapse-after: 5
+
+      - size: small
+        widgets:
+          - type: latest-media
+            title: Latest Movies
+            title-url: "https://jellyfin.hera.ac"
+            item-count: 6
+            columns: 2
+            small-column: true
+            hosts:
+              - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
+                public-url: https://jellyfin.hera.ac
+                token: ${JELLYFIN_API_KEY}
+                libraries:
+                  - Movies
+
+          - type: latest-media
+            title: Latest TV
+            title-url: "https://jellyfin.hera.ac"
+            item-count: 6
+            columns: 2
+            small-column: true
+            hosts:
+              - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
+                public-url: https://jellyfin.hera.ac
+                token: ${JELLYFIN_API_KEY}
+                libraries:
+                  - TV Shows
+
+          - type: dns-stats
+            service: pihole-v6
+            url: http://pihole-web.network.svc.cluster.local
+            password: ""
+            hour-format: "24h"
+
+          - type: torrenting
+            title: Active Torrents
+            hosts:
+              - url: http://qbittorrent.default.svc.cluster.local
+                client: qbittorrent
+                username: ${QBITTORRENT_USERNAME}
+                password: ${QBITTORRENT_PASSWORD}
+            hide-completed: true
+            hide-inactive: true
+            collapse-after: 5
+            update-interval: 30s
+
+  - name: Formula 1
+    key-bind: "d f"
+    columns:
+      - size: small
+        widgets:
+          - type: custom-api
+            title: Next Race
+            cache: 1h
+            url: https://f1api.dev/api/current/next?timezone=Europe/London
+            template: |
+              <div class="flex flex-column gap-10">
+                {{ $session := index (.JSON.Array "race") 0 }}
+                <p class="size-h5">
+                  Round {{ .JSON.String "round" }}
+                </p>
+
+                <div class="margin-block-4">
+                  <p class="color-highlight">{{ $session.String "raceName" }}</p>
+
+                  <div class="margin-block-10"></div>
+
+                  <!-- Race -->
+                  <p class="color-primary">
+                    <span>Race</span>
+                    {{ $raceDate := $session.String "schedule.race.date" }}
+                    {{ $raceTime := $session.String "schedule.race.time" }}
+                    {{ $raceDateTime := concat $raceDate "T" $raceTime }}
+                    {{ $parsedRaceTime := parseLocalTime "2006-01-02T15:04:05" $raceDateTime }}
+                    {{ $now := now }}
+                    {{ if $parsedRaceTime.Before $now }}
+                      <span class="color-highlight">Completed</span>
+                    {{ else }}
+                      <span class="color-highlight" {{ $parsedRaceTime | toRelativeTime }}></span>
+                    {{ end }}
+                  </p>
+                  <p class="size-h5">{{ $raceDate }} at {{ $raceTime }}</p>
+
+                  <!-- Qualifying -->
+                  <p class="color-primary">
+                    <span>Qualifying</span>
+                    {{ $qualyDate := $session.String "schedule.qualy.date" }}
+                    {{ $qualyTime := $session.String "schedule.qualy.time" }}
+                    {{ $qualyDateTime := concat $qualyDate "T" $qualyTime }}
+                    {{ $parsedQualyTime := parseLocalTime "2006-01-02T15:04:05" $qualyDateTime }}
+                    {{ $now := now }}
+                    {{ if $parsedQualyTime.Before $now }}
+                      <span class="color-highlight">Completed</span>
+                    {{ else }}
+                      <span class="color-highlight" {{ $parsedQualyTime | toRelativeTime }}></span>
+                    {{ end }}
+                  </p>
+                  <p class="size-h5">{{ $qualyDate }} at {{ $qualyTime }}</p>
+
+                  <!-- Sprint Race - only if date is not null -->
+                  {{ if and (ne ($session.String "schedule.sprintRace.date") "null") (ne ($session.String "schedule.sprintRace.date") "") }}
+                  <p class="color-primary">
+                    <span>Sprint Race</span>
+                    {{ $sprintRaceDate := $session.String "schedule.sprintRace.date" }}
+                    {{ $sprintRaceTime := $session.String "schedule.sprintRace.time" }}
+                    {{ $sprintRaceDateTime := concat $sprintRaceDate "T" $sprintRaceTime }}
+                    {{ $parsedSprintRaceTime := parseLocalTime "2006-01-02T15:04:05" $sprintRaceDateTime }}
+                    {{ $now := now }}
+                    {{ if $parsedSprintRaceTime.Before $now }}
+                      <span class="color-highlight">Completed</span>
+                    {{ else }}
+                      <span class="color-highlight" {{ $parsedSprintRaceTime | toRelativeTime }}></span>
+                    {{ end }}
+                  </p>
+                  <p class="size-h5">{{ $sprintRaceDate }} at {{ $sprintRaceTime }}</p>
+                  {{ end }}
+                </div>
+
+                <ul class="size-h5 attachments">
+                  <li>{{ $session.String "circuit.country" }}</li>
+                  <li>{{ $session.String "circuit.city" }}</li>
+                  <li>{{ $session.String "laps" }} Laps</li>
+                  <li>{{ $session.String "circuit.circuitName" }}</li>
+                </ul>
+              </div>
+
+      - size: full
+        widgets:
+          - type: custom-api
+            title: Last Race Results
+            cache: 1d
+            url: https://f1api.dev/api/current/last/race
+            template: |
+              <div class="flex flex-column gap-10">
+                <p class="size-h5">{{ .JSON.String "races.raceName" }}</p>
+                <ul class="list collapsible-container" data-collapse-after="5">
+                  {{ range $i, $v := .JSON.Array "races.results" }}
+                  <li class="flex items-center {{ if eq $i 0 }}color-primary{{ else if eq $i 1 }}color-highlight{{ end }}">
+                    <span class="grow min-width-0">{{ .String "position" }}. {{ .String "driver.shortName" }}</span>
+                    <span class="shrink-0 text-right">{{ .String "time" }}</span>
+                  </li>
+                  {{ end }}
+                </ul>
+              </div>
+
+          - type: custom-api
+            title: Drivers Championship
+            cache: 1d
+            url: https://f1api.dev/api/current/drivers-championship
+            template: |
+              <ul class="list collapsible-container" data-collapse-after="5">
+                {{ range $i, $v := .JSON.Array "drivers_championship" }}
+                <li class="flex items-center {{ if eq $i 0 }}color-primary{{ else if eq $i 1 }}color-highlight{{ end }}">
+                  <div class="grow min-width-0">
+                    <span>{{ .String "position" }}. {{ .String "driver.shortName" }}</span>
+                    <span class="size-h6">({{ .String "team.teamName" }})</span>
+                  </div>
+                  <span class="shrink-0 text-right">{{ .String "points" }}</span>
+                </li>
+                {{ end }}
+              </ul>
+
+          - type: custom-api
+            title: Constructors Championship
+            cache: 1d
+            url: https://f1api.dev/api/current/constructors-championship
+            template: |-
+              <ul class="list collapsible-container" data-collapse-after="5">
+                {{ range $i, $v := .JSON.Array "constructors_championship" }}
+                <li class="flex items-center {{ if eq $i 0 }}color-primary{{ else if eq $i 1 }}color-highlight{{ end }}">
+                  <span class="grow min-width-0">{{ .String "position" }}. {{ .String "team.teamName" }}</span>
+                  <span class="shrink-0 text-right">{{ .String "points" }}</span>
+                </li>
+                {{ end }}
+              </ul>

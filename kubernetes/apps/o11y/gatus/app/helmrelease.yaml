@@ -92,7 +92,6 @@ spec:
         annotations:
           gatus.home-operations.com/enabled: "false"
         hostnames:
-          - "{{ .Release.Name }}.hera.ac"
           - status.hera.ac
         parentRefs:
           - name: envoy-external
@@ -133,7 +132,7 @@ spec:
         type: configMap
         name: "{{ .Release.Name }}-configmap"
         globalMounts:
-          - path: /config/status.yaml
-            subPath: status.yaml
+          - path: /config/buddy.yaml
+            subPath: buddy.yaml
           - path: /config/config.yaml
             subPath: config.yaml

@@ -1,7 +1,7 @@
 ---
 alerting:
   pushover:
-    application-token: ${STATUS_PUSHOVER_TOKEN}
+    application-token: ${BUDDY_PUSHOVER_TOKEN}
     default-alert:
       description: health-check failed
       failure-threshold: 3
@@ -11,12 +11,12 @@ alerting:
     priority: 1
     resolved-priority: 0
     title: Gatus
-    user-key: ${STATUS_PUSHOVER_USER_KEY}
+    user-key: ${BUDDY_PUSHOVER_USER_KEY}
 
 endpoints:
   - name: Ping
-    group: status
-    url: tcp://${STATUS_DDNS_HOSTNAME}:443
+    group: buddy
+    url: icmp://${BUDDY_DDNS_HOSTNAME}
     interval: 1m
     ui:
       hide-url: true
@@ -27,8 +27,8 @@ endpoints:
       - type: pushover
 
   - name: Status Page
-    group: status
-    url: https://${STATUS_PAGE_HOSTNAME}
+    group: buddy
+    url: https://${BUDDY_STATUS_HOSTNAME}
     interval: 1m
     ui:
       hide-url: true
@@ -39,6 +39,10 @@ endpoints:
       - type: pushover
 
 external-endpoints:
-  - name: heartbeat
-    group: status
-    token: ${STATUS_HEARTBEAT_TOKEN}
+  - name: Heartbeat
+    group: buddy
+    token: ${BUDDY_HEARTBEAT_TOKEN}
+    heartbeat:
+      interval: 5m
+    alerts:
+      - type: pushover

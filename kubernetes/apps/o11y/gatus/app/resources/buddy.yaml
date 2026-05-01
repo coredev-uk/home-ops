@@ -16,13 +16,16 @@ alerting:
 endpoints:
   - name: Ping
     group: buddy
-    url: icmp://${BUDDY_DDNS_HOSTNAME}
+    url: 1.1.1.1
     interval: 1m
+    dns:
+      query-name: ${BUDDY_DDNS_HOSTNAME}
+      query-type: A
     ui:
       hide-url: true
       hide-hostname: true
     conditions:
-      - "[CONNECTED] == true"
+      - "len([BODY]) > 0"
     alerts:
       - type: pushover
 

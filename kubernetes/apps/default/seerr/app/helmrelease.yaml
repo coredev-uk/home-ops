@@ -85,7 +85,6 @@ spec:
             conditions: ["[STATUS] == 200"]
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
-          - requests.hera.ac
         parentRefs:
           - name: envoy-internal
             namespace: network

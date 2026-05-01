@@ -576,8 +576,8 @@ pages:
                   - title: Jellyfin
                     url: https://jellyfin.hera.ac
                     icon: si:jellyfin
-                  - title: Requests
-                    url: https://requests.hera.ac
+                  - title: Seerr
+                    url: https://seerr.hera.ac
                     icon: sh:jellyseerr-light
                   - title: Radarr
                     url: https://radarr.hera.ac

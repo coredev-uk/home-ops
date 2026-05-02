@@ -12,9 +12,9 @@ spec:
     staticConfig:
       static:
         - expanse.internal
-        - k8s-0.internal
-        - k8s-1.internal
-        - k8s-2.internal
+        - hyperion-0.internal
+        - hyperion-1.internal
+        - hyperion-2.internal
   metricRelabelings:
     - targetLabel: service
       replacement: blackbox-exporter-lan
@@ -34,25 +34,6 @@ spec:
     staticConfig:
       static:
         - expanse.internal:2049
-  metricRelabelings:
-    - targetLabel: service
-      replacement: blackbox-exporter-lan
-      action: replace
----
-# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/monitoring.coreos.com/probe_v1.json
-apiVersion: monitoring.coreos.com/v1
-kind: Probe
-metadata:
-  name: lan-slzb-ultima
-spec:
-  jobName: slzb_ultima_probe
-  module: icmp
-  prober:
-    url: blackbox-exporter-lan.o11y.svc.cluster.local:9115
-  targets:
-    staticConfig:
-      static:
-        - slzb-ultima.internal
   metricRelabelings:
     - targetLabel: service
       replacement: blackbox-exporter-lan

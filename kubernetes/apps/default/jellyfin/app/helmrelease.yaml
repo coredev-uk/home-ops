@@ -135,6 +135,12 @@ spec:
           jellyfin:
             app:
               - path: /config
+      cache:
+        type: emptyDir
+        advancedMounts:
+          jellyfin:
+            app:
+              - path: /cache
       media:
         type: nfs
         server: expanse.internal
@@ -144,5 +150,11 @@ spec:
             app:
               - path: /media
                 readOnly: true
+      subtitles:
+        type: emptyDir
+        advancedMounts:
+          jellyfin:
+            app:
+              - path: /config/data/subtitles
       tmp:
         type: emptyDir

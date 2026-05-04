@@ -19,6 +19,8 @@ spec:
       groups:
         etcd:
           create: false
+        kubernetesResources:
+          create: false
     alertmanager:
       config:
         route:

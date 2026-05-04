@@ -15,6 +15,10 @@ spec:
       valuesKey: flux-metrics.yaml
   values:
     fullnameOverride: victoria-metrics-cluster
+    defaultRules:
+      groups:
+        etcd:
+          create: false
     alertmanager:
       config:
         route:

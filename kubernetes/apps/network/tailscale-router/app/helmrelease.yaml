@@ -10,11 +10,11 @@ spec:
     name: tailscale-router
   interval: 1h
   values:
+    defaultPodOptions:
+      automountServiceAccountToken: true
     controllers:
       tailscale-router:
         strategy: Recreate
-        pod:
-          automountServiceAccountToken: true
         annotations:
           reloader.stakater.com/auto: "true"
         serviceAccount:

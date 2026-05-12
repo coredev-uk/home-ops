@@ -3,7 +3,7 @@ version: v1alpha1
 machine:
   ca:
     crt: op://kubernetes/talos/MACHINE/CA_CRT
-    {% if ENV.IS_CONTROLLER %}
+    {% if ENV.CONTROLPLANE %}
     key: op://kubernetes/talos/MACHINE/CA_KEY
     {% endif %}
   features:
@@ -16,7 +16,7 @@ machine:
     kubePrism:
       enabled: true
       port: 7445
-    {% if ENV.IS_CONTROLLER %}
+    {% if ENV.CONTROLPLANE %}
     kubernetesTalosAPIAccess:
       enabled: true
       allowedKubernetesNamespaces:
@@ -48,8 +48,11 @@ machine:
         rsize=1048576
         wsize=1048576
   install:
-    image: factory.talos.dev/metal-installer/38c53dea4ad3bdc9580ba961a53fc1aad12b7581a261041fab486f2663585679:v1.13.0
+    image: factory.talos.dev/metal-installer/{{ ENV.SCHEMATIC }}:v1.13.0
     wipe: false
+  kernel:
+    modules:
+      - name: nbd
   kubelet:
     defaultRuntimeSeccompProfileEnabled: true
     disableManifestsDirectory: true
@@ -91,7 +94,7 @@ machine:
 cluster:
   ca:
     crt: op://kubernetes/talos/CLUSTER/CA_CRT
-    {% if ENV.IS_CONTROLLER %}
+    {% if ENV.CONTROLPLANE %}
     key: op://kubernetes/talos/CLUSTER/CA_KEY
     {% endif %}
   clusterName: main
@@ -115,7 +118,7 @@ cluster:
       - 10.43.0.0/16
   secret: op://kubernetes/talos/CLUSTER/SECRET
   token: op://kubernetes/talos/CLUSTER/TOKEN
-  {% if ENV.IS_CONTROLLER %}
+  {% if ENV.CONTROLPLANE %}
   aggregatorCA:
     crt: op://kubernetes/talos/CLUSTER/AGGREGATOR_CA_CRT
     key: op://kubernetes/talos/CLUSTER/AGGREGATOR_CA_KEY
@@ -180,4 +183,4 @@ cluster:
 apiVersion: v1alpha1
 kind: WatchdogTimerConfig
 device: /dev/watchdog0
-timeout: 10m
+timeout: 5m

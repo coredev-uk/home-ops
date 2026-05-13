@@ -364,7 +364,6 @@ pages:
             update-interval: 30s
 
           - type: twitch-channels
-            title: Twitch
             channels:
               - ThePrimeagen
               - TheMrSark

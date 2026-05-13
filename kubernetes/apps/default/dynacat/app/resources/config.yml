@@ -155,7 +155,7 @@ pages:
               - title: Ops
                 links:
                   - title: Alertmanager
-                    url: https://vmalertmanager.hera.ac
+                    url: https://alertmanager.hera.ac
                     icon: si:prometheus
                   - title: Headscale
                     url: https://hs.hera.ac
@@ -253,7 +253,7 @@ pages:
                   <p class="size-h3 {{ if eq $count "0" }}color-positive{{ else }}color-negative{{ end }}">{{ $count }}</p>
                   <p class="size-h6 color-paragraph">active alerts</p>
                 </div>
-                <a class="color-highlight text-right" href="https://vmalertmanager.hera.ac" target="_blank" rel="noreferrer">Open</a>
+                <a class="color-highlight text-right" href="https://alertmanager.hera.ac" target="_blank" rel="noreferrer">Open</a>
               </div>
 
           - type: playing

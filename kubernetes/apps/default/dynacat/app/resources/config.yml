@@ -90,10 +90,6 @@ pages:
                 name: hyperion-2
                 url: http://hyperion-2.internal:27973
 
-          - type: change-detection
-            instance-url: https://changes.hera.ac
-            token: ${CHANGE_DETECTION_API_KEY}
-
           - type: markets
             title: Portfolio
             markets:
@@ -237,6 +233,29 @@ pages:
                     url: https://mealie.hera.ac
                     icon: si:mealie
 
+          - type: repository
+            title: Home Ops Repo
+            repository: coredev-uk/home-ops
+            pull-requests-limit: 8
+            issues-limit: -1
+            commits-limit: 5
+            cache: 1h
+
+          - type: custom-api
+            title: Alertmanager
+            title-icon: si:prometheus
+            cache: 2m
+            url: https://kromgo.hera.ac/cluster_alert_count
+            template: |
+              {{ $count := .JSON.String "message" }}
+              <div class="flex items-center justify-between gap-10">
+                <div>
+                  <p class="size-h3 {{ if eq $count "0" }}color-positive{{ else }}color-negative{{ end }}">{{ $count }}</p>
+                  <p class="size-h6 color-paragraph">active alerts</p>
+                </div>
+                <a class="color-highlight text-right" href="https://vmalertmanager.hera.ac" target="_blank" rel="noreferrer">Open</a>
+              </div>
+
           - type: playing
             title: Currently Playing
             hosts:
@@ -308,23 +327,28 @@ pages:
                 libraries:
                   - Movies
 
-          - type: latest-media
-            title: Latest TV
-            title-url: "https://jellyfin.hera.ac"
-            item-count: 6
-            columns: 2
-            small-column: true
-            hosts:
-              - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
-                public-url: https://jellyfin.hera.ac
-                token: ${JELLYFIN_API_KEY}
-                libraries:
-                  - TV Shows
+          - type: custom-api
+            title: Latest TV Episodes
+            cache: 15m
+            url: "https://jellyfin.hera.ac/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=10&Fields=SeriesName,ParentIndexNumber,IndexNumber,Id"
+            headers:
+              X-Emby-Token: ${JELLYFIN_API_KEY}
+            template: |
+              <ul class="list collapsible-container" data-collapse-after="6">
+                {{ range .JSON.Array "Items" }}
+                  <li>
+                    <a class="color-highlight size-h5 block text-truncate" href="https://jellyfin.hera.ac/web/#/details?id={{ .String "Id" }}" target="_blank" rel="noreferrer">
+                      {{ .String "SeriesName" }}
+                    </a>
+                    <p class="size-h6 color-paragraph text-truncate">S{{ printf "%02d" (.Int "ParentIndexNumber") }}E{{ printf "%02d" (.Int "IndexNumber") }} · {{ .String "Name" }}</p>
+                  </li>
+                {{ end }}
+              </ul>
 
           - type: dns-stats
             service: pihole-v6
             url: http://pihole-web.network.svc.cluster.local
-            password: ""
+            password: ${PIHOLE_APP_PASSWORD}
             hour-format: "24h"
 
           - type: torrenting
@@ -338,6 +362,18 @@ pages:
             hide-inactive: true
             collapse-after: 5
             update-interval: 30s
+
+          - type: twitch-channels
+            title: Twitch
+            channels:
+              - ThePrimeagen
+              - TheMrSark
+              - CallumFromTheCorner
+              - SMii7Y
+
+          - type: change-detection
+            instance-url: https://changes.hera.ac
+            token: ${CHANGE_DETECTION_API_KEY}
 
   - name: Formula 1
     key-bind: "d f"

@@ -37,8 +37,6 @@ spec:
               value: "27973"
             - name: HIDE_MOUNTPOINTS_BY_DEFAULT
               value: "true"
-            - name: MOUNTPOINTS
-              value: /hostfs/var/lib/rook:Rook-Ceph
           readinessProbe:
             httpGet:
               path: /api/healthz

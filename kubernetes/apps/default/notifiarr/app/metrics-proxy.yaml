@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: caddy
-          image: docker.io/library/caddy:2.11.2-alpine
+          image: docker.io/library/caddy:2.11.3-alpine
           env:
             - name: NOTIFIARR_API_KEY
               valueFrom:

@@ -17,3 +17,4 @@ Brewfile.lock.json
 Thumbs.db
 kubeconfig
 talosconfig
+tmp

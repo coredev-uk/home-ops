@@ -32,6 +32,7 @@ spec:
             resources:
               requests:
                 cpu: 10m
+                memory: 512Mi
               limits:
                 memory: 2Gi
     defaultPodOptions:
@@ -75,5 +76,11 @@ spec:
         existingClaim: "{{ .Release.Name }}-cache"
         globalMounts:
           - path: /config/.venv
+      deps:
+        type: emptyDir
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /config/deps
+            readOnly: false
       tmp:
         type: emptyDir

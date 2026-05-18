@@ -10,11 +10,21 @@ spec:
       rules:
         - alert: CertManagerAbsent
           expr: |-
-            absent(up{job="cert-manager"})
+            absent(up{namespace="cert-manager", service="cert-manager"})
           for: 5m
           annotations:
             summary: >-
               Cert Manager has dissapeared from Prometheus service discovery
+          labels:
+            severity: critical
+
+        - alert: CertManagerTargetDown
+          expr: |-
+            min_over_time(up{namespace="cert-manager", service=~"cert-manager|cert-manager-cainjector|cert-manager-webhook"}[5m]) < 1
+          for: 5m
+          annotations:
+            summary: >-
+              Cert Manager metrics target is down
           labels:
             severity: critical
 

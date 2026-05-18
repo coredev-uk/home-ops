@@ -10,10 +10,20 @@ spec:
       rules:
         - alert: VolSyncComponentAbsent
           expr: |-
-            absent(up{job="volsync-metrics"})
+            absent(up{namespace="volsync-system", service="volsync-metrics"})
           annotations:
             summary: >-
               VolSync component has disappeared from Prometheus target discovery
+          for: 5m
+          labels:
+            severity: critical
+
+        - alert: VolSyncTargetDown
+          expr: |-
+            min_over_time(up{namespace="volsync-system", service="volsync-metrics"}[5m]) < 1
+          annotations:
+            summary: >-
+              VolSync metrics target is down
           for: 5m
           labels:
             severity: critical

@@ -24,6 +24,7 @@ spec:
               PORT: &port 5000
               BASE_URL: https://changes.hera.ac
               HIDE_REFERER: "true"
+              WEBDRIVER_URL: http://localhost:4444/wd/hub
             probes:
               liveness:
                 enabled: true
@@ -65,7 +66,50 @@ spec:
                 memory: 256Mi
               limits:
                 memory: 1Gi
+          selenium:
+            image:
+              repository: selenium/standalone-chrome
+              tag: 147.0-20260404
+            env:
+              VNC_NO_PASSWORD: "1"
+              SCREEN_WIDTH: "1920"
+              SCREEN_HEIGHT: "1080"
+              SCREEN_DEPTH: "24"
+            probes:
+              liveness: &seleniumProbes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /status
+                    port: &seleniumPort 4444
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *seleniumProbes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /status
+                    port: *seleniumPort
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+            securityContext:
+              allowPrivilegeEscalation: false
+              runAsUser: 1200
+              runAsGroup: 1201
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
     defaultPodOptions:
+      hostname: hyperion
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -87,9 +131,19 @@ spec:
     persistence:
       data:
         existingClaim: "{{ .Release.Name }}"
-        globalMounts:
-          - path: /datastore
+        advancedMounts:
+          changedetection:
+            app:
+              - path: /datastore
       tmp:
         type: emptyDir
         globalMounts:
           - path: /tmp
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 2Gi
+        advancedMounts:
+          changedetection:
+            selenium:
+              - path: /dev/shm

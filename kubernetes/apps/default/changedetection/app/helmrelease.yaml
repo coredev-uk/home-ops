@@ -24,6 +24,7 @@ spec:
               PORT: &port 5000
               BASE_URL: https://changes.hera.ac
               HIDE_REFERER: "true"
+              ALLOW_IANA_RESTRICTED_ADDRESSES: "true"
               WEBDRIVER_URL: http://localhost:4444/wd/hub
             probes:
               liveness:

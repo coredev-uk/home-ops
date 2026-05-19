@@ -28,8 +28,8 @@ spec:
         issuerURL: https://id.hera.ac
         existingSecret: radar-secret
         clientSecretKey: client-secret
-        redirectURL: https://k8s.hera.ac/auth/callback
-        postLogoutRedirectURL: https://k8s.hera.ac
+        redirectURL: https://ui.hera.ac/auth/callback
+        postLogoutRedirectURL: https://ui.hera.ac
         groupsClaim: groups
         scopes:
           - openid

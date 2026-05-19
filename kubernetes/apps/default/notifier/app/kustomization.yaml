@@ -11,6 +11,7 @@ configMapGenerator:
     files:
       - hooks.yaml=./resources/hooks.yaml
       - seerr-pushover.sh=./resources/seerr-pushover.sh
+      - changedetection-pushover.sh=./resources/changedetection-pushover.sh
       - radarr-pushover.sh=./resources/radarr-pushover.sh
       - sonarr-pushover.sh=./resources/sonarr-pushover.sh
 generatorOptions:

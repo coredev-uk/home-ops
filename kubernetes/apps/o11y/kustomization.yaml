@@ -17,5 +17,4 @@ resources:
   - ./prometheus-adapter/ks.yaml
   - ./silence-operator/ks.yaml
   - ./smartctl-exporter/ks.yaml
-  - ./unpoller/ks.yaml
   - ./victoria-logs/ks.yaml

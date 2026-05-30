@@ -23,6 +23,7 @@
     uv
     yamlfmt
     yq-go
+    zizmor
   ];
 
   env = {

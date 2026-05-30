@@ -11,7 +11,7 @@ spec:
       rules:
         - alert: FluxInstanceAbsent
           expr: |-
-            absent(gotk_resource_info{customresource_kind="Kustomization", exported_namespace="flux-system", name="flux-system"})
+            absent(flux_instance_info{exported_namespace="flux-system", name="flux"})
           for: 5m
           annotations:
             summary: >-
@@ -21,21 +21,11 @@ spec:
 
         - alert: FluxInstanceNotReady
           expr: |-
-            gotk_resource_info{customresource_kind="Kustomization", exported_namespace="flux-system", name="flux-system", ready!="True"} == 1
+            flux_instance_info{exported_namespace="flux-system", name="flux", ready!="True"}
           for: 5m
           annotations:
             summary: >-
               Flux instance {{ $labels.name }} is not ready
-          labels:
-            severity: critical
-
-        - alert: FluxControllerTargetDown
-          expr: |-
-            min_over_time(up{namespace="flux-system", pod=~"(source-controller|kustomize-controller|helm-controller|notification-controller)-.*"}[5m]) < 1
-          for: 5m
-          annotations:
-            summary: >-
-              Flux controller metrics target is down
           labels:
             severity: critical
 

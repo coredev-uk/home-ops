@@ -11,6 +11,7 @@ resources:
   - ./namespace.yaml
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
+  - ./brrpolice/ks.yaml
   - ./changedetection/ks.yaml
   - ./deduparr/ks.yaml
   - ./dynacat/ks.yaml

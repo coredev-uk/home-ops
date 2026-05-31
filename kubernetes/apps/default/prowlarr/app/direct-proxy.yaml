@@ -1,0 +1,88 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowlarr-direct-proxy-config
+data:
+  tinyproxy.conf: |
+    Port 8888
+    Listen 0.0.0.0
+    Timeout 600
+
+    LogLevel Info
+    StatHost "prowlarr-direct-proxy"
+
+    # Keep this as an internal proxy for cluster workloads only.
+    Allow 10.0.0.0/8
+    Allow 192.168.0.0/16
+
+    ConnectPort 443
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr-direct-proxy
+  labels:
+    app.kubernetes.io/name: prowlarr-direct-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: prowlarr-direct-proxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prowlarr-direct-proxy
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: tinyproxy
+          image: docker.io/vimagick/tinyproxy@sha256:72b441b95ee1e641af948f68f09492f9f795ead72b73954414e339168c98ad8c
+          args:
+            - tinyproxy
+            - -d
+            - -c
+            - /etc/tinyproxy/tinyproxy.conf
+          ports:
+            - name: http-proxy
+              containerPort: 8888
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tinyproxy/tinyproxy.conf
+              subPath: tinyproxy.conf
+            - name: tmp
+              mountPath: /tmp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      volumes:
+        - name: config
+          configMap:
+            name: prowlarr-direct-proxy-config
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr-direct-proxy
+  labels:
+    app.kubernetes.io/name: prowlarr-direct-proxy
+spec:
+  selector:
+    app.kubernetes.io/name: prowlarr-direct-proxy
+  ports:
+    - name: http-proxy
+      port: 8888
+      targetPort: http-proxy

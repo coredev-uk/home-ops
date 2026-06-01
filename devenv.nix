@@ -21,6 +21,7 @@
     sops
     talosctl
     uv
+    oxfmt
     yamlfmt
     yq-go
     zizmor

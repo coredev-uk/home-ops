@@ -71,7 +71,7 @@ spec:
     route:
       app:
         hostnames:
-          - "{{ .Release.Name }}.turbo.ac"
+          - "{{ .Release.Name }}.hera.ac"
         parentRefs:
           - name: envoy-internal
             namespace: network

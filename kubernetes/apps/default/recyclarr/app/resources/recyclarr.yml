@@ -38,11 +38,6 @@ sonarr:
           - 06d66ab109d4d2eddb2794d21526d140 # Retags
         assign_scores_to:
           - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
-      - # English Language Guard
-        trash_ids:
-          - 69aa1e159f97d860440b04cd6d590c4f # Language: Not English
-        assign_scores_to:
-          - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
     custom_format_groups:
       add:
         - trash_id: ddab3095a5d2f436f369263840af34f9 # [Streaming Services] UK
@@ -92,13 +87,6 @@ radarr:
           - 7357cf5161efbf8c4d5d0c30b4815ee2 # Obfuscated
           - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
           - f537cf427b64c38c8e36298f657e4828 # Scene
-        assign_scores_to:
-          - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
-          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
-          - trash_id: d1d67249d3890e49bc12e275d989a7e9 # HD Bluray + WEB
-      - # English Language Guard
-        trash_ids:
-          - 0dc8aec3bd1c47cd6c40c46ecd27e846 # Language: Not English
         assign_scores_to:
           - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
           - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)

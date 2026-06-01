@@ -43,6 +43,7 @@ pages:
         sites:
           - title: Plex
             url: https://plex.hera.ac
+            check-url: https://plex.hera.ac/identity
             icon: si:plex
           - title: Seerr
             url: https://seerr.hera.ac

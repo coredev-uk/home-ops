@@ -185,6 +185,9 @@ pages:
                   - title: Sonarr
                     url: https://sonarr.hera.ac
                     icon: si:sonarr
+                  - title: Maintainerr
+                    url: https://maintainerr.hera.ac
+                    icon: sh:maintainerr
 
               - title: Media Automation
                 links:

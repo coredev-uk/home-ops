@@ -21,7 +21,6 @@ spec:
               tag: 2.3.0
             env:
               TZ: Europe/London
-              JELLYFIN_URL: https://jellyfin.hera.ac
               QBITTORRENT_URL: https://qbittorrent.hera.ac
             envFrom:
               - secretRef:

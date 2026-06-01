@@ -41,9 +41,9 @@ pages:
         show-failing-only: true
         update-interval: 1m
         sites:
-          - title: Jellyfin
-            url: https://jellyfin.hera.ac
-            icon: si:jellyfin
+          - title: Plex
+            url: https://plex.hera.ac
+            icon: si:plex
           - title: Seerr
             url: https://seerr.hera.ac
             icon: sh:jellyseerr-light
@@ -127,9 +127,6 @@ pages:
             groups:
               - title: Core Infrastructure
                 links:
-                  - title: Media Dashboard
-                    url: https://dash.hera.ac
-                    icon: di:autobrr
                   - title: Status
                     url: https://status.hera.ac
                     icon: di:gatus
@@ -169,12 +166,18 @@ pages:
 
               - title: Media Discovery & Servers
                 links:
-                  - title: Jellyfin
-                    url: https://jellyfin.hera.ac
-                    icon: si:jellyfin
+                  - title: Plex
+                    url: https://plex.hera.ac
+                    icon: si:plex
                   - title: Seerr
                     url: https://seerr.hera.ac
                     icon: sh:jellyseerr-light
+                  - title: Tautulli
+                    url: https://tautulli.hera.ac
+                    icon: si:tautulli
+                  - title: Agregarr
+                    url: https://agregarr.hera.ac
+                    icon: mdi:playlist-plus
                   - title: Radarr
                     url: https://radarr.hera.ac
                     icon: si:radarr
@@ -190,9 +193,6 @@ pages:
                   - title: Bazarr
                     url: https://bazarr.hera.ac
                     icon: sh:bazarr-light
-                  - title: Notifiarr
-                    url: https://notifiarr.hera.ac
-                    icon: di:notifiarr
                   - title: Prowlarr
                     url: https://prowlarr.hera.ac
                     icon: sh:prowlarr-light
@@ -229,6 +229,9 @@ pages:
                   - title: Docs
                     url: https://docs.hera.ac
                     icon: si:outline
+                  - title: Atuin
+                    url: https://atuin.hera.ac
+                    icon: si:atuin
                   - title: Mealie
                     url: https://mealie.hera.ac
                     icon: si:mealie
@@ -255,17 +258,6 @@ pages:
                 </div>
                 <a class="color-highlight text-right" href="https://alertmanager.hera.ac" target="_blank" rel="noreferrer">Open</a>
               </div>
-
-          - type: playing
-            title: Currently Playing
-            hosts:
-              - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
-                token: ${JELLYFIN_API_KEY}
-            show-progress-bar: true
-            show-progress-info: true
-            show-paused: false
-            episode-title-format: series
-            update-interval: 30s
 
           - type: to-do
             id: home-ops
@@ -314,37 +306,6 @@ pages:
 
       - size: small
         widgets:
-          - type: latest-media
-            title: Latest Movies
-            title-url: "https://jellyfin.hera.ac"
-            item-count: 6
-            columns: 2
-            small-column: true
-            hosts:
-              - url: jellyfin:http://jellyfin.default.svc.cluster.local:8096
-                public-url: https://jellyfin.hera.ac
-                token: ${JELLYFIN_API_KEY}
-                libraries:
-                  - Movies
-
-          - type: custom-api
-            title: Latest TV Episodes
-            cache: 15m
-            url: "https://jellyfin.hera.ac/Items?IncludeItemTypes=Episode&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=10&Fields=SeriesName,ParentIndexNumber,IndexNumber,Id"
-            headers:
-              X-Emby-Token: ${JELLYFIN_API_KEY}
-            template: |
-              <ul class="list collapsible-container" data-collapse-after="6">
-                {{ range .JSON.Array "Items" }}
-                  <li>
-                    <a class="color-highlight size-h5 block text-truncate" href="https://jellyfin.hera.ac/web/#/details?id={{ .String "Id" }}" target="_blank" rel="noreferrer">
-                      {{ .String "SeriesName" }}
-                    </a>
-                    <p class="size-h6 color-paragraph text-truncate">S{{ printf "%02d" (.Int "ParentIndexNumber") }}E{{ printf "%02d" (.Int "IndexNumber") }} · {{ .String "Name" }}</p>
-                  </li>
-                {{ end }}
-              </ul>
-
           - type: dns-stats
             service: pihole-v6
             url: http://pihole-web.network.svc.cluster.local

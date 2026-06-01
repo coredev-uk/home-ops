@@ -174,10 +174,10 @@ pages:
                     icon: sh:jellyseerr-light
                   - title: Tautulli
                     url: https://tautulli.hera.ac
-                    icon: si:tautulli
+                    icon: sh:tautulli
                   - title: Agregarr
                     url: https://agregarr.hera.ac
-                    icon: mdi:playlist-plus
+                    icon: sh:agregarr
                   - title: Radarr
                     url: https://radarr.hera.ac
                     icon: si:radarr

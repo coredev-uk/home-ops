@@ -22,7 +22,6 @@ resources:
   - ./jellyfin/ks.yaml
   - ./matter-server/ks.yaml
   - ./mealie/ks.yaml
-  - ./notifiarr/ks.yaml
   - ./notifier/ks.yaml
   - ./outline/ks.yaml
   - ./plex/ks.yaml

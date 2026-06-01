@@ -21,6 +21,7 @@ resources:
   - ./home-assistant/ks.yaml
   - ./homebridge/ks.yaml
   - ./matter-server/ks.yaml
+  - ./maintainerr/ks.yaml
   - ./mealie/ks.yaml
   - ./notifier/ks.yaml
   - ./outline/ks.yaml

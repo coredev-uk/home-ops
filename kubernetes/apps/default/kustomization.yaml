@@ -21,7 +21,6 @@ resources:
   - ./homebridge/ks.yaml
   - ./matter-server/ks.yaml
   - ./mealie/ks.yaml
-  - ./notifiarr/ks.yaml
   - ./notifier/ks.yaml
   - ./outline/ks.yaml
   - ./plex/ks.yaml
@@ -30,6 +29,7 @@ resources:
   - ./qbittorrent/ks.yaml
   - ./qui/ks.yaml
   - ./radarr/ks.yaml
+  - ./recyclarr/ks.yaml
   - ./sabnzbd/ks.yaml
   - ./seerr/ks.yaml
   - ./sonarr/ks.yaml

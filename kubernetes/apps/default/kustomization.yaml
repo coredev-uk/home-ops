@@ -9,6 +9,7 @@ components:
 
 resources:
   - ./namespace.yaml
+  - ./agregarr/ks.yaml
   - ./atuin/ks.yaml
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
@@ -34,3 +35,4 @@ resources:
   - ./seerr/ks.yaml
   - ./sonarr/ks.yaml
   - ./thelounge/ks.yaml
+  - ./tautulli/ks.yaml

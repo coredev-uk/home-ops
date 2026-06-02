@@ -18,7 +18,7 @@ sonarr:
     quality_definition:
       type: series
     quality_profiles:
-      - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
+      - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
         reset_unmatched_scores:
           enabled: true
     custom_formats:
@@ -26,7 +26,7 @@ sonarr:
         trash_ids:
           - 5d9fd1b1e06cd8a475462f40214b7df6 # FLUX
         assign_scores_to:
-          - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
+          - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
             score: 100
       - # Unwanted
         trash_ids:
@@ -35,12 +35,7 @@ sonarr:
           - e1a997ddb54e3ecbfe06341ad323c458 # Obfuscated
           - 06d66ab109d4d2eddb2794d21526d140 # Retags
         assign_scores_to:
-          - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
-    custom_format_groups:
-      add:
-        - trash_id: ddab3095a5d2f436f369263840af34f9 # [Streaming Services] UK
-          assign_scores_to:
-            - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
+          - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
 
 radarr:
   movies:
@@ -55,20 +50,15 @@ radarr:
         rename: true
         standard: plex-imdb
     quality_definition:
-      type: sqp-streaming
+      type: sqp-uhd
     quality_profiles:
-      - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
+      - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
         reset_unmatched_scores:
           enabled: true
     custom_formats:
-      - # Unwanted Editions
-        trash_ids:
-          - 957d0f44b592285f26449575e8b1167e # Special Edition
-        assign_scores_to:
-          - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
-            score: -10000
       - # Unwanted
         trash_ids:
+          - 957d0f44b592285f26449575e8b1167e # Special Edition
           - b6832f586342ef70d9c128d40c07b872 # Bad Dual Groups
           - cc444569854e9de0b084ab2b8b1532b2 # Black and White Editions
           - ae9b7c9ebde1f3bd336a8cbd1ec4c5e5 # No-RlsGroup
@@ -76,9 +66,4 @@ radarr:
           - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
           - f537cf427b64c38c8e36298f657e4828 # Scene
         assign_scores_to:
-          - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
-    custom_format_groups:
-      add:
-        - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c # [Streaming Services] UK
-          assign_scores_to:
-            - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
+          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)

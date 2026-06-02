@@ -1,7 +1,5 @@
 ---
-# yamllint disable rule:line-length
-# yaml-language-server: $schema=https://raw.githubusercontent.com/recyclarr/recyclarr/refs/tags/v8.0.0/schemas/config-schema.json
-# yamllint enable rule:line-length
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
 sonarr:
   series:
     base_url: http://sonarr.default.svc.cluster.local
@@ -65,9 +63,6 @@ radarr:
       - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
         reset_unmatched_scores:
           enabled: true
-      - trash_id: d1d67249d3890e49bc12e275d989a7e9 # HD Bluray + WEB
-        reset_unmatched_scores:
-          enabled: true
     custom_formats:
       - # Unwanted Editions
         trash_ids:
@@ -76,8 +71,6 @@ radarr:
           - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
             score: -10000
           - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
-            score: -10000
-          - trash_id: d1d67249d3890e49bc12e275d989a7e9 # HD Bluray + WEB
             score: -10000
       - # Unwanted
         trash_ids:
@@ -90,11 +83,9 @@ radarr:
         assign_scores_to:
           - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
           - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
-          - trash_id: d1d67249d3890e49bc12e275d989a7e9 # HD Bluray + WEB
     custom_format_groups:
       add:
         - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c # [Streaming Services] UK
           assign_scores_to:
             - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
             - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
-            - trash_id: d1d67249d3890e49bc12e275d989a7e9 # HD Bluray + WEB

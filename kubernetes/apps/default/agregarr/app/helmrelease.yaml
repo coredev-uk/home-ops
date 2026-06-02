@@ -60,6 +60,8 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
+        supplementalGroups:
+          - 988
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
@@ -78,5 +80,11 @@ spec:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /app/config
+      media:
+        type: nfs
+        server: expanse.internal
+        path: /var/nfs/shared/Media
+        globalMounts:
+          - path: /media
       tmp:
         type: emptyDir

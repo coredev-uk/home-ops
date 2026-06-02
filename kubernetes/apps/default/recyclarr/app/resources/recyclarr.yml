@@ -52,7 +52,10 @@ radarr:
     quality_definition:
       type: sqp-uhd
     quality_profiles:
-      - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
+      - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
+        reset_unmatched_scores:
+          enabled: true
+      - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-2 (2160p)
         reset_unmatched_scores:
           enabled: true
     custom_formats:
@@ -66,4 +69,5 @@ radarr:
           - 5c44f52a8714fdd79bb4d98e2673be1f # Retags
           - f537cf427b64c38c8e36298f657e4828 # Scene
         assign_scores_to:
-          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
+          - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
+          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-2 (2160p)

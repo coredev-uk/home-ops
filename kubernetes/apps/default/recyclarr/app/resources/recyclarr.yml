@@ -18,7 +18,7 @@ sonarr:
     quality_definition:
       type: series
     quality_profiles:
-      - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+      - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
         reset_unmatched_scores:
           enabled: true
     custom_formats:
@@ -26,7 +26,7 @@ sonarr:
         trash_ids:
           - 5d9fd1b1e06cd8a475462f40214b7df6 # FLUX
         assign_scores_to:
-          - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+          - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
             score: 100
       - # Unwanted
         trash_ids:
@@ -35,12 +35,12 @@ sonarr:
           - e1a997ddb54e3ecbfe06341ad323c458 # Obfuscated
           - 06d66ab109d4d2eddb2794d21526d140 # Retags
         assign_scores_to:
-          - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+          - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
     custom_format_groups:
       add:
         - trash_id: ddab3095a5d2f436f369263840af34f9 # [Streaming Services] UK
           assign_scores_to:
-            - trash_id: 72dae194fc92bf828f32cde7744e51a1 # WEB-1080p
+            - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
 
 radarr:
   movies:
@@ -60,17 +60,12 @@ radarr:
       - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
         reset_unmatched_scores:
           enabled: true
-      - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
-        reset_unmatched_scores:
-          enabled: true
     custom_formats:
       - # Unwanted Editions
         trash_ids:
           - 957d0f44b592285f26449575e8b1167e # Special Edition
         assign_scores_to:
           - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
-            score: -10000
-          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
             score: -10000
       - # Unwanted
         trash_ids:
@@ -82,10 +77,8 @@ radarr:
           - f537cf427b64c38c8e36298f657e4828 # Scene
         assign_scores_to:
           - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
-          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
     custom_format_groups:
       add:
         - trash_id: f737e18b5824d6ebb2d57b957ae2fd6c # [Streaming Services] UK
           assign_scores_to:
             - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
-            - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)

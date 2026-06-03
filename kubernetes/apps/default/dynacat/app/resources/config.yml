@@ -176,9 +176,6 @@ pages:
                   - title: Tautulli
                     url: https://tautulli.hera.ac
                     icon: sh:tautulli
-                  - title: Agregarr
-                    url: https://agregarr.hera.ac
-                    icon: sh:agregarr
                   - title: Radarr
                     url: https://radarr.hera.ac
                     icon: si:radarr

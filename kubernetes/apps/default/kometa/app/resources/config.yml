@@ -12,7 +12,19 @@ libraries:
       - default: imdb
       - default: tautulli
       - default: streaming
+        template_variables:
+          region: GB
       - default: seasonal
+        template_variables:
+          exclude:
+            - aapi
+            - independence
+            - labor
+            - lgbtq
+            - latinx
+            - thanksgiving
+            - veteran
+            - memorial
       - default: universe
       - default: studio
       - default: genre
@@ -27,6 +39,8 @@ libraries:
       - default: imdb
       - default: tautulli
       - default: streaming
+        template_variables:
+          region: GB
       - default: network
       - default: genre
 

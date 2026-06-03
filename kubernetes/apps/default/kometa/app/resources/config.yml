@@ -1,0 +1,125 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kometa-team/kometa/nightly/json-schema/config-schema.json
+---
+libraries:
+  Films:
+    template_variables:
+      collection_mode: hide
+      use_separator: false
+    collection_files:
+      - file: config/Movies.yml
+      - default: basic
+      - default: tmdb
+      - default: imdb
+      - default: tautulli
+      - default: streaming
+      - default: seasonal
+      - default: universe
+      - default: studio
+      - default: genre
+  TV Programmes:
+    template_variables:
+      collection_mode: hide
+      use_separator: false
+    collection_files:
+      - file: config/TV.yml
+      - default: basic
+      - default: tmdb
+      - default: imdb
+      - default: tautulli
+      - default: streaming
+      - default: network
+      - default: genre
+
+settings:
+  run_order:
+    - operations
+    - metadata
+    - collections
+    - overlays
+  cache: true
+  cache_expiration: 60
+  asset_directory:
+    - config/assets
+  asset_folders: true
+  asset_depth: 0
+  create_asset_folders: false
+  prioritize_assets: false
+  dimensional_asset_rename: false
+  download_url_assets: false
+  show_missing_season_assets: false
+  show_missing_episode_assets: false
+  show_asset_not_needed: true
+  sync_mode: sync
+  minimum_items: 1
+  default_collection_order: custom
+  delete_below_minimum: true
+  delete_not_scheduled: false
+  run_again_delay: 2
+  missing_only_released: true
+  only_filter_missing: false
+  show_unmanaged: true
+  show_unconfigured: true
+  show_filtered: false
+  show_unfiltered: false
+  show_options: true
+  show_missing: false
+  show_missing_assets: false
+  save_report: false
+  tvdb_language: eng
+  item_refresh_delay: 0
+  playlist_report: false
+  verify_ssl: true
+
+plex:
+  url: http://plex.default.svc.cluster.local:32400
+  token: <<plextoken>>
+  timeout: 60
+  db_cache: 4096
+  clean_bundles: false
+  empty_trash: false
+  optimize: false
+  verify_ssl: false
+
+tmdb:
+  apikey: <<tmdbapikey>>
+  cache_expiration: 60
+  language: en
+  region: GB
+
+tautulli:
+  url: http://tautulli.default.svc.cluster.local
+  apikey: <<tautulliapikey>>
+
+mdblist:
+  apikey: <<mdblistapikey>>
+  cache_expiration: 60
+
+radarr:
+  url: http://radarr.default.svc.cluster.local
+  token: <<radarrtoken>>
+  add_missing: false
+  add_existing: false
+  upgrade_existing: false
+  monitor_existing: false
+  root_folder_path: /media/media/movies
+  monitor: false
+  availability: released
+  quality_profile: "[SQP] SQP-1 (1080p)"
+  search: false
+  ignore_cache: false
+
+sonarr:
+  url: http://sonarr.default.svc.cluster.local
+  token: <<sonarrtoken>>
+  add_missing: false
+  add_existing: false
+  upgrade_existing: false
+  monitor_existing: false
+  root_folder_path: /media/media/tv
+  monitor: none
+  quality_profile: WEB-1080p (Alternative)
+  series_type: standard
+  season_folder: true
+  search: false
+  cutoff_search: false
+  ignore_cache: false

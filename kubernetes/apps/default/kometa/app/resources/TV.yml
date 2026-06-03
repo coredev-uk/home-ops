@@ -1,0 +1,34 @@
+---
+collections:
+  Recently Added TV:
+    plex_search:
+      type: show
+      sort_by: added.desc
+      limit: 25
+    collection_order: custom
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Recently added TV programmes in Plex.
+
+  Recently Released Episodes:
+    builder_level: episode
+    plex_search:
+      type: episode
+      sort_by: release.desc
+      limit: 25
+    collection_order: custom
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Recently released episodes already available in Plex.
+
+  Popular on Plex - TV:
+    tautulli_popular:
+      list_days: 30
+      list_size: 25
+    collection_order: custom
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: TV programmes watched most often on Plex in the last 30 days.

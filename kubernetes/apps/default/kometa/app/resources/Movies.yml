@@ -1,0 +1,33 @@
+---
+collections:
+  Recently Added Movies:
+    plex_search:
+      type: movie
+      sort_by: added.desc
+      limit: 25
+    collection_order: custom
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Recently added films in Plex.
+
+  Recently Released Movies:
+    plex_search:
+      type: movie
+      sort_by: release.desc
+      limit: 25
+    collection_order: custom
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Recently released films already available in Plex.
+
+  Popular on Plex - Films:
+    tautulli_popular:
+      list_days: 30
+      list_size: 25
+    collection_order: custom
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Films watched most often on Plex in the last 30 days.

@@ -19,16 +19,13 @@ spec:
             image:
               repository: ghcr.io/home-operations/busybox
               tag: 1.38.0@sha256:7e2c04dd50ede647bf4a7a4c8dbd629dd4971cd139b9b88fb22bfc3c7a6c13df
-            envFrom:
-              - secretRef:
-                  name: "{{ .Release.Name }}-secret"
             command:
               - /bin/sh
               - -ec
               - |
-                test -n "${YOUTUBE_COOKIES_B64:-}"
+                test -s /var/run/secrets/agregarr/YOUTUBE_COOKIES_B64
                 umask 077
-                printf '%s' "$YOUTUBE_COOKIES_B64" | base64 -d > /app/config/youtube-cookies.txt
+                base64 -d /var/run/secrets/agregarr/YOUTUBE_COOKIES_B64 > /app/config/youtube-cookies.txt
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -105,5 +102,13 @@ spec:
         path: /var/nfs/shared/Media
         globalMounts:
           - path: /media
+      youtube-cookies:
+        type: secret
+        name: "{{ .Release.Name }}-secret"
+        advancedMounts:
+          agregarr:
+            youtube-cookies:
+              - path: /var/run/secrets/agregarr
+                readOnly: true
       tmp:
         type: emptyDir

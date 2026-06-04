@@ -15,6 +15,10 @@ spec:
       valuesKey: flux-metrics.yaml
   values:
     cleanPrometheusOperatorObjectNames: true
+    defaultRules:
+      disabled:
+        KubeCPUOvercommit: true
+        KubeMemoryOvercommit: true
     alertmanager:
       route:
         main:

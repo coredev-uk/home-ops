@@ -2,10 +2,11 @@
 
 {
   packages = with pkgs; [
+    just
+    minijinja
+    oxfmt
     vals
     yq
-    minijinja
-    just
     zizmor
   ];
 

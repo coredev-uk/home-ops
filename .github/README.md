@@ -3,25 +3,26 @@
 # Home Operations
 
 Personal home-ops repository for running a Talos Kubernetes cluster with Flux GitOps.
-</div>
-
-<div align="center">
-
-[![Home-Internet](https://img.shields.io/endpoint?url=https%3A%2F%2Fstatus.hera.ac%2Fapi%2Fv1%2Fendpoints%2Fbuddy_ping%2Fhealth%2Fbadge.shields&style=for-the-badge&logo=ubiquiti&logoColor=white&label=Home%20Internet)](https://status.hera.ac)&nbsp;&nbsp;
-[![Status-Page](https://img.shields.io/endpoint?url=https%3A%2F%2Fstatus.hera.ac%2Fapi%2Fv1%2Fendpoints%2Fbuddy_status-page%2Fhealth%2Fbadge.shields&style=for-the-badge&logo=statuspage&logoColor=white&label=Status%20Page)](https://status.hera.ac)&nbsp;&nbsp;
-[![Alertmanager](https://img.shields.io/endpoint?url=https%3A%2F%2Fstatus.hera.ac%2Fapi%2Fv1%2Fendpoints%2Fbuddy_heartbeat%2Fhealth%2Fbadge.shields&style=for-the-badge&logo=prometheus&logoColor=white&label=Alertmanager)](https://status.hera.ac)
 
 </div>
 
 <div align="center">
 
-[![Age-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_age_days&style=flat-square&label=Age)](https://github.com/kashalls/kromgo)&nbsp;&nbsp;
-[![Uptime-Days](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_uptime_days&style=flat-square&label=Uptime)](https://github.com/kashalls/kromgo)&nbsp;&nbsp;
-[![Node-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_node_count&style=flat-square&label=Nodes)](https://github.com/kashalls/kromgo)&nbsp;&nbsp;
-[![Pod-Count](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_pod_count&style=flat-square&label=Pods)](https://github.com/kashalls/kromgo)&nbsp;&nbsp;
-[![CPU-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_cpu_usage&style=flat-square&label=CPU)](https://github.com/kashalls/kromgo)&nbsp;&nbsp;
-[![Memory-Usage](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_memory_usage&style=flat-square&label=Memory)](https://github.com/kashalls/kromgo)&nbsp;&nbsp;
-[![Alerts](https://img.shields.io/endpoint?url=https%3A%2F%2Fkromgo.hera.ac%2Fcluster_alert_count&style=flat-square&label=Alerts)](https://github.com/kashalls/kromgo)
+![Home Internet](https://kromgo.hera.ac/badges/buddy_ping)
+![Status Page](https://kromgo.hera.ac/badges/buddy_status_page)
+![Alertmanager](https://kromgo.hera.ac/badges/buddy_heartbeat)
+
+</div>
+
+<div align="center">
+
+![Age](https://kromgo.hera.ac/badges/cluster_birth_age)
+![Uptime](https://kromgo.hera.ac/badges/cluster_uptime_age)
+![Nodes](https://kromgo.hera.ac/badges/cluster_node_count)
+![Pods](https://kromgo.hera.ac/badges/cluster_pod_count)
+![CPU](https://kromgo.hera.ac/badges/cluster_cpu_usage)
+![Memory](https://kromgo.hera.ac/badges/cluster_memory_usage)
+![Alerts](https://kromgo.hera.ac/badges/cluster_alert_count)
 
 </div>
 
@@ -36,12 +37,12 @@ This is a practical, single-cluster setup focused on reliability and straightfor
 
 ## Hardware
 
-| Device | Qty | CPU | Memory | Storage | Role | Misc Hardware |
-|---|---:|---|---|---|---|---|
-| Beelink SEi14 (`hyperion-0`) | 1 | Intel Core Ultra 5 125H | 32GB DDR5 | 1TB NVMe M.2 (Ceph), 128GB NVMe M.2 (Talos) | Kubernetes node | Google Coral TPU A+E |
-| Lenovo ThinkCentre M720q (`hyperion-1`) | 1 | Intel Core i5-8400T | 16GB DDR4 | 1TB SSD (Ceph), 256GB SSD (Talos) | Kubernetes node | - |
-| Lenovo ThinkCentre M920q (`hyperion-2`) | 1 | Intel Core i5-8500T | 16GB DDR4 | 1TB SSD (Ceph), 128GB SSD (Talos) | Kubernetes node | - |
-| UniFi UNAS 2 | 1 | - | - | 2x 2TB Seagate IronWolf HDD | NAS | - |
+| Device                                  | Qty | CPU                     | Memory    | Storage                                     | Role            | Misc Hardware        |
+| --------------------------------------- | --: | ----------------------- | --------- | ------------------------------------------- | --------------- | -------------------- |
+| Beelink SEi14 (`hyperion-0`)            |   1 | Intel Core Ultra 5 125H | 32GB DDR5 | 1TB NVMe M.2 (Ceph), 128GB NVMe M.2 (Talos) | Kubernetes node | Google Coral TPU A+E |
+| Lenovo ThinkCentre M720q (`hyperion-1`) |   1 | Intel Core i5-8400T     | 16GB DDR4 | 1TB SSD (Ceph), 256GB SSD (Talos)           | Kubernetes node | -                    |
+| Lenovo ThinkCentre M920q (`hyperion-2`) |   1 | Intel Core i5-8500T     | 16GB DDR4 | 1TB SSD (Ceph), 128GB SSD (Talos)           | Kubernetes node | -                    |
+| UniFi UNAS 2                            |   1 | -                       | -         | 2x 2TB Seagate IronWolf HDD                 | NAS             | -                    |
 
 ## Repository Layout
 

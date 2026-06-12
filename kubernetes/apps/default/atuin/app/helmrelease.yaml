@@ -25,7 +25,7 @@ spec:
             env:
               ATUIN_HOST: "0.0.0.0"
               ATUIN_PORT: &port 80
-              ATUIN_OPEN_REGISTRATION: "true"
+              ATUIN_OPEN_REGISTRATION: "false"
               TZ: Europe/London
             envFrom:
               - secretRef:

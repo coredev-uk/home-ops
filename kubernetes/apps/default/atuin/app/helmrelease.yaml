@@ -8,10 +8,15 @@ spec:
   chartRef:
     kind: OCIRepository
     name: atuin
+  dependsOn:
+    - name: postgresql
+      namespace: db
   interval: 1h
   values:
     controllers:
       atuin:
+        annotations:
+          reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
@@ -21,8 +26,10 @@ spec:
               ATUIN_HOST: "0.0.0.0"
               ATUIN_PORT: &port 80
               ATUIN_OPEN_REGISTRATION: "true"
-              ATUIN_DB_URI: sqlite:///config/atuin.db
               TZ: Europe/London
+            envFrom:
+              - secretRef:
+                  name: atuin-secret
             args:
               - start
             probes:
@@ -50,7 +57,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 10m

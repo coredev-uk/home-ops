@@ -2,30 +2,14 @@
 
 {
   packages = with pkgs; [
-    age
-    cloudflared
-    curl
-    fluxcd
-    gum
-    helmfile
-    just
-    jq
-    krew
-    kubectl
-    kubernetes-helm
-    kustomize
-    lefthook
+    vals
+    yq
     minijinja
-    mise
-    pipx
-    sops
-    talosctl
-    uv
-    oxfmt
-    yamlfmt
-    yq-go
+    just
     zizmor
   ];
+
+  dotenv.enable = true;
 
   env = {
     JUST_UNSTABLE = "1";
@@ -34,17 +18,6 @@
   };
 
   enterShell = ''
-    export KREW_ROOT="${config.devenv.root}/.devenv/krew"
-    export PATH="$KREW_ROOT/bin:$PATH"
-
-    if ! command -v kubectl-krew >/dev/null 2>&1; then
-      krew install krew >/dev/null
-    fi
-
-    if ! command -v kubectl-browse_pvc >/dev/null 2>&1; then
-      kubectl krew install browse-pvc >/dev/null
-    fi
-
     if [ -f .mise.toml ]; then
       export MISE_TRUSTED_CONFIG_PATHS="${config.devenv.root}"
       mise install -y >/dev/null

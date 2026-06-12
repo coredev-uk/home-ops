@@ -10,7 +10,7 @@ spec:
   interval: 1h
   values:
     config:
-      repo: github://onedr0p/home-ops
+      repo: github://coredev-uk/home-ops
     secret:
       existingSecret: konflate-webhook-token-secret
     httpRoute:

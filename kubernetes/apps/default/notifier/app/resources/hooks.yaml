@@ -16,5 +16,6 @@
 
 - id: changedetection-pushover
   execute-command: /config/changedetection-pushover.sh
+  incoming-payload-content-type: application/json
   pass-arguments-to-command:
     - source: entire-payload

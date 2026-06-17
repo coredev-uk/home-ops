@@ -9,6 +9,16 @@ PAYLOAD=${1:-}
 
 echo "[DEBUG] changedetection Payload: ${PAYLOAD}"
 
+# changedetection.io normally posts the rendered notification body directly.
+# If an Apprise/custom handler wraps it as a message/body string, merge the
+# embedded JSON back into the top-level payload before selecting fields.
+PAYLOAD=$(jq -c '
+  def parse_json: try fromjson catch null;
+  (.message // .body // "") as $embedded |
+  ($embedded | parse_json) as $parsed |
+  if ($parsed | type) == "object" then . + $parsed else . end
+' <<<"${PAYLOAD}")
+
 function _jq() {
     jq -r "${1:?}" <<<"${PAYLOAD}"
 }

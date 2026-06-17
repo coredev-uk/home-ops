@@ -18,6 +18,7 @@ spec:
   postBuild:
     substitute:
       APP: frigate
+      CONTROLLER: StatefulSet
       VOLSYNC_CAPACITY: 10Gi
   prune: true
   sourceRef:

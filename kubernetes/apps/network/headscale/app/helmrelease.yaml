@@ -19,7 +19,7 @@ spec:
           app:
             image:
               repository: headscale/headscale
-              tag: v0.29.0@sha256:5d464c7ba8f5b2c1472f926fae4cd67f136d66ec108c0b4ad1891856ac6da915
+              tag: v0.29.1@sha256:8453e47ea6bf69cd2c550d230ad23f4cf9d0e7daa31c652da3cbb88dca059c62
             command: ["headscale", "serve"]
             env:
               TZ: Europe/London

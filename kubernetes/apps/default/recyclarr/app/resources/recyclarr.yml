@@ -24,6 +24,30 @@ sonarr:
       - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
         reset_unmatched_scores:
           enabled: true
+      - name: Archive 1080p
+        reset_unmatched_scores:
+          enabled: true
+        min_format_score: 0
+        min_upgrade_format_score: 1000
+        upgrade:
+          allowed: true
+          until_quality: WEB 1080p
+          until_score: 10000
+        qualities:
+          - name: WEB 1080p
+            qualities:
+              - WEBDL-1080p
+              - WEBRip-1080p
+          - name: Bluray-1080p
+          - name: HDTV-1080p
+          - name: WEB 720p
+            qualities:
+              - WEBDL-720p
+              - WEBRip-720p
+          - name: Bluray-720p
+          - name: HDTV-720p
+          - name: Bluray-576p
+          - name: DVD
     custom_formats:
       - # FLUX trumps REPACKS
         trash_ids:
@@ -40,6 +64,7 @@ sonarr:
         assign_scores_to:
           - trash_id: 9d142234e45d6143785ac55f5a9e8dc9 # WEB-1080p (Alternative)
           - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
+          - name: Archive 1080p
 
 radarr:
   movies:
@@ -57,6 +82,8 @@ radarr:
       type: sqp-uhd
     quality_profiles:
       - trash_id: 0896c29d74de619df168d23b98104b22 # [SQP] SQP-1 (1080p)
+        min_format_score: 0
+        min_upgrade_format_score: 1000
         reset_unmatched_scores:
           enabled: true
       - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-2 (2160p)

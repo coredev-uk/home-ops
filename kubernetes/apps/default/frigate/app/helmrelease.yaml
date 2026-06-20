@@ -258,7 +258,15 @@ spec:
                 ffmpeg:
                   inputs:
                     - path: rtsp://127.0.0.1:8554/back_door
-                      input_args: preset-rtsp-restream
+                      input_args:
+                        - -rtsp_transport
+                        - tcp
+                        - -timeout
+                        - "10000000"
+                        - -analyzeduration
+                        - "10000000"
+                        - -probesize
+                        - "10000000"
                       roles:
                         - record
                     - path: rtsp://127.0.0.1:8554/back_door_sub
@@ -303,7 +311,15 @@ spec:
                 ffmpeg:
                   inputs:
                     - path: rtsp://127.0.0.1:8554/back_garden
-                      input_args: preset-rtsp-restream
+                      input_args:
+                        - -rtsp_transport
+                        - tcp
+                        - -timeout
+                        - "10000000"
+                        - -analyzeduration
+                        - "10000000"
+                        - -probesize
+                        - "10000000"
                       roles:
                         - record
                     - path: rtsp://127.0.0.1:8554/back_garden_sub

@@ -18,7 +18,7 @@ spec:
       name: frigate-secret
     redirectURL: https://frigate.hera.ac/oauth2/callback
     logoutPath: /logout
-    cookieDomain: hera.ac
+    cookieDomain: frigate.hera.ac
     scopes:
       - openid
       - profile

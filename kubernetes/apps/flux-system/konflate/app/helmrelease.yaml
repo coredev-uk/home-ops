@@ -11,6 +11,10 @@ spec:
   values:
     config:
       repo: github://coredev-uk/home-ops
+      statusChecks: true
+      prComments: true
+      publicUrl: https://{{ .Release.Name }}.hera.ac
+      mcp: true
     secret:
       existingSecret: konflate-webhook-token-secret
     httpRoute:

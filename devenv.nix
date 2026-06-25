@@ -21,6 +21,25 @@ let
     vendorHash = "sha256-tVzSYSZ8eMETrML4ReLZx6P+OcoXbilfYnuFH4VUOyc=";
     subPackages = [ "cmd/chaski" ];
   };
+
+  topf = pkgs.buildGoModule {
+    pname = "topf";
+    version = "0.4.2";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "postfinance";
+      repo = "topf";
+      rev = "v0.4.2";
+      hash = "sha256-W1IES57n8NTcnt9D5iTkrAxnZf4oaz4vm6UBTM96nrc=";
+    };
+
+    postPatch = ''
+      substituteInPlace go.mod --replace-fail "go 1.26.3" "go 1.26.2"
+    '';
+
+    vendorHash = "sha256-YGDMWx8jLwLcdjIIh82wL2k1yhWo1+GEW0aq47PZbDI=";
+    subPackages = [ "cmd/topf" ];
+  };
 in
 {
   packages = with pkgs; [
@@ -28,6 +47,7 @@ in
     just
     minijinja
     oxfmt
+    topf
     vals
     yq
     zizmor

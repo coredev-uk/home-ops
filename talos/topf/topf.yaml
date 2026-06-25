@@ -1,0 +1,13 @@
+kubernetesVersion: 1.36.2
+talosVersion: 1.13.4
+schematicId: "@schematic.yaml"
+clusterEndpoint: https://k8s.internal:6443
+clusterName: main
+
+nodes:
+  - host: hyperion-0
+    role: control-plane
+  - host: hyperion-1
+    role: control-plane
+  - host: hyperion-2
+    role: control-plane

@@ -52,6 +52,26 @@ upgrade-k8s version:
 upgrade-node node *args:
     talosctl -n "{{ node }}" upgrade -i "$(just talos machine-image)" -m powercycle --timeout=10m {{ args }}
 
+[doc('Apply Talos config with Topf')]
+topf-apply *args:
+    topf --topfconfig "{{ source_directory() }}/topf/topf.yaml" apply {{ args }}
+
+[doc('Render Talos configs with Topf')]
+topf-render *args:
+    topf --topfconfig "{{ source_directory() }}/topf/topf.yaml" render --output "{{ source_directory() }}/topf/output" {{ args }}
+
+[doc('Generate kubeconfig with Topf')]
+topf-kubeconfig *args:
+    topf --topfconfig "{{ source_directory() }}/topf/topf.yaml" kubeconfig {{ args }}
+
+[doc('Generate talosconfig with Topf')]
+topf-talosconfig *args:
+    topf --topfconfig "{{ source_directory() }}/topf/topf.yaml" talosconfig {{ args }}
+
+[doc('Upgrade Talos with Topf')]
+topf-upgrade *args:
+    topf --topfconfig "{{ source_directory() }}/topf/topf.yaml" upgrade {{ args }}
+
 [private]
 schematic-id:
     curl -sX POST --data-binary @<(just template "{{ source_directory() }}/schematic.yaml.j2") "https://factory.talos.dev/schematics" | jq -r '.id'

@@ -18,6 +18,7 @@ spec:
     defaultRules:
       disabled:
         KubeCPUOvercommit: true
+        KubeHpaMaxedOut: true
         KubeMemoryOvercommit: true
     alertmanager:
       route:

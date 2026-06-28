@@ -19,6 +19,8 @@ spec:
       existingSecret: redis-secret
       existingSecretPasswordKey: redis-password
     master:
+      containerSecurityContext:
+        readOnlyRootFilesystem: false
       persistence:
         enabled: true
         storageClass: ceph-block

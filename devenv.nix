@@ -1,6 +1,15 @@
-{ config, pkgs, ... }:
+{
+  config,
+  inputs,
+  pkgs,
+  ...
+}:
 
 let
+  unstable = import inputs.nixpkgs-unstable {
+    inherit (pkgs) system;
+  };
+
   chaski = pkgs.buildGoModule {
     pname = "chaski";
     version = "0.2.0";
@@ -25,7 +34,7 @@ in
 {
   packages = with pkgs; [
     chaski
-    just
+    unstable.just
     minijinja
     oxfmt
     vals

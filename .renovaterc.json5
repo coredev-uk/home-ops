@@ -104,6 +104,14 @@
       },
       minimumGroupSize: 2,
     },
+    // Changelog rules
+    {
+      description: "Use Frigate GitHub releases for changelogs",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/blakeblackshear/frigate"],
+      sourceUrl: "https://github.com/blakeblackshear/frigate",
+      changelogUrl: "https://github.com/blakeblackshear/frigate/releases",
+    },
     // Labeling rules
     {
       matchUpdateTypes: ["major"],

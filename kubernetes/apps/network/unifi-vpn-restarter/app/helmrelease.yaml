@@ -1,0 +1,67 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: unifi-vpn-restarter
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: unifi-vpn-restarter
+  interval: 1h
+  values:
+    controllers:
+      unifi-vpn-restarter:
+        type: cronjob
+        cronjob:
+          schedule: "0 3 * * 0"
+          backoffLimit: 2
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            image:
+              repository: docker.io/curlimages/curl
+              tag: 8.14.1@sha256:e4618c47d1f3c5446937eca7fc516085121b3ab3672bd97935898e97d2662532
+            command:
+              - /bin/sh
+              - -c
+              - |
+                set -e
+                BASE="https://unifi.internal"
+                SITE="default"
+                ID="699387394169ddacaf400dd6"
+                URL="$BASE/proxy/network/api/s/$SITE/rest/networkconf/$ID"
+
+                echo "Disabling ProtonVPN WireGuard client..."
+                curl -sf -X PUT -H "X-API-KEY: $UNIFI_API_KEY" -H "Content-Type: application/json" \
+                  -d '{"enabled": false}' "$URL" -k -o /dev/null
+
+                sleep 5
+
+                echo "Re-enabling ProtonVPN WireGuard client..."
+                curl -sf -X PUT -H "X-API-KEY: $UNIFI_API_KEY" -H "Content-Type: application/json" \
+                  -d '{"enabled": true}' "$URL" -k -o /dev/null
+
+                echo "Done. VPN tunnel reconnected."
+            envFrom:
+              - secretRef:
+                  name: unifi-vpn-restarter-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: {drop: ["ALL"]}
+            resources:
+              requests:
+                cpu: 5m
+              limits:
+                memory: 32Mi
+        pod:
+          restartPolicy: Never
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000

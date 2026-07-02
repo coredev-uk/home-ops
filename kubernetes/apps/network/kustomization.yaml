@@ -18,4 +18,5 @@ resources:
   - ./pihole/ks.yaml
   - ./pihole-dns/ks.yaml
   - ./tailscale-router/ks.yaml
+  - ./unifi-vpn-restarter/ks.yaml
   - ./wireguard-client/ks.yaml

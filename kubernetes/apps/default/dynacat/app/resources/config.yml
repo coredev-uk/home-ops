@@ -73,10 +73,20 @@ pages:
       - size: small
         widgets:
           - type: calendar
+            hosts:
+              - url: radarr:http://radarr.default.svc.cluster.local
+                token: ${RADARR_API_KEY}
+                public-url: https://radarr.hera.ac
+              - url: sonarr:http://sonarr.default.svc.cluster.local
+                token: ${SONARR_API_KEY}
+                public-url: https://sonarr.hera.ac
 
           - type: weather
             location: ${WEATHER_LOCATION}
             show-area-name: true
+
+          - type: speedtest
+            update-interval: 6h
 
           - type: server-stats
             title: Cluster Nodes
@@ -122,6 +132,16 @@ pages:
               - title: Amazon
                 shortcut: "!a"
                 url: https://www.amazon.co.uk/s?k={QUERY}
+
+          - type: latest-media
+            title: Recently Added
+            update-interval: 30m
+            item-count: 12
+            columns: 4
+            hosts:
+              - url: plex:http://plex.default.svc.cluster.local:32400
+                token: ${PLEX_TOKEN}
+                public-url: https://plex.hera.ac
 
           - type: bookmarks
             title: Services
@@ -245,21 +265,6 @@ pages:
             commits-limit: 5
             cache: 1h
 
-          - type: custom-api
-            title: Alertmanager
-            title-icon: si:prometheus
-            cache: 2m
-            url: https://kromgo.hera.ac/cluster_alert_count
-            template: |
-              {{ $count := .JSON.String "message" }}
-              <div class="flex items-center justify-between gap-10">
-                <div>
-                  <p class="size-h3 {{ if eq $count "0" }}color-positive{{ else }}color-negative{{ end }}">{{ $count }}</p>
-                  <p class="size-h6 color-paragraph">active alerts</p>
-                </div>
-                <a class="color-highlight text-right" href="https://alertmanager.hera.ac" target="_blank" rel="noreferrer">Open</a>
-              </div>
-
           - type: to-do
             id: home-ops
             storage: server
@@ -307,6 +312,11 @@ pages:
 
       - size: small
         widgets:
+          - type: playing
+            hosts:
+              - url: plex:http://plex.default.svc.cluster.local:32400
+                token: ${PLEX_TOKEN}
+
           - type: dns-stats
             service: pihole-v6
             url: http://pihole-web.network.svc.cluster.local

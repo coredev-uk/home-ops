@@ -24,7 +24,7 @@ spec:
           app:
             image:
               repository: docker.io/curlimages/curl
-              tag: 8.14.1@sha256:e4618c47d1f3c5446937eca7fc516085121b3ab3672bd97935898e97d2662532
+              tag: 8.21.0@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db
             command:
               - /bin/sh
               - -c

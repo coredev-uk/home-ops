@@ -133,16 +133,6 @@ pages:
                 shortcut: "!a"
                 url: https://www.amazon.co.uk/s?k={QUERY}
 
-          - type: latest-media
-            title: Recently Added
-            update-interval: 30m
-            item-count: 12
-            columns: 4
-            hosts:
-              - url: plex:http://plex.default.svc.cluster.local:32400
-                token: ${PLEX_TOKEN}
-                public-url: https://plex.hera.ac
-
           - type: bookmarks
             title: Services
             groups:
@@ -334,6 +324,16 @@ pages:
             hide-inactive: true
             collapse-after: 5
             update-interval: 30s
+
+          - type: latest-media
+            title: Recently Added
+            update-interval: 30m
+            item-count: 12
+            columns: 4
+            hosts:
+              - url: plex:http://plex.default.svc.cluster.local:32400
+                token: ${PLEX_TOKEN}
+                public-url: https://plex.hera.ac
 
           - type: twitch-channels
             channels:

@@ -125,6 +125,8 @@ pages:
             autofocus: true
             new-tab: true
             search-engine: google
+            autocomplete: true
+            autocomplete-provider: brave
             bangs:
               - title: YouTube
                 shortcut: "!y"

@@ -7,13 +7,23 @@ libraries:
       use_separator: false
     collection_files:
       - file: config/Movies.yml
-      - default: basic
+      - file: config/Seasonal.yml
+      # Charts
       - default: tmdb
       - default: imdb
-      - default: tautulli
+        template_variables:
+          use_lowest: false
+      # Awards (BAFTA first — UK priority)
+      - default: bafta
+      - default: oscars
+      # Franchise & universe collections
+      - default: universe
+      - default: franchise
+      # Streaming services (UK region)
       - default: streaming
         template_variables:
           region: GB
+      # Seasonal (UK-adjusted — US holidays excluded, Mothering Sunday handled in Seasonal.yml)
       - default: seasonal
         template_variables:
           exclude:
@@ -25,24 +35,72 @@ libraries:
             - thanksgiving
             - veteran
             - memorial
-      - default: universe
+            - mother
+      # Browse by
+      - default: decade
       - default: studio
       - default: genre
+      - default: content_rating_uk
+
+    overlay_files:
+      - default: ribbon
+      - default: resolution
+      - default: ratings
+        template_variables:
+          rating1: critic
+          rating1_image: imdb
+          rating2: audience
+          rating2_image: rt_popcorn
+          rating3: user
+          rating3_image: tmdb
+
+    operations:
+      mass_critic_rating_update: imdb
+      mass_audience_rating_update: mdb_tomatoesaudience
+      mass_user_rating_update: tmdb
+      delete_collections_with_less: 2
+
   TV Programmes:
     template_variables:
       collection_mode: hide
       use_separator: false
     collection_files:
       - file: config/TV.yml
-      - default: basic
+      # Charts
       - default: tmdb
       - default: imdb
-      - default: tautulli
+        template_variables:
+          use_lowest: false
+      # Streaming & network
       - default: streaming
         template_variables:
           region: GB
       - default: network
+      # Franchise
+      - default: franchise
+      # Browse by
+      - default: decade
       - default: genre
+      - default: content_rating_uk
+
+    overlay_files:
+      - default: status
+      - default: ribbon
+      - default: resolution
+      - default: ratings
+        template_variables:
+          rating1: critic
+          rating1_image: imdb
+          rating2: audience
+          rating2_image: rt_popcorn
+          use_rating3: false
+
+    operations:
+      mass_critic_rating_update: imdb
+      mass_audience_rating_update: mdb_tomatoesaudience
+      mass_user_rating_update: tmdb
+      mass_episode_critic_rating_update: imdb
+      delete_collections_with_less: 2
 
 settings:
   run_order:

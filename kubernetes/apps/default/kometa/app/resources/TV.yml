@@ -1,34 +1,73 @@
 ---
 collections:
+
+  # ── Row 1: What's new ──────────────────────────────────────────────────────
+
   Recently Added TV:
     plex_search:
       type: show
       sort_by: added.desc
       limit: 25
     collection_order: custom
+    sort_title: "!001_Recently Added"
     visible_home: true
     visible_shared: true
     visible_library: true
-    summary: Recently added TV programmes in Plex.
+    summary: The latest TV programmes added to your Plex library.
 
-  Recently Released Episodes:
-    builder_level: episode
-    plex_search:
-      type: episode
-      sort_by: release.desc
-      limit: 25
-    collection_order: custom
-    visible_home: true
-    visible_shared: true
-    visible_library: true
-    summary: Recently released episodes already available in Plex.
+  # ── Row 2: Popular ─────────────────────────────────────────────────────────
 
   Popular on Plex - TV:
     tautulli_popular:
       list_days: 30
       list_size: 25
     collection_order: custom
+    sort_title: "!010_Popular on Plex"
     visible_home: true
     visible_shared: true
     visible_library: true
-    summary: TV programmes watched most often on Plex in the last 30 days.
+    summary: TV programmes watched most on Plex in the last 30 days.
+
+  # ── Row 3: Homegrown TV ────────────────────────────────────────────────────
+
+  Crime Drama:
+    imdb_search:
+      country: GB
+      genre: crime
+      genre: drama
+      rating.gte: 7.5
+      votes.gte: 10000
+      language: en
+      type: tv_series
+    sort_title: "!020_Crime Drama"
+    collection_order: critic_rating.desc
+    visible_home: false
+    visible_library: true
+    summary: The finest crime drama — from Line of Duty to Broadchurch.
+
+  Comedy Greats:
+    imdb_search:
+      country: GB
+      genre: comedy
+      rating.gte: 7.5
+      votes.gte: 5000
+      language: en
+      type: tv_series
+    sort_title: "!021_Comedy Greats"
+    collection_order: critic_rating.desc
+    visible_home: false
+    visible_library: true
+    summary: Classic and modern comedy series.
+
+  Prestige Drama:
+    imdb_search:
+      genre: drama
+      rating.gte: 8.5
+      votes.gte: 50000
+      language: en
+      type: tv_series
+    sort_title: "!030_Prestige Drama"
+    collection_order: critic_rating.desc
+    visible_home: false
+    visible_library: true
+    summary: Critically acclaimed drama series worth your time.

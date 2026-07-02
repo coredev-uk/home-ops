@@ -71,5 +71,7 @@ spec:
                 subPath: Movies.yml
               - path: /config/TV.yml
                 subPath: TV.yml
+              - path: /config/Seasonal.yml
+                subPath: Seasonal.yml
       tmp:
         type: emptyDir

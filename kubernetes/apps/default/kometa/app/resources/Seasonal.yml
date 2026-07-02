@@ -1,0 +1,73 @@
+---
+# UK-specific seasonal collections for the Films library.
+# Mothering Sunday replaces the US Mother's Day (excluded from the seasonal default).
+# The seasonal default handles: New Year, Valentine's, Easter, Father's Day, Halloween, Christmas.
+collections:
+
+  "Mothering Sunday":
+    schedule: range(03/01-03/31)
+    imdb_search:
+      genre: drama
+      keyword: mother
+      rating.gte: 6.5
+      votes.gte: 15000
+      language: en
+    limit: 25
+    collection_order: critic_rating.desc
+    sort_title: "!060_Mothering Sunday"
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Heartfelt films for Mothering Sunday, celebrated in March.
+
+  "St Patrick's Day":
+    schedule: range(03/12-03/18)
+    tmdb_discover:
+      with_origin_country: IE
+      sort_by: vote_average.desc
+      vote_count.gte: 200
+      with_original_language: en
+    imdb_search:
+      keyword: ireland
+      rating.gte: 6.5
+      votes.gte: 10000
+      language: en
+    limit: 25
+    collection_order: critic_rating.desc
+    sort_title: "!061_St Patricks Day"
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Irish films and films set in Ireland, for St Patrick's Day.
+
+  "Bonfire Night":
+    schedule: range(10/25-11/06)
+    imdb_search:
+      genre: thriller
+      rating.gte: 7.0
+      votes.gte: 30000
+      language: en
+    tmdb_movie:
+      - 11104  # V for Vendetta
+    limit: 25
+    collection_order: critic_rating.desc
+    sort_title: "!062_Bonfire Night"
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: Dark, gripping thrillers for Bonfire Night — November 5th, remember, remember.
+
+  "Remembrance Day":
+    schedule: range(10/29-11/12)
+    imdb_search:
+      genre: war
+      rating.gte: 7.0
+      votes.gte: 20000
+      language: en
+    limit: 25
+    collection_order: critic_rating.desc
+    sort_title: "!063_Remembrance Day"
+    visible_home: true
+    visible_shared: true
+    visible_library: true
+    summary: War films honouring the fallen, for Remembrance Sunday and Armistice Day.

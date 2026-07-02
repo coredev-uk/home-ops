@@ -1,33 +1,97 @@
 ---
 collections:
-  Recently Added Movies:
+
+  # ── Row 1: What's new ──────────────────────────────────────────────────────
+
+  Recently Added Films:
     plex_search:
       type: movie
       sort_by: added.desc
       limit: 25
     collection_order: custom
+    sort_title: "!001_Recently Added"
     visible_home: true
     visible_shared: true
     visible_library: true
-    summary: Recently added films in Plex.
+    summary: The latest films added to your Plex library.
 
-  Recently Released Movies:
+  Newly Released Films:
     plex_search:
       type: movie
       sort_by: release.desc
+      filters:
+        release.after: 1 year ago
       limit: 25
     collection_order: custom
+    sort_title: "!002_Newly Released"
     visible_home: true
     visible_shared: true
     visible_library: true
-    summary: Recently released films already available in Plex.
+    summary: Films released in the last year already in your library.
+
+  # ── Row 2: Popular ─────────────────────────────────────────────────────────
 
   Popular on Plex - Films:
     tautulli_popular:
       list_days: 30
       list_size: 25
     collection_order: custom
+    sort_title: "!010_Popular on Plex"
     visible_home: true
     visible_shared: true
     visible_library: true
-    summary: Films watched most often on Plex in the last 30 days.
+    summary: Films watched most on Plex in the last 30 days.
+
+  Highly Rated in Your Library:
+    plex_search:
+      type: movie
+      sort_by: critic_rating.desc
+      filters:
+        critic_rating.gte: 8.0
+      limit: 25
+    collection_order: custom
+    sort_title: "!011_Highly Rated"
+    visible_home: false
+    visible_library: true
+    summary: Films in your library rated 8.0 or above on IMDb.
+
+  # ── Row 3: Homegrown Cinema ────────────────────────────────────────────────
+
+  Classic Cinema:
+    imdb_search:
+      country: GB
+      release.before: 1990-01-01
+      rating.gte: 7.5
+      votes.gte: 15000
+      language: en
+    sort_title: "!020_Classic Cinema"
+    collection_order: critic_rating.desc
+    visible_home: false
+    visible_library: true
+    summary: Essential homegrown films from before 1990.
+
+  Contemporary Cinema:
+    imdb_search:
+      country: GB
+      release.after: 1990-01-01
+      rating.gte: 7.0
+      votes.gte: 20000
+      language: en
+    sort_title: "!021_Contemporary Cinema"
+    collection_order: critic_rating.desc
+    visible_home: false
+    visible_library: true
+    summary: The best of homegrown filmmaking from 1990 onwards.
+
+  Comedy Greats:
+    imdb_search:
+      country: GB
+      genre: comedy
+      rating.gte: 7.0
+      votes.gte: 10000
+      language: en
+    sort_title: "!022_Comedy Greats"
+    collection_order: critic_rating.desc
+    visible_home: false
+    visible_library: true
+    summary: Great comedies — from Ealing to Edgar Wright.

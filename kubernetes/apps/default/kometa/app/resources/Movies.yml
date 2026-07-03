@@ -5,7 +5,6 @@ collections:
 
   Recently Added Films:
     plex_search:
-      type: movie
       sort_by: added.desc
       limit: 25
     collection_order: custom
@@ -17,10 +16,9 @@ collections:
 
   Newly Released Films:
     plex_search:
-      type: movie
-      sort_by: release.desc
-      filters:
-        release.after: 1 year ago
+      all:
+        originally_available.after: 1 year ago
+      sort_by: originally_available.desc
       limit: 25
     collection_order: custom
     sort_title: "!002_Newly Released"
@@ -44,10 +42,9 @@ collections:
 
   Highly Rated in Your Library:
     plex_search:
-      type: movie
+      all:
+        critic_rating.gte: 8
       sort_by: critic_rating.desc
-      filters:
-        critic_rating.gte: 8.0
       limit: 25
     collection_order: custom
     sort_title: "!011_Highly Rated"

@@ -5,7 +5,6 @@ collections:
 
   Recently Added TV:
     plex_search:
-      type: show
       sort_by: added.desc
       limit: 25
     collection_order: custom
@@ -34,7 +33,6 @@ collections:
     imdb_search:
       country: GB
       genre: crime
-      genre: drama
       rating.gte: 7.5
       votes.gte: 10000
       language: en

@@ -5,6 +5,8 @@ collections:
 
   Recently Added Films:
     plex_search:
+      all:
+        type: movie
       sort_by: added.desc
       limit: 25
     collection_order: custom
@@ -17,7 +19,7 @@ collections:
   Newly Released Films:
     plex_search:
       all:
-        originally_available.after: 1 year ago
+        type: movie
       sort_by: originally_available.desc
       limit: 25
     collection_order: custom
@@ -25,7 +27,7 @@ collections:
     visible_home: true
     visible_shared: true
     visible_library: true
-    summary: Films released in the last year already in your library.
+    summary: Films sorted by release date — the newest first.
 
   # ── Row 2: Popular ─────────────────────────────────────────────────────────
 

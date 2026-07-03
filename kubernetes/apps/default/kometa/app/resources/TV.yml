@@ -6,7 +6,7 @@ collections:
   Recently Added TV:
     plex_search:
       all:
-        type: show
+        year.gte: 1900
       sort_by: added.desc
       limit: 25
     collection_order: custom

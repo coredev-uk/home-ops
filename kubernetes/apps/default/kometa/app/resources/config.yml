@@ -42,18 +42,6 @@ libraries:
       - default: genre
       - default: content_rating_uk
 
-    overlay_files:
-      - default: ribbon
-      - default: resolution
-      - default: ratings
-        template_variables:
-          rating1: critic
-          rating1_image: imdb
-          rating2: audience
-          rating2_image: rt_popcorn
-          rating3: user
-          rating3_image: tmdb
-
     operations:
       mass_critic_rating_update: imdb
       mass_audience_rating_update: mdb_tomatoesaudience
@@ -82,18 +70,6 @@ libraries:
       - default: decade
       - default: genre
       - default: content_rating_uk
-
-    overlay_files:
-      - default: status
-      - default: ribbon
-      - default: resolution
-      - default: ratings
-        template_variables:
-          rating1: critic
-          rating1_image: imdb
-          rating2: audience
-          rating2_image: rt_popcorn
-          use_rating3: false
 
     operations:
       mass_critic_rating_update: imdb

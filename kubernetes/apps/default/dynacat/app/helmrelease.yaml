@@ -84,6 +84,9 @@ spec:
             port: *port
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /api/healthz
         hostnames:
           - home.hera.ac
         parentRefs:

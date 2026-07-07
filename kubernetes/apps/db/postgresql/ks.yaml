@@ -6,6 +6,8 @@ metadata:
   name: postgresql
 spec:
   dependsOn:
+    - name: kopiur
+      namespace: kopiur-system
     - name: rook-ceph-cluster
       namespace: rook-ceph
   interval: 1h

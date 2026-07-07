@@ -14,27 +14,25 @@ spec:
         nfs:
           server: expanse.internal
           path: /var/nfs/shared/Kopiur
-  create:
-    enabled: true
-  credentialProjection:
-    allowed: true
   encryption:
     passwordSecretRef:
       name: kopiur-nas-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
-  identityDefaults:
-    hostnameExpr: namespace
-    usernameExpr: namespace + '-' + policyName
   moverDefaults:
     cache:
       capacity: 1Mi
       mode: Ephemeral
       storageClassName: openebs-hostpath
     podSecurityContext:
-      fsGroup: 988
+      fsGroup: 1000
       fsGroupChangePolicy: OnRootMismatch
+    scratch:
+      capacity: 1Mi
+      storageClassName: openebs-hostpath
     securityContext:
-      runAsUser: 988
-      runAsGroup: 988
+      runAsUser: 1000
+      runAsGroup: 1000
     ttlSecondsAfterFinished: 300
+  scheduleDefaults:
+    timezone: Europe/London

@@ -6,7 +6,7 @@ metadata:
   name: tailscale-router
 spec:
   components:
-    - ../../../../components/volsync
+    - ../../../../components/kopiur/backup
   dependsOn:
     - name: headscale
       namespace: network
@@ -17,7 +17,6 @@ spec:
   postBuild:
     substitute:
       APP: tailscale-router
-      VOLSYNC_CAPACITY: 250Mi
   prune: true
   sourceRef:
     kind: GitRepository

@@ -15,6 +15,7 @@ spec:
       prComments: true
       publicUrl: https://{{ .Release.Name }}.hera.ac
       mcp: true
+      verifyImages: true
     secret:
       existingSecret: konflate-webhook-token-secret
     httpRoute:

@@ -54,6 +54,9 @@ spec:
             port: 9000
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:

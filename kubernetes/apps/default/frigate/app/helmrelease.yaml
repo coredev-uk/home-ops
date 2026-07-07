@@ -89,6 +89,9 @@ spec:
             interval: 15s
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /api/version
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:

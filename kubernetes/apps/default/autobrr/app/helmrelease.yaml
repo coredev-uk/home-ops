@@ -88,6 +88,9 @@ spec:
           - port: metrics
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /api/healthz/readiness
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:

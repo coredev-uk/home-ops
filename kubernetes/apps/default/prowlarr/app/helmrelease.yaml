@@ -129,6 +129,9 @@ spec:
             port: *byparrPort
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /ping
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:

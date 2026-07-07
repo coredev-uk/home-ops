@@ -124,6 +124,9 @@ spec:
             port: *port
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /
         hostnames:
           - changes.hera.ac
         parentRefs:

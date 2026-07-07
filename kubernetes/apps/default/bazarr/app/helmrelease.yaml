@@ -69,6 +69,9 @@ spec:
             port: *port
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /api/system/ping
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:

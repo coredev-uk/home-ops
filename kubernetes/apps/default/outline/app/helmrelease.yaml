@@ -93,6 +93,10 @@ spec:
             port: *port
     route:
       app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["len([BODY]) == 0"]
+            path: /_health
         hostnames:
           - docs.hera.ac
         parentRefs:

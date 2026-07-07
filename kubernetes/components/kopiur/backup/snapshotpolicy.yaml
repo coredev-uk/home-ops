@@ -16,6 +16,9 @@ spec:
   sources:
     - pvc:
         name: ${APP}
+  errorHandling:
+    ignoreFileErrors: true
+    ignoreDirErrors: true
   verification:
     deep:
       schedule:

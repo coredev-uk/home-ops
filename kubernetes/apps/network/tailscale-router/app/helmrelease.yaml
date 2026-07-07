@@ -12,6 +12,9 @@ spec:
   values:
     defaultPodOptions:
       automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
     controllers:
       tailscale-router:
         strategy: Recreate

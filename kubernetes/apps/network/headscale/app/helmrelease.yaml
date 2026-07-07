@@ -10,6 +10,10 @@ spec:
     name: headscale
   interval: 1h
   values:
+    defaultPodOptions:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
     controllers:
       headscale:
         strategy: Recreate

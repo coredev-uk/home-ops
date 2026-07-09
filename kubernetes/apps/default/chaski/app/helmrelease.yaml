@@ -36,12 +36,17 @@ spec:
             {{- $parts := concat (splitList "|||" .payload.message) (list "") -}}
             {{- $url := index $parts 0 | trim -}}
             {{- $diff := index $parts 1 | trim -}}
+            {{- $data := dict "removed" "" "added" "" -}}
             {{- range splitList "\n" $diff -}}
-            {{- if hasPrefix "(into)" . }}<font color="#27ae60">+ {{ trimPrefix "(into) " . }}</font><br>
-            {{- else if hasPrefix "(changed)" . }}<font color="#e74c3c">- {{ trimPrefix "(changed) " . }}</font><br>
-            {{- else if . }}{{ . }}<br>{{ end -}}
+            {{- if hasPrefix "(changed) " . -}}{{- $_ := set $data "removed" (printf "%s%s\n" (get $data "removed") (trimPrefix "(changed) " .)) -}}
+            {{- else if hasPrefix "(into) " . -}}{{- $_ := set $data "added" (printf "%s%s\n" (get $data "added") (trimPrefix "(into) " .)) -}}
             {{- end -}}
-            <br><a href="{{ $url }}">{{ $url }}</a>
+            {{- end -}}
+            {{- $removed := get $data "removed" | trim -}}
+            {{- $added := get $data "added" | trim -}}
+            {{- if $removed }}<font color="#e74c3c"><b>－ Previous</b></font><br><i>{{ $removed | replace "\n" "<br>" | ellipsis 400 }}</i>{{ end -}}
+            {{- if $added }}<br><br><font color="#27ae60"><b>＋ Updated</b></font><br><i>{{ $added | replace "\n" "<br>" | ellipsis 400 }}</i>{{ end -}}
+            <br><br><a href="{{ $url }}">{{ $url }}</a>
           params:
             format: html
             priority: normal

@@ -31,19 +31,21 @@ spec:
       routes:
         changedetection-pushover:
           target: change-detection
-          title: '{{ .payload.title | default (.payload.watch_title | default (.payload.page_title | default (.payload.website_title | default (.payload.url | default (.payload.watch_url | default "changedetection.io"))))) }}'
+          title: '{{ $d := .payload.message | fromJson }}{{ $d.title | default (.payload.title | default "changedetection.io") }}{{ if $d.diff_added }} has changed to {{ $d.diff_added | ellipsis 80 }}{{ else }} has changed{{ end }}'
           message: |-
-            {{- $title := .payload.title | default (.payload.watch_title | default (.payload.page_title | default (.payload.website_title | default (.payload.url | default (.payload.watch_url | default "changedetection.io"))))) -}}
-            {{- $url := .payload.url | default (.payload.watch_url | default (.payload.source_url | default "https://changes.hera.ac")) -}}
-            {{- $added := .payload.diff_added | default .payload.added -}}
-            {{- $removed := .payload.diff_removed | default .payload.removed -}}
-            {{- $diff := .payload.diff | default (.payload.diff_full | default (.payload.message | default (.payload.body | default .payload.current_snapshot))) -}}
-            <b>{{ $title }}</b><br><a href="{{ $url }}">{{ $url }}</a>{{ if $added }}<br><br><b>Added</b><br><pre>{{ $added }}</pre>{{ end }}{{ if $removed }}<br><br><b>Removed</b><br><pre>{{ $removed }}</pre>{{ end }}{{ if and (not $added) (not $removed) $diff }}<br><br><b>Change</b><br><pre>{{ $diff }}</pre>{{ end }}
+            {{- $d := .payload.message | fromJson -}}
+            {{- $url := $d.url | default ($d.watch_url | default "https://changes.hera.ac") -}}
+            {{- $added := $d.diff_added -}}
+            {{- $removed := $d.diff_removed -}}
+            <a href="{{ $url }}">{{ $url }}</a>
+            {{- if $removed }}<br><br><font color="#e74c3c"><b>－ Previous</b></font><br><i>{{ $removed | ellipsis 400 }}</i>{{ end -}}
+            {{- if $added }}<br><br><font color="#27ae60"><b>＋ Updated</b></font><br><i>{{ $added | ellipsis 400 }}</i>{{ end -}}
+            {{- if and (not $added) (not $removed) }}<br><br><b>Changes</b><br><i>{{ $d.diff | default $d.current_snapshot | ellipsis 600 }}</i>{{ end }}
           params:
-            priority: normal
-            url: '{{ .payload.url | default (.payload.watch_url | default (.payload.source_url | default "https://changes.hera.ac")) }}'
-            url_title: View Watch
             format: html
+            priority: normal
+            url: '{{ (.payload.message | fromJson).url | default ((.payload.message | fromJson).watch_url | default "https://changes.hera.ac") }}'
+            url_title: View Page
         radarr-download:
           target: radarr
           title: Movie {{ if .payload.isUpgrade }}Upgraded{{ else }}Added{{ end }}

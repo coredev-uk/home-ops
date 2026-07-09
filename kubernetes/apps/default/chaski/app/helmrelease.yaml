@@ -51,7 +51,7 @@ spec:
             format: html
             priority: normal
             url: '{{ splitList "|||" .payload.message | first | trim }}'
-            url_title: View Page
+            url_title: View-Page
         radarr-download:
           target: radarr
           title: Movie {{ if .payload.isUpgrade }}Upgraded{{ else }}Added{{ end }}
@@ -63,7 +63,7 @@ spec:
             format: html
             priority: low
             url: "{{ .payload.applicationUrl }}/movie/{{ .payload.movie.tmdbId }}"
-            url_title: View Movie
+            url_title: View-Movie
           whenExpr: payload.eventType == "Download"
         radarr-manual:
           target: radarr
@@ -75,7 +75,7 @@ spec:
             format: html
             priority: high
             url: "{{ .payload.applicationUrl }}/activity/queue"
-            url_title: View Queue
+            url_title: View-Queue
           whenExpr: payload.eventType == "ManualInteractionRequired"
         sonarr-download:
           target: sonarr
@@ -88,7 +88,7 @@ spec:
             format: html
             priority: low
             url: "{{ .payload.applicationUrl }}/series/{{ .payload.series.titleSlug }}"
-            url_title: View Series
+            url_title: View-Series
           whenExpr: payload.eventType == "Download"
         sonarr-manual:
           target: sonarr
@@ -100,7 +100,7 @@ spec:
             format: html
             priority: high
             url: "{{ .payload.applicationUrl }}/activity/queue"
-            url_title: View Queue
+            url_title: View-Queue
           whenExpr: payload.eventType == "ManualInteractionRequired"
     monitoring:
       serviceMonitor:

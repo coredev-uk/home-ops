@@ -33,15 +33,17 @@ spec:
           target: change-detection
           title: '{{ .payload.title | default "changedetection.io" }}'
           message: |-
-            {{- $lines := splitList "\n" .payload.message -}}
-            {{- $url := first $lines | trim -}}
-            {{- $content := rest $lines | join "<br>" | trim -}}
-            <a href="{{ $url }}">{{ $url }}</a>
-            {{- if $content }}<br><br><b>Changes</b><br><i>{{ $content | ellipsis 600 }}</i>{{ end }}
+            {{- $parts := concat (splitList "|||" .payload.message) (list "" "") -}}
+            {{- $url := index $parts 0 | trim -}}
+            {{- $added := index $parts 1 | trim -}}
+            {{- $removed := index $parts 2 | trim -}}
+            {{- if $removed }}<font color="#e74c3c"><b>－ Previous</b></font><br><i>{{ $removed | replace "\n" "<br>" | ellipsis 400 }}</i>{{ end -}}
+            {{- if $added }}<br><br><font color="#27ae60"><b>＋ Updated</b></font><br><i>{{ $added | replace "\n" "<br>" | ellipsis 400 }}</i>{{ end -}}
+            {{- if or $added $removed }}<br><br>{{ end }}<a href="{{ $url }}">{{ $url }}</a>
           params:
             format: html
             priority: normal
-            url: '{{ splitList "\n" .payload.message | first | trim }}'
+            url: '{{ splitList "|||" .payload.message | first | trim }}'
             url_title: View Page
         radarr-download:
           target: radarr

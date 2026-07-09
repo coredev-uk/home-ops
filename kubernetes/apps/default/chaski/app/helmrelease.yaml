@@ -31,20 +31,17 @@ spec:
       routes:
         changedetection-pushover:
           target: change-detection
-          title: '{{ $d := .payload.message | fromJSON }}{{ $d.title | default (.payload.title | default "changedetection.io") }}{{ if $d.diff_added }} has changed to {{ $d.diff_added | ellipsis 80 }}{{ else }} has changed{{ end }}'
+          title: '{{ .payload.title | default "changedetection.io" }}'
           message: |-
-            {{- $d := .payload.message | fromJSON -}}
-            {{- $url := $d.url | default ($d.watch_url | default "https://changes.hera.ac") -}}
-            {{- $added := $d.diff_added -}}
-            {{- $removed := $d.diff_removed -}}
+            {{- $lines := splitList "\n" .payload.message -}}
+            {{- $url := first $lines | trim -}}
+            {{- $content := rest $lines | join "<br>" | trim -}}
             <a href="{{ $url }}">{{ $url }}</a>
-            {{- if $removed }}<br><br><font color="#e74c3c"><b>－ Previous</b></font><br><i>{{ $removed | ellipsis 400 }}</i>{{ end -}}
-            {{- if $added }}<br><br><font color="#27ae60"><b>＋ Updated</b></font><br><i>{{ $added | ellipsis 400 }}</i>{{ end -}}
-            {{- if and (not $added) (not $removed) }}<br><br><b>Changes</b><br><i>{{ $d.diff | default $d.current_snapshot | ellipsis 600 }}</i>{{ end }}
+            {{- if $content }}<br><br><b>Changes</b><br><i>{{ $content | ellipsis 600 }}</i>{{ end }}
           params:
             format: html
             priority: normal
-            url: '{{ (.payload.message | fromJSON).url | default ((.payload.message | fromJSON).watch_url | default "https://changes.hera.ac") }}'
+            url: '{{ splitList "\n" .payload.message | first | trim }}'
             url_title: View Page
         radarr-download:
           target: radarr

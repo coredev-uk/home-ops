@@ -31,9 +31,9 @@ spec:
       routes:
         changedetection-pushover:
           target: change-detection
-          title: '{{ $d := .payload.message | fromJson }}{{ $d.title | default (.payload.title | default "changedetection.io") }}{{ if $d.diff_added }} has changed to {{ $d.diff_added | ellipsis 80 }}{{ else }} has changed{{ end }}'
+          title: '{{ $d := .payload.message | fromJSON }}{{ $d.title | default (.payload.title | default "changedetection.io") }}{{ if $d.diff_added }} has changed to {{ $d.diff_added | ellipsis 80 }}{{ else }} has changed{{ end }}'
           message: |-
-            {{- $d := .payload.message | fromJson -}}
+            {{- $d := .payload.message | fromJSON -}}
             {{- $url := $d.url | default ($d.watch_url | default "https://changes.hera.ac") -}}
             {{- $added := $d.diff_added -}}
             {{- $removed := $d.diff_removed -}}
@@ -44,7 +44,7 @@ spec:
           params:
             format: html
             priority: normal
-            url: '{{ (.payload.message | fromJson).url | default ((.payload.message | fromJson).watch_url | default "https://changes.hera.ac") }}'
+            url: '{{ (.payload.message | fromJSON).url | default ((.payload.message | fromJSON).watch_url | default "https://changes.hera.ac") }}'
             url_title: View Page
         radarr-download:
           target: radarr

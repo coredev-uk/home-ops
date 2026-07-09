@@ -31,7 +31,7 @@ spec:
       routes:
         changedetection-pushover:
           target: change-detection
-          title: '{{ .payload.title | default "changedetection.io" }}'
+          title: '{{ .payload.title | default "changes.hera.ac" }}'
           message: |-
             {{- $parts := concat (splitList "|||" .payload.message) (list "" "") -}}
             {{- $url := index $parts 0 | trim -}}

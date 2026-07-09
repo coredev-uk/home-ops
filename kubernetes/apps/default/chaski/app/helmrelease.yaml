@@ -37,9 +37,9 @@ spec:
             {{- $url := index $parts 0 | trim -}}
             {{- $diff := index $parts 1 | trim -}}
             {{- range splitList "\n" $diff -}}
-            {{- if hasPrefix "(into)" . }}<font color="#27ae60">{{ . }}</font><br>
-            {{- else if hasPrefix "(changed)" . }}<font color="#e74c3c">{{ . }}</font><br>
-            {{- else }}{{ . }}<br>{{ end -}}
+            {{- if hasPrefix "(into)" . }}<font color="#27ae60">+ {{ trimPrefix "(into) " . }}</font><br>
+            {{- else if hasPrefix "(changed)" . }}<font color="#e74c3c">- {{ trimPrefix "(changed) " . }}</font><br>
+            {{- else if . }}{{ . }}<br>{{ end -}}
             {{- end -}}
             <br><a href="{{ $url }}">{{ $url }}</a>
           params:

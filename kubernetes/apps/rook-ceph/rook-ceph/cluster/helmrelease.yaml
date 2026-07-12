@@ -12,6 +12,8 @@ spec:
   timeout: 10m
   values:
     cephClusterSpec:
+      cephVersion:
+        image: quay.io/ceph/ceph:v20.2.2
       # TODO: Remove warnings when ssd issues fixed
       cephConfig:
         global:

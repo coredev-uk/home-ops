@@ -49,7 +49,7 @@ spec:
         nodes:
           - name: hyperion-0
             devices:
-              - name: /dev/disk/by-id/nvme-CT1000P3PSSD8_24014607D6A0
+              - name: /dev/disk/by-id/nvme-eui.e8238fa6bf530001001b448b42f7559e
           - name: hyperion-1
             devices:
               - name: /dev/disk/by-id/wwn-0x5001b444a4337ebf

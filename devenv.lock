@@ -64,11 +64,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1783427201,
-        "narHash": "sha256-oaA0ap7w1XF1P5w4IpP+F4XfLwww2R9ht8MW1auaOms=",
+        "lastModified": 1783972995,
+        "narHash": "sha256-BIti2dNiCWjOpemU6z0sKaSa214XwdynXckvX5Sirkk=",
         "ref": "refs/heads/main",
-        "rev": "821e0be605bd00b1aaf6113406c4babc3ce12d23",
-        "revCount": 6836,
+        "rev": "32f6747aabbd5aeb7413bae53d7e01e224ec77bc",
+        "revCount": 6850,
         "type": "git",
         "url": "ssh://git@github.com/cachix/devenv.git"
       },
@@ -208,11 +208,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1780381423,
-        "narHash": "sha256-S1BIJiQF4lRtJUKak0e97JwNvbe69/LW78YJJuB18Qk=",
+        "lastModified": 1783935112,
+        "narHash": "sha256-IAQ14nteIKXAz4cd75UcZrsHGEVJ7QNrkUwX9rmeZ/Y=",
         "owner": "nix-community",
         "repo": "nixd",
-        "rev": "0e07c08c448a2995e7793d1098437b29bbe80b02",
+        "rev": "a64cd33e53b316b6b092ea0a966640cd2309bf3d",
         "type": "github"
       },
       "original": {
@@ -276,11 +276,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1783279667,
-        "narHash": "sha256-/NAkDSsve+GNM0Bt6tleJdCGfsTlK89nPjkVOzZMo0s=",
+        "lastModified": 1783915482,
+        "narHash": "sha256-FmieJB8/OUvNxbkboi7+IGfIuSXY3nF/hZQm8kD0r50=",
         "ref": "nixpkgs-unstable",
-        "rev": "f205b5574fd0cb7da5b702a2da51507b7f4fdd1b",
-        "revCount": 1028110,
+        "rev": "6cdc7fc76e8bf7fde9fa43a849fcaaa70e230dee",
+        "revCount": 1033616,
         "type": "git",
         "url": "ssh://git@github.com/NixOS/nixpkgs.git"
       },

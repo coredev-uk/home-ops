@@ -115,3 +115,6 @@ spec:
             readOnly: true
       tmp:
         type: emptyDir
+        globalMounts:
+          - path: /tmp
+          - path: /transcode

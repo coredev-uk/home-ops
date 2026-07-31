@@ -82,4 +82,4 @@ spec:
       config:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
-          - path: /var/lib/homebridge
+          - path: /homebridge

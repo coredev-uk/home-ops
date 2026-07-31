@@ -26,7 +26,7 @@ spec:
           app:
             image:
               repository: tailscale/tailscale
-              tag: v1.98.9@sha256:f15d5d3f4a68773a853180b72496f70ba614b64de0878c43fe3da39fe0afba47
+              tag: v1.98.10@sha256:cdf5612ded5be1344f1a704b8c5e53496db97376bb533e5e15f141e48bf60cc0
             env:
               TS_EXTRA_ARGS: --login-server=http://headscale.network.svc.cluster.local:8080 --advertise-routes=10.244.0.0/16,10.96.0.0/12,192.168.20.0/24 --accept-dns=false --snat-subnet-routes=true
               TS_STATE_DIR: /var/lib/tailscale

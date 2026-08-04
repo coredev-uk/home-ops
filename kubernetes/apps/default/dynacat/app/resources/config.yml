@@ -194,6 +194,9 @@ pages:
                   - title: Sonarr
                     url: https://sonarr.hera.ac
                     icon: si:sonarr
+                  - title: Sportarr
+                    url: https://sportarr.hera.ac
+                    icon: sh:sportarr
                   - title: Maintainerr
                     url: https://maintainerr.hera.ac
                     icon: sh:maintainerr

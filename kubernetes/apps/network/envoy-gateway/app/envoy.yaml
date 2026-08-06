@@ -177,6 +177,11 @@ spec:
       brotli: {}
     - type: Gzip
       gzip: {}
+  connection:
+    bufferLimit: 4Mi
+  http2:
+    initialStreamWindowSize: 4Mi
+    initialConnectionWindowSize: 4Mi
   retry:
     numRetries: 2
     retryOn:
@@ -224,10 +229,14 @@ spec:
     xForwardedFor:
       trustedCIDRs:
         - 10.42.0.0/16
+  connection:
+    bufferLimit: 4Mi
   path:
     escapedSlashesAction: KeepUnchanged
   http2:
     onInvalidMessage: TerminateStream
+    initialStreamWindowSize: 4Mi
+    initialConnectionWindowSize: 4Mi
   http3: {}
   targetSelectors:
     - group: gateway.networking.k8s.io

@@ -48,7 +48,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               claims:
                 - name: gpu
@@ -72,7 +72,6 @@ spec:
         type: LoadBalancer
         annotations:
           lbipam.cilium.io/ips: 192.168.20.248
-          external-dns.alpha.kubernetes.io/hostname: plex-lan.hera.ac
         externalTrafficPolicy: Local
         ports:
           http:

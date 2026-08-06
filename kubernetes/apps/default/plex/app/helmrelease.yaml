@@ -72,6 +72,7 @@ spec:
         type: LoadBalancer
         annotations:
           lbipam.cilium.io/ips: 192.168.20.248
+          external-dns.alpha.kubernetes.io/hostname: plex-lan.hera.ac
         externalTrafficPolicy: Local
         ports:
           http:

@@ -117,6 +117,39 @@
       sourceUrl: "https://github.com/blakeblackshear/frigate",
       changelogUrl: "https://github.com/blakeblackshear/frigate/releases",
     },
+    {
+      description: "Use Kometa GitHub releases for changelogs",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["kometateam/kometa"],
+      sourceUrl: "https://github.com/Kometa-Team/Kometa",
+      changelogUrl: "https://github.com/Kometa-Team/Kometa/releases",
+    },
+    {
+      // Reloader's chart releases are tagged "chart-v<version>" instead of "v<version>",
+      // so Renovate can't match them against the chart version to pull release notes.
+      description: "Fix changelog tag matching for Reloader Helm chart",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/stakater/charts/reloader"],
+      extractVersion: "^(?:chart-v)?(?<version>.*)$",
+    },
+    {
+      // prometheus-community/helm-charts is a monorepo where every chart's releases are
+      // tagged "<chart-name>-<version>", so Renovate can't match tags to the chart version.
+      // The image's org.opencontainers.image.source label also points at the upstream
+      // blackbox_exporter binary repo instead of the chart repo, so sourceUrl needs pinning too.
+      description: "Fix changelog source/tag matching for prometheus-blackbox-exporter Helm chart",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/prometheus-community/charts/prometheus-blackbox-exporter"],
+      sourceUrl: "https://github.com/prometheus-community/helm-charts",
+      extractVersion: "^(?:prometheus-blackbox-exporter-)?(?<version>.*)$",
+    },
+    {
+      // Same monorepo tag-matching issue as prometheus-blackbox-exporter above.
+      description: "Fix changelog tag matching for kube-prometheus-stack Helm chart",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/prometheus-community/charts/kube-prometheus-stack"],
+      extractVersion: "^(?:kube-prometheus-stack-)?(?<version>.*)$",
+    },
     // Labeling rules
     {
       matchUpdateTypes: ["major"],

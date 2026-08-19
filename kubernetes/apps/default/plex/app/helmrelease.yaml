@@ -58,6 +58,15 @@ spec:
               limits:
                 memory: 4Gi
     defaultPodOptions:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.kubernetes.io/gpu-tier
+                    operator: In
+                    values:
+                      - high
       resourceClaims:
         - name: gpu
           resourceClaimTemplateName: plex

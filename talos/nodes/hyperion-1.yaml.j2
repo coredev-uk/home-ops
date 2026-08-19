@@ -3,7 +3,14 @@ machine:
   type: controlplane
   install:
     diskSelector:
-      serial: S41GNX0N534512
+      serial: P300NDBB2510091860
+  kubelet:
+    extraConfig:
+      # Tighter than the cluster default (70/60): this node is taking over the
+      # 128GB drive, which already holds >100GB of unpruned image layers on the
+      # 256GB drive it's leaving behind.
+      imageGCHighThresholdPercent: 60
+      imageGCLowThresholdPercent: 50
   nodeLabels:
     topology.kubernetes.io/zone: m
 ---

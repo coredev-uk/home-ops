@@ -12,12 +12,9 @@ spec:
   timeout: 10m
   values:
     cephClusterSpec:
-      # TODO: Remove warnings when ssd issues fixed
       cephConfig:
-        global:
-          mon_data_avail_warn: "15"
-        osd:
-          bluestore_slow_ops_warn_threshold: "500"
+        mon:
+          mon_cluster_log_level: info
       cleanupPolicy:
         wipeDevicesFromOtherClusters: true
       crashCollector:
@@ -39,16 +36,13 @@ spec:
           requireMsgr2: true
       resources:
         osd:
-          requests:
-            cpu: 250m
           limits:
             memory: 8Gi # Required for bootstrap
-        mon:
-          requests:
-            cpu: 150m
-        mgr:
-          requests:
-            cpu: 200m
+      security:
+        cephx:
+          daemon:
+            keyRotationPolicy: KeyGeneration
+            keyGeneration: 2
       storage:
         useAllDevices: false
         useAllNodes: false
@@ -74,7 +68,7 @@ spec:
           path: /
           pathType: PathPrefix
         parentRefs:
-          - name: envoy-protected
+          - name: envoy-internal
             namespace: network
     cephBlockPools:
       - name: ceph-blockpool

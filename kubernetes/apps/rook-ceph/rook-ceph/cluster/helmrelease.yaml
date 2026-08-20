@@ -42,7 +42,8 @@ spec:
         cephx:
           daemon:
             keyRotationPolicy: KeyGeneration
-            keyGeneration: 2
+            keyGeneration: 3
+            keyType: aes256k
       storage:
         useAllDevices: false
         useAllNodes: false

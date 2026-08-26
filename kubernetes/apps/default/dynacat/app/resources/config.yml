@@ -230,9 +230,6 @@ pages:
                   - title: Change Detection
                     url: https://changes.hera.ac
                     icon: si:changedetection
-                  - title: Frigate
-                    url: https://frigate.hera.ac
-                    icon: si:frigate
                   - title: Home Assistant
                     url: https://hass.hera.ac
                     icon: si:homeassistant

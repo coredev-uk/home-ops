@@ -59,7 +59,7 @@ spec:
           [{
             "name": "vpn",
             "namespace": "kube-system",
-            "ips": ["192.168.30.15/24"]
+            "ips": ["192.168.120.15/24"]
           }]
       terminationGracePeriodSeconds: 300
       securityContext:
@@ -80,7 +80,7 @@ spec:
       bittorrent:
         type: LoadBalancer
         annotations:
-          lbipam.cilium.io/ips: 192.168.20.244
+          lbipam.cilium.io/ips: 192.168.110.244
         externalTrafficPolicy: Local
         ports:
           bittorrent-tcp:

@@ -2,11 +2,6 @@
 .private/
 .pytest_cache/
 .venv/
-.direnv/
-.devenv/
-.devenv*
-devenv.local.nix
-devenv.local.yaml
 *.crt
 *.env
 *.iso

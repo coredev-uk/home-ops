@@ -94,43 +94,6 @@ spec:
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: envoy-protected
-  annotations:
-    external-dns.alpha.kubernetes.io/target: &hostname protected.hera.ac
-    gatus.home-operations.com/endpoint: |-
-      group: internal
-      guarded: true
-      ui:
-        hide-hostname: true
-        hide-url: true
-spec:
-  gatewayClassName: envoy
-  infrastructure:
-    annotations:
-      external-dns.alpha.kubernetes.io/hostname: *hostname
-      lbipam.cilium.io/ips: 192.168.20.242
-  listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
-      allowedRoutes:
-        namespaces:
-          from: Same
-    - name: https
-      protocol: HTTPS
-      port: 443
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        certificateRefs:
-          - kind: Secret
-            name: hera-ac-tls
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/gateway_v1.json
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
   name: envoy-internal
   annotations:
     external-dns.alpha.kubernetes.io/target: &hostname internal.hera.ac
@@ -177,11 +140,6 @@ spec:
       brotli: {}
     - type: Gzip
       gzip: {}
-  connection:
-    bufferLimit: 4Mi
-  http2:
-    initialStreamWindowSize: 4Mi
-    initialConnectionWindowSize: 4Mi
   retry:
     numRetries: 2
     retryOn:
@@ -189,7 +147,6 @@ spec:
         - reset
   httpUpgrade:
     - type: websocket
-    - type: tailscale-control-protocol
   targetSelectors:
     - group: gateway.networking.k8s.io
       kind: Gateway
@@ -197,27 +154,6 @@ spec:
   timeout:
     http:
       requestTimeout: 0s
----
-# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/envoypatchpolicy_v1alpha1.json
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: EnvoyPatchPolicy
-metadata:
-  name: headscale-ts2021-upgrade
-spec:
-  targetRef:
-    group: gateway.networking.k8s.io
-    kind: Gateway
-    name: envoy-external
-  type: JSONPatch
-  jsonPatches:
-    - type: type.googleapis.com/envoy.config.listener.v3.Listener
-      name: network/envoy-external/https
-      operation:
-        op: add
-        path: /filter_chains/0/filters/0/typed_config/upgrade_configs
-        value:
-          - upgrade_type: websocket
-          - upgrade_type: tailscale-control-protocol
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/clienttrafficpolicy_v1alpha1.json
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -229,14 +165,10 @@ spec:
     xForwardedFor:
       trustedCIDRs:
         - 10.42.0.0/16
-  connection:
-    bufferLimit: 4Mi
   path:
     escapedSlashesAction: KeepUnchanged
   http2:
     onInvalidMessage: TerminateStream
-    initialStreamWindowSize: 4Mi
-    initialConnectionWindowSize: 4Mi
   http3: {}
   targetSelectors:
     - group: gateway.networking.k8s.io
@@ -258,9 +190,6 @@ metadata:
 spec:
   parentRefs:
     - name: envoy-external
-      namespace: network
-      sectionName: http
-    - name: envoy-protected
       namespace: network
       sectionName: http
     - name: envoy-internal

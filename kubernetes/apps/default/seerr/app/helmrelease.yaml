@@ -54,7 +54,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 10m
@@ -79,8 +79,9 @@ spec:
             conditions: ["len([BODY]) == 0"]
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
+          - requests.hera.ac
         parentRefs:
-          - name: envoy-internal
+          - name: envoy-external
             namespace: network
     persistence:
       config:

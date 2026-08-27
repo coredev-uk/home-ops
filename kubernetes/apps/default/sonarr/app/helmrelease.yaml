@@ -57,7 +57,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 100m
@@ -77,13 +77,10 @@ spec:
             port: *port
     route:
       app:
-        annotations:
-          gatus.home-operations.com/endpoint: |-
-            path: /ping
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
-          - name: envoy-protected
+          - name: envoy-internal
             namespace: network
     persistence:
       config:

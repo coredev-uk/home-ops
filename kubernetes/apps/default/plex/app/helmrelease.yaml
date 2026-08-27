@@ -93,7 +93,7 @@ spec:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
-          - name: envoy-internal
+          - name: envoy-external
             namespace: network
         rules:
           - # Ref: https://forums.plex.tv/t/external-srt-subtitles-are-not-working-w-reverse-proxy/886540

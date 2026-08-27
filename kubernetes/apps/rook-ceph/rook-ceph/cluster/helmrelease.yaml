@@ -27,6 +27,16 @@ spec:
         urlPrefix: /
         ssl: false
         prometheusEndpoint: http://prometheus-operated.o11y.svc.cluster.local:9090
+      healthCheck:
+        muteHealthWarning: # Remove these once Talos ships a 7.x kernel (needed for aes256k CSI/mirror key rotation)
+          AUTH_EMERGENCY_CIPHERS_SET:
+            policy: mute
+          AUTH_INSECURE_CLIENT_KEY_TYPE:
+            policy: mute
+          AUTH_INSECURE_KEYS_ALLOWED:
+            policy: mute
+          AUTH_INSECURE_KEYS_CREATABLE:
+            policy: mute
       mgr:
         modules:
           - name: pg_autoscaler

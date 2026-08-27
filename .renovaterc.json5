@@ -6,6 +6,21 @@
     "github>home-operations/renovate-presets//apps/talosFactory.json5#8.1.0",
     ":timezone(Europe/London)",
   ],
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 3am on the first day of the month"],
+    commitMessageExtra: "({{manager}})",
+    additionalBranchPrefix: "{{manager}}-",
+  },
+  hostRules: [
+    {
+      description: "Authenticate against the ocharted OCI registry",
+      matchHost: "ocharted.hera.ac",
+      hostType: "docker",
+      username: "{{ secrets.OCHARTED_USERNAME }}",
+      password: "{{ secrets.OCHARTED_PASSWORD }}",
+    },
+  ],
   packageRules: [
     // Auto-merge rules
     {
@@ -100,6 +115,12 @@
       minimumGroupSize: 5,
     },
     {
+      description: "Mise Tools Group",
+      matchManagers: ["mise"],
+      groupName: "mise tools",
+      groupSlug: "mise-tools",
+    },
+    {
       description: "Rook-Ceph Group",
       groupName: "rook-ceph",
       matchDatasources: ["docker"],
@@ -109,14 +130,24 @@
       },
       minimumGroupSize: 2,
     },
-    // Changelog rules
     {
-      description: "Use Frigate GitHub releases for changelogs",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/blakeblackshear/frigate"],
-      sourceUrl: "https://github.com/blakeblackshear/frigate",
-      changelogUrl: "https://github.com/blakeblackshear/frigate/releases",
+      // After the mise tools catch-all so talos wins its own group; unites the
+      // mise pin, the factory installer image, and the tuppr upgrade version
+      description: "Talos Group",
+      groupName: "talos",
+      matchPackageNames: ["siderolabs/talos"],
+      group: {
+        commitMessageTopic: "{{{groupName}}} group",
+      },
+      minimumGroupSize: 2,
     },
+    {
+      description: "1Password CLI is not resolvable on GitHub, bump manually",
+      matchManagers: ["mise"],
+      matchDepNames: ["1password-cli"],
+      enabled: false,
+    },
+    // Changelog rules
     {
       description: "Use Kometa GitHub releases for changelogs",
       matchDatasources: ["docker"],

@@ -16,7 +16,7 @@ resources:
   - ./brrpolice/ks.yaml
   - ./changedetection/ks.yaml
   - ./chaski/ks.yaml
-  - ./deduparr/ks.yaml
+  - ./cleanrr/ks.yaml
   - ./dynacat/ks.yaml
   - ./home-assistant/ks.yaml
   - ./homebridge/ks.yaml

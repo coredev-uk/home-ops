@@ -9,7 +9,7 @@ metadata:
 spec:
   repository:
     kind: ClusterRepository
-    name: nas
+    name: expanse
   retention:
     keepDaily: 7
     keepHourly: 24

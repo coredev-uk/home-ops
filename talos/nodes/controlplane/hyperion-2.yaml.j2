@@ -1,23 +1,27 @@
 ---
 machine:
   type: controlplane
-  install:
-    diskSelector:
-      serial: S41GNX0N534512
-  nodeLabels:
-    node.kubernetes.io/coral: "true"
-    node.kubernetes.io/gpu-tier: high
-    topology.kubernetes.io/zone: m
 ---
 apiVersion: v1alpha1
 kind: HostnameConfig
-hostname: hyperion-0
+hostname: hyperion-2
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+labels:
+  topology.kubernetes.io/zone: m
+---
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+provisioning:
+  diskSelector:
+    match: disk.serial == "1847E1D852B7"
 ---
 apiVersion: v1alpha1
 kind: LinkAliasConfig
 name: net0
 selector:
-  match: mac(link.permanent_addr) == "b0:41:6f:10:7c:e5"
+  match: mac(link.permanent_addr) == "e8:6a:64:da:07:6f"
 ---
 apiVersion: v1alpha1
 kind: Layer2VIPConfig
@@ -37,4 +41,4 @@ vlanMode: 802.1q
 parent: net0
 up: true
 addresses:
-  - address: 192.168.120.240/24
+  - address: 192.168.120.242/24

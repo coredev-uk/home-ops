@@ -54,7 +54,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: false
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
     defaultPodOptions:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
@@ -76,7 +76,7 @@ spec:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
-          - name: envoy-protected
+          - name: envoy-internal
             namespace: network
     persistence:
       config:

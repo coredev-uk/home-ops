@@ -7,16 +7,6 @@ server:
 
 auth:
   secret-key: ${AUTH_SECRET_KEY}
-  disable-password: true
-  oidc:
-    issuer-url: https://id.hera.ac
-    client-id: ${OIDC_CLIENT_ID}
-    client-secret: ${OIDC_CLIENT_SECRET}
-    redirect-url: https://home.hera.ac/api/oidc/callback
-    scopes:
-      - openid
-      - profile
-      - email
 
 theme:
   background-color: 210 20 96
@@ -236,6 +226,9 @@ pages:
                   - title: Homebridge
                     url: https://homebridge.hera.ac
                     icon: si:homebridge
+                  - title: go2rtc
+                    url: https://go2rtc.hera.ac
+                    icon: sh:go2rtc
 
               - title: Personal & Docs
                 links:

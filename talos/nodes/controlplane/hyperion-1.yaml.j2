@@ -1,0 +1,61 @@
+---
+machine:
+  type: controlplane
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: hyperion-1
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+labels:
+  topology.kubernetes.io/zone: m
+---
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+provisioning:
+  diskSelector:
+    match: disk.serial == "P300NDBB2510091860"
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+config:
+  # TODO: Remove once upgraded storage
+  imageGCHighThresholdPercent: 60
+  imageGCLowThresholdPercent: 50
+---
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: containerd
+content: |
+  [plugins."io.containerd.cri.v1.images"]
+    # Same storage constraint as the imageGC thresholds above.
+    discard_unpacked_layers = true
+  [plugins."io.containerd.cri.v1.runtime"]
+    device_ownership_from_security_context = true
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0
+selector:
+  match: mac(link.permanent_addr) == "f8:75:a4:e8:17:3a"
+---
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: 192.168.20.29
+link: net0
+---
+apiVersion: v1alpha1
+kind: DHCPv4Config
+name: net0
+clientIdentifier: mac
+---
+apiVersion: v1alpha1
+kind: VLANConfig
+name: net0.3
+vlanID: 3
+vlanMode: 802.1q
+parent: net0
+up: true
+addresses:
+  - address: 192.168.30.241/24

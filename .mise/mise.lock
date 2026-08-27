@@ -273,6 +273,47 @@ url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-darwin-x64.tar.gz"
 checksum = "sha256:57693d8e93d1b04e7b7de46aca53ecd63e97564e73de36a68428d7ff08d83587"
 url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-win-x64.zip"
 
+[[tools.node]]
+version = "26.8.1"
+backend = "core:node"
+
+[tools.node.options]
+compile = "true"
+
+[tools.node."platforms.linux-arm64"]
+checksum = "sha256:6820658dd95037a1488a94f06184f67e5c56e0fb572d37016871792b1561dd3b"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.gz"
+install = "source"
+
+[tools.node."platforms.linux-arm64-musl"]
+checksum = "sha256:6820658dd95037a1488a94f06184f67e5c56e0fb572d37016871792b1561dd3b"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.gz"
+install = "source"
+
+[tools.node."platforms.linux-x64"]
+checksum = "sha256:6820658dd95037a1488a94f06184f67e5c56e0fb572d37016871792b1561dd3b"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.gz"
+install = "source"
+
+[tools.node."platforms.linux-x64-musl"]
+checksum = "sha256:6820658dd95037a1488a94f06184f67e5c56e0fb572d37016871792b1561dd3b"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.gz"
+install = "source"
+
+[tools.node."platforms.macos-arm64"]
+checksum = "sha256:6820658dd95037a1488a94f06184f67e5c56e0fb572d37016871792b1561dd3b"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.gz"
+install = "source"
+
+[tools.node."platforms.macos-x64"]
+checksum = "sha256:6820658dd95037a1488a94f06184f67e5c56e0fb572d37016871792b1561dd3b"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1.tar.gz"
+install = "source"
+
+[tools.node."platforms.windows-x64"]
+checksum = "sha256:57693d8e93d1b04e7b7de46aca53ecd63e97564e73de36a68428d7ff08d83587"
+url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-win-x64.zip"
+
 [[tools.oxfmt]]
 version = "0.65.0"
 backend = "npm:oxfmt"

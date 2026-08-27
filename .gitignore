@@ -7,6 +7,7 @@
 *.iso
 *.key
 .decrypted~*
+.mise.local.toml
 .DS_Store
 Thumbs.db
 kubeconfig

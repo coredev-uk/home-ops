@@ -131,14 +131,20 @@ Verified by grepping the whole repo for every `192.168.x.x` occurrence, not just
 is the full list, not a sample.
 
 **Talos (`talos/`):** all values below move to the **cluster VLAN** (`192.168.110.0/24`), not the
-primary LAN.
+primary LAN. **Note:** `main` restructured this directory on 2026-08-27 (`talos/machineconfig.yaml.j2`
+→ split into `talos/cluster.yaml.j2` + `talos/controlplane.yaml.j2`; `talos/nodes/hyperion-*.yaml.j2`
+→ moved to `talos/nodes/controlplane/hyperion-*.yaml.j2`) — paths below are current as of that
+restructure. When it was merged into this branch, the IP edits below survived the merge cleanly for
+`hyperion-0` and `hyperion-2` (git's rename detection handled it), but were silently dropped for
+`hyperion-1` and both cluster-wide files — those four were manually re-applied 2026-08-27 and
+re-verified against this table.
 
-- `machineconfig.yaml.j2:67` — `kubelet.nodeIP.validSubnets` → `192.168.110.0/24`
-- `machineconfig.yaml.j2:148` — `cluster.etcd.advertisedSubnets` → `192.168.110.0/24`
-- `nodes/hyperion-{0,1,2}.yaml.j2` — `Layer2VIPConfig` (`192.168.20.29` → `192.168.110.29`,
-  identical on all three — this is the floating pre-CNI control-plane VIP)
-- `nodes/hyperion-{0,1,2}.yaml.j2` — VLAN3 static addresses (`.240/.241/.242` on `192.168.30.0/24`
-  → `192.168.120.0/24`, same last octets)
+- `cluster.yaml.j2` — `KubeNodeConfig.nodeIP.validSubnets` → `192.168.110.0/24`
+- `controlplane.yaml.j2` — `cluster.etcd.advertisedSubnets` → `192.168.110.0/24`
+- `nodes/controlplane/hyperion-{0,1,2}.yaml.j2` — `Layer2VIPConfig` (`192.168.20.29` →
+  `192.168.110.29`, identical on all three — this is the floating pre-CNI control-plane VIP)
+- `nodes/controlplane/hyperion-{0,1,2}.yaml.j2` — VLAN3 static addresses (`.240/.241/.242` on
+  `192.168.30.0/24` → `192.168.120.0/24`, same last octets)
 
 **Kubernetes (`kubernetes/apps/`):**
 
@@ -160,6 +166,15 @@ primary LAN.
 - `default/prowlarr/app/helmrelease.yaml`, `default/qbittorrent/app/helmrelease.yaml`,
   `o11y/blackbox-exporter/vpn/helmrelease.yaml` — VLAN3 static IPs, `192.168.30.0/24` →
   `192.168.120.0/24` (same last octets)
+- `actions-runner-system/actions-runner-controller/runners/home-ops/networkpolicy.yaml` — egress
+  deny carve-out for the cluster VLAN, `192.168.20.0/24` → `192.168.110.0/24`. **New on `main`**
+  since this table was first written — not caught by the merge (merged cleanly with the stale IP
+  baked in, since it didn't exist on this branch to conflict). Left unfixed, CI runners would
+  silently lose the ability to reach in-cluster LB services after the move.
+- `default/go2rtc/app/helmrelease.yaml` — `lbipam.cilium.io/ips` and a self-referencing WebRTC ICE
+  candidate address, both `192.168.20.247` → `192.168.110.247`. **New on `main`** (added
+  2026-08-26/27, alongside Frigate's removal — this is the actual UniFi Protect streaming relay
+  that replaced it). Same "not caught by the merge" situation as above.
 
 **Checked, no change needed:** `default/prowlarr/app/direct-proxy.yaml` allows `192.168.0.0/16` —
 already covers both the old and new ranges.
@@ -196,9 +211,10 @@ new-site requirement is that outbound UDP/51820 isn't blocked by the new gateway
 5. Update the files in §2 with new values on a branch (e.g. `site-migration`), and **keep it
    unmerged through the whole move.** Two different mechanisms apply these, on two different
    schedules:
-    - **Talos node config** (`talos/machineconfig.yaml.j2`, `talos/nodes/*.yaml.j2`) isn't
-      Flux-managed — `just talos apply-node` reads straight from your local working tree, so you
-      apply it directly from the branch checkout on move day. No merge needed for this part to work.
+    - **Talos node config** (`talos/cluster.yaml.j2`, `talos/controlplane.yaml.j2`,
+      `talos/nodes/controlplane/*.yaml.j2`) isn't Flux-managed — `just talos apply-node` reads
+      straight from your local working tree, so you apply it directly from the branch checkout on
+      move day. No merge needed for this part to work.
     - **Kubernetes manifests** (Cilium LB pool, envoy-gateway, headscale, tailscale-router, per-app
       static IPs) _are_ reconciled by Flux the moment they land on `main`. Merging while the cluster
       is still live at the old site would have Flux immediately try to announce new-range LB IPs on

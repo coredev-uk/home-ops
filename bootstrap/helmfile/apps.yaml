@@ -28,10 +28,8 @@ releases:
         args:
           - wait
           - --for=create
-          - crd/ciliumbgpadvertisements.cilium.io
-          - crd/ciliumbgpclusterconfigs.cilium.io
-          - crd/ciliumbgppeerconfigs.cilium.io
           - crd/ciliumloadbalancerippools.cilium.io
+          - crd/ciliuml2announcementpolicies.cilium.io
           - --timeout=2m
         events:
           - postsync

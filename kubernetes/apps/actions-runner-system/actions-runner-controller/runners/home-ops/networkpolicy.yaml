@@ -9,7 +9,33 @@ spec:
     matchLabels:
       runner: *name
   enableDefaultDeny:
-    egress: false
+    egress: true
+  egress:
+    # DNS resolution
+    - toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Cluster-internal: pod/service CIDRs, needed for containerMode:kubernetes job pods and in-cluster API access
+    - toCIDR:
+        - 10.42.0.0/16
+        - 10.43.0.0/16
+    # Public internet: standard web ports only (GitHub, registries, 1Password, etc. are all HTTPS/HTTP).
+    # Deliberately not an FQDN allowlist - Renovate autodiscovers and checks every registry referenced
+    # anywhere in this repo, so enumerating destinations is fragile. Restricting to 80/443 still blocks
+    # arbitrary-protocol/port egress (e.g. the anomalous UDP:8080 traffic this policy was written for).
+    - toCIDR:
+        - 0.0.0.0/0
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
+  # Deny takes precedence over the 0.0.0.0/0:80/443 allow above - without this, that rule would also
+  # permit reaching LAN devices with a web UI on those ports.
   egressDeny:
     - toCIDRSet:
         - cidr: 10.0.0.0/8

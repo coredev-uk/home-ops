@@ -76,7 +76,7 @@ spec:
       app:
         annotations:
           gatus.home-operations.com/endpoint: |-
-            conditions: ["len([BODY]) == 0"]
+            conditions: ["[STATUS] == 200"]
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
           - requests.hera.ac

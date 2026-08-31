@@ -21,7 +21,7 @@ spec:
           app:
             image:
               repository: docker.io/sportarr/sportarr
-              tag: 4.1.5.1115@sha256:2c6d4bd3ddc679253bbef368e311d897853f3944a12d8adab5d6f7c7717e254f
+              tag: 4.1.6.1116@sha256:4d2165ed25840a2d80ca655c616e754a0867b551f21c55dff4eab15529098399
             env:
               HOME: /config
               Sportarr__Port: &port 80

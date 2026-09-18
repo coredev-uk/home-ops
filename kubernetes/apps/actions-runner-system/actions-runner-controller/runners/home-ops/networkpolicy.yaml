@@ -11,6 +11,13 @@ spec:
   enableDefaultDeny:
     egress: true
   egress:
+    # Kubernetes API access - the Service ClusterIP gets DNAT'd to a real backend on the node's
+    # own network, which Cilium classifies under the reserved "host" identity, not a CIDR-derived
+    # one. Plain toCIDR rules for the pod/service ranges below do not cover this - confirmed via
+    # `cilium monitor --type drop` showing "Policy denied ... identity <ep>->host" on the apiserver
+    # SYN. The controller/listener pods (this policy's selector) need this to manage runner pods.
+    - toEntities:
+        - host
     # DNS resolution
     - toPorts:
         - ports:

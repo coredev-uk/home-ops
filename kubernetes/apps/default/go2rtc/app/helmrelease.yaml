@@ -59,7 +59,7 @@ spec:
       streams:
         type: LoadBalancer
         annotations:
-          lbipam.cilium.io/ips: 192.168.20.247
+          lbipam.cilium.io/ips: 192.168.110.247
         externalTrafficPolicy: Local
         ports:
           streams-rtsp:
@@ -95,7 +95,7 @@ spec:
             webrtc:
               listen: :8555
               candidates:
-                - 192.168.20.247:8555
+                - 192.168.110.247:8555
                 - stun:8555
               ice_servers:
                 - urls:

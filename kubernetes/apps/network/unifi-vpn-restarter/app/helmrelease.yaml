@@ -32,7 +32,7 @@ spec:
                 set -e
                 BASE="https://unifi.internal"
                 SITE="default"
-                ID="699387394169ddacaf400dd6"
+                ID="6aad91ea01c47862ce3620dc"
                 URL="$BASE/proxy/network/api/s/$SITE/rest/networkconf/$ID"
 
                 echo "Disabling ProtonVPN WireGuard client..."
@@ -52,7 +52,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 5m

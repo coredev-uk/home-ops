@@ -52,7 +52,7 @@ runway so the rest of this doc can be finalized against real values.
 8. **Local DNS (`.internal` zone) — bigger than just `k8s.internal`.** None of these are defined
    anywhere in this repo; all presumed UniFi static DNS entries, all need re-pointing at the new
    site:
-    - `k8s.internal` → new floating VIP (`192.168.110.29`)
+    - `k8s.internal` → new floating VIP (`192.168.110.10`)
     - `expanse.internal` (the NAS) → `192.168.110.40`
     - `hyperion-0/1/2.internal` → new node addresses (the DHCP reservations from item 4)
     - `unifi.internal` → the UniFi controller itself; likely self-resolves on the new gateway
@@ -93,7 +93,7 @@ Cluster-specific addresses (LB pool, per-app IPs, floating VIP) live in the **cl
 
 | Purpose                                                               | Current (`192.168.20.0/24`) | New (`192.168.110.0/24`) |
 | --------------------------------------------------------------------- | --------------------------- | ------------------------ |
-| Bootstrap/control-plane floating VIP (`Layer2VIPConfig`, all 3 nodes) | `.29`                       | `.29`                    |
+| Bootstrap/control-plane floating VIP (`Layer2VIPConfig`, all 3 nodes) | `.29`                       | `.10`                    |
 | Cilium LB pool                                                        | `.240/28`                   | `.240/28`                |
 | kube-api LB (`k8s.hera.ac`)                                           | `.241`                      | `.241`                   |
 | envoy-gateway `external`                                              | `.246`                      | `.246`                   |
@@ -104,7 +104,9 @@ Cluster-specific addresses (LB pool, per-app IPs, floating VIP) live in the **cl
 | plex                                                                  | `.248`                      | `.248`                   |
 
 Last octets kept identical to the current scheme — makes the diff trivial to eyeball and re-verify
-against this table. Gateway for the cluster VLAN would be `192.168.110.1`.
+against this table. Gateway for the cluster VLAN would be `192.168.110.1`. **One deliberate
+exception:** the floating VIP moved to `.10` (not `.29`) to keep it clearly separated from the
+node DHCP reservations, which now live at `.11`–`.13`.
 
 VPN VLAN addresses (Multus/ipvlan on `net0.3`, policy-routed VPN egress for a few apps) — same
 last-octet-preserving remap, gateway `192.168.120.1`:
@@ -142,7 +144,7 @@ re-verified against this table.
 - `cluster.yaml.j2` — `KubeNodeConfig.nodeIP.validSubnets` → `192.168.110.0/24`
 - `controlplane.yaml.j2` — `cluster.etcd.advertisedSubnets` → `192.168.110.0/24`
 - `nodes/controlplane/hyperion-{0,1,2}.yaml.j2` — `Layer2VIPConfig` (`192.168.20.29` →
-  `192.168.110.29`, identical on all three — this is the floating pre-CNI control-plane VIP)
+  `192.168.110.10`, identical on all three — this is the floating pre-CNI control-plane VIP)
 - `nodes/controlplane/hyperion-{0,1,2}.yaml.j2` — VLAN3 static addresses (`.240/.241/.242` on
   `192.168.30.0/24` → `192.168.120.0/24`, same last octets)
 

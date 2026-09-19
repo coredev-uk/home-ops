@@ -81,7 +81,8 @@ params:
   net.ipv4.tcp_slow_start_after_idle: "0"
   net.ipv4.tcp_wmem: 4096 65536 67108864
   # IPv6 is disabled on the LAN; scoped per-interface (not conf.all) so lo/Cilium's internal ::1 redirect still works.
-  net/ipv6/conf/net0/disable_ipv6: "1"
+  # The physical NIC's real kernel name differs per node (net0 is only a Talos-level alias, not a
+  # real procfs entry) - see the per-node hyperion-N.yaml.j2 files for that half of this.
   net/ipv6/conf/net0.3/disable_ipv6: "1"
   sunrpc.tcp_max_slot_table_entries: "128"
   sunrpc.tcp_slot_table_entries: "128"

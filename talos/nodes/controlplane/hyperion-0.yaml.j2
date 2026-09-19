@@ -44,3 +44,9 @@ parent: net0
 up: true
 addresses:
   - address: 192.168.120.240/24
+---
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  # net0's real kernel name on this node - see talos/cluster.yaml.j2 for the net0.3 half of this.
+  net/ipv6/conf/enp171s0/disable_ipv6: "1"

@@ -11,13 +11,16 @@ spec:
   enableDefaultDeny:
     egress: true
   egress:
-    # Kubernetes API access - the Service ClusterIP gets DNAT'd to a real backend on the node's
-    # own network, which Cilium classifies under the reserved "host" identity, not a CIDR-derived
-    # one. Plain toCIDR rules for the pod/service ranges below do not cover this - confirmed via
-    # `cilium monitor --type drop` showing "Policy denied ... identity <ep>->host" on the apiserver
-    # SYN. The controller/listener pods (this policy's selector) need this to manage runner pods.
+    # Kubernetes/Talos API access - Service ClusterIPs (the k8s apiserver, and the Talos apid
+    # service the "Image Pull" CI job's `talosctl --nodes <ip> image pull` uses) get DNAT'd to a
+    # real backend on a node's host network, which Cilium classifies under its reserved "host"
+    # (local node) or "remote-node" (other cluster nodes) identities, not a CIDR-derived one -
+    # plain toCIDR rules for the pod/service/node ranges never cover this regardless of the actual
+    # IP being in an allowed range. Confirmed via `cilium monitor --type drop` showing
+    # "Policy denied ... identity <ep>->host" for the apiserver case.
     - toEntities:
         - host
+        - remote-node
     # DNS resolution
     - toPorts:
         - ports:

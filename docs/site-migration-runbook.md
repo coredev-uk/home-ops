@@ -4,11 +4,10 @@
 new site in one trip, on a new IP range. No network bridge between old and new site. No return
 trip if something's wrong — this has to work from what travels in the vehicle.
 
-**Status:** final. All open decisions in §0 are resolved except the UniFi ProtonVPN policy route
-(item 5), which is a manual gateway-side task deferred to when the new network exists, not a
-blocker on the plan itself. Item 4 (DHCP reservations) is an execution step tracked in §3, not an
-open decision. Everything else has been checked against the current repo state and, where
-possible, the live running cluster.
+**Status:** complete. Migration executed 2026-08-30 (shutdown) → 2026-09-18 (restore). All open
+decisions in §0 are resolved, all post-move verification in §5 is green, and `site-migration` has
+been merged to `main`. See §8 for what actually happened during restore, including a few issues
+this runbook didn't anticipate.
 
 ---
 
@@ -24,19 +23,15 @@ runway so the rest of this doc can be finalized against real values.
    the full address table.
 3. ~~Security cameras.~~ **Resolved** — Frigate has been decommissioned and removed from the repo
    (2026-08-26), dropped from scope.
-4. **DHCP reservations for the three nodes.** Recommend MAC-based DHCP reservations on the new
-   gateway rather than converting Talos to static addressing — it gets you the same predictability
-   without touching a machine-config schema I can't fully verify syntax for right now (Talos's
-   newer "document" config style doesn't obviously expose a static-address document the way it
-   does for VLANs, and I'd rather flag that gap than hand you unverified YAML). Node MACs:
+4. ~~DHCP reservations for the three nodes.~~ **Resolved** — set on the new gateway; all three
+   nodes came up `Ready` at their new `192.168.110.11/12/13` addresses. MAC-based, as planned:
     - `hyperion-0`: `b0:41:6f:10:7c:e5`
     - `hyperion-1`: `f8:75:a4:e8:17:3a`
     - `hyperion-2`: `e8:6a:64:da:07:6f`
-5. **UniFi ProtonVPN policy route for VLAN3.** This lives in the gateway config, not this repo —
-   needs recreating on the new UniFi gateway pointed at `192.168.120.0/24` once it's up. Not
-   something I can apply from here; flagging so it doesn't get missed. Recreating it will almost
-   certainly assign it a new UniFi `networkconf` object ID — see item 8 below,
-   `network/unifi-vpn-restarter` hardcodes the current one.
+5. ~~UniFi ProtonVPN policy route for VLAN3.~~ **Resolved** — recreated on the new gateway pointed
+   at `192.168.120.0/24`. As anticipated, it got a new UniFi `networkconf` object ID
+   (`6aad91ea01c47862ce3620dc`, was `699387394169ddacaf400dd6`); `network/unifi-vpn-restarter`
+   updated to match and merged to `main` (`a621def`).
 6. ~~`wireguard-client` / headscale ingress.~~ **Resolved, confirmed live** — checked against the
    running cluster: the pod is healthy and actively proxying traffic, and `headscale nodes list`
    shows the Oracle VPS (`130.162.183.212`) itself registered as an online tailscale node
@@ -49,18 +44,21 @@ runway so the rest of this doc can be finalized against real values.
    *arr stack, kopiur backups), so no inter-VLAN routing dependency to worry about. Worth a static
    DHCP reservation for it too, same reasoning as the three nodes (item 4) — exclude `.40` from the
    dynamic DHCP range.
-8. **Local DNS (`.internal` zone) — bigger than just `k8s.internal`.** None of these are defined
-   anywhere in this repo; all presumed UniFi static DNS entries, all need re-pointing at the new
-   site:
-    - `k8s.internal` → new floating VIP (`192.168.110.10`)
+8. ~~Local DNS (`.internal` zone) — bigger than just `k8s.internal`.~~ **Resolved** — all
+   re-pointed at the new site and verified resolving:
+    - `k8s.internal` → new floating VIP (`192.168.110.10`) — verified, apiserver reachable through it
     - `expanse.internal` (the NAS) → `192.168.110.40`
     - `hyperion-0/1/2.internal` → new node addresses (the DHCP reservations from item 4)
-    - `unifi.internal` → the UniFi controller itself; likely self-resolves on the new gateway
-      without action, but worth a glance
+    - `unifi.internal` → the UniFi controller itself; self-resolved on the new gateway, no action
+      needed
     - Referenced by: `talos/machineconfig.yaml.j2` (`k8s.internal`), 8× NFS mounts + the kopiur
       `ClusterRepository` + a blackbox-exporter probe (`expanse.internal`), `dynacat`'s dashboard
       config + a blackbox-exporter probe (`hyperion-N.internal`), `network/unifi-vpn-restarter`
       (`unifi.internal`)
+    - **Separately**, the UniFi gateway's forward-DNS rule for the `hera.ac` zone (conditional
+      forward to the in-cluster Pi-hole, not a UniFi static entry) also needed re-pointing at
+      Pi-hole's new LB IP (`192.168.110.245`, was `192.168.20.245`) — this wasn't anticipated in the
+      original decision list. Done; `hera.ac` resolves internally.
 
 ---
 
@@ -317,13 +315,14 @@ range shortly after. This step is folded into §5's verification checklist below
 
 ## 5. Post-move verification
 
-- `talosctl etcd status` — 3/3 healthy
-- `kubectl get nodes -o wide` — all `Ready`, correct new IPs
-- `ceph status` — `HEALTH_OK`, all PGs `active+clean`
-- Merge `site-migration` → `main` (Phase E) — only after the three checks above are green
-- `flux get kustomizations -A` — everything reconciled against the new range
-- Spot-check a couple of `*.hera.ac` hostnames resolve and serve over the new LB IPs
-- `k8s.internal` resolves to the new floating VIP
+- [x] `talosctl etcd status` — 3/3 healthy
+- [x] `kubectl get nodes -o wide` — all `Ready`, correct new IPs
+- [x] `ceph status` — `HEALTH_OK` (modulo a self-clearing deep-scrub backlog from the 3-week outage)
+- [x] Merge `site-migration` → `main` (Phase E) — done, `f0b32b2` (PR #730)
+- [x] `flux get kustomizations -A` — everything reconciled against the new range
+- [x] Spot-check a couple of `*.hera.ac` hostnames resolve and serve over the new LB IPs
+- [x] `k8s.internal` resolves to the new floating VIP
+- [x] ProtonVPN policy route + `unifi-vpn-restarter` networkconf ID (§0 item 5) — `a621def`
 
 ---
 
@@ -335,9 +334,55 @@ range shortly after. This step is folded into §5's verification checklist below
 
 ## 7. What's genuinely unverified
 
-- Whether Phase C actually converges for a _simultaneous_ 3-node address change (as opposed to
-  the routine single-node DHCP renewal `AdvertisedPeerController` normally handles) — no official
-  doc or real-world report covers this exact combined scenario. That's why Phase C is scoped as
-  "attempt with a time box," not asserted as certain.
+- ~~Whether Phase C actually converges for a _simultaneous_ 3-node address change~~ — **answered:
+  no, not cleanly.** See §8 — Phase D (reset + recover-from-snapshot) ended up needed on at least
+  `hyperion-0`, and the actual restore involved manual `talosctl` intervention beyond what either
+  phase scripted. Real-world data point for next time: budget for Phase D, don't expect Phase C
+  alone to carry a simultaneous 3-node move.
 - Exact Talos machine-config syntax for converting `net0` to a static address — deliberately
-  avoided in this plan (using DHCP reservations instead) rather than guessing.
+  avoided in this plan (using DHCP reservations instead) rather than guessing. Never became
+  relevant — DHCP reservations worked as planned.
+
+---
+
+## 8. What actually happened during restore (2026-09-18)
+
+Kept for the next time this happens — none of this was anticipated in the plan above.
+
+- **Phase C didn't cleanly converge.** Nodes needed direct intervention (stale network config
+  cleared via `talosctl` on each node), and at least one node (`hyperion-0`) went through a full
+  Talos reset + `bootstrap --recover-from=` etcd snapshot restore (Phase D) rather than a clean
+  self-heal. An accidental second reset mid-recovery on `hyperion-0` looked like it had destroyed
+  the just-recovered state, but turned out to be a hung `reset` that never completed cleanly until
+  a physical power-cycle — the etcd data survived intact and didn't need re-bootstrapping.
+- **Ceph came up with all 81 PGs stuck `unknown`/`inactive`** even after etcd reached genuine 3/3
+  quorum and all nodes were `Ready`. Root cause: OSD pods that had been running since before the
+  outage (22+ days, never restarted) were still presenting cephx session tickets signed by the
+  pre-outage mon quorum's rotating-key state, which the freshly-reformed mon quorum didn't
+  recognize (`verify_authorizer could not get service secret ... secret_id=...`). Clock skew was
+  checked and ruled out first. Fix: restart the stale OSD pods (forces fresh cephx auth) — this
+  applied at two levels, first to the OSDs' own client-facing auth, then again to OSD-to-OSD
+  heartbeat auth for the one OSD that came up after the others. Once genuinely healthy,
+  `noout`/`nobackfill`/`norebalance` (set pre-shutdown) were cleared to let final backfill finish.
+- **Flux only reconciles what's on `main`.** Obvious in hindsight, but worth stating plainly: until
+  `site-migration` merged, the live cluster's `CiliumLoadBalancerIPPool` was still the _old_
+  `192.168.20.240/28` block, so `pihole-dns`'s LB IP didn't move until the merge + a manual
+  `flux reconcile kustomization cilium --with-source`.
+- **Pi-hole's custom DNS records need a full pod restart, not `pihole reloaddns`.** `external-dns`
+  correctly wrote the new IPs into `pihole.toml`, but the generated `/etc/pihole/hosts/custom.list`
+  (what FTL actually serves from) only regenerates on an FTL process restart. `reloaddns` only
+  flushes the cache/blocklists.
+- **The `hera.ac` wildcard cert had been dead for 19 days.** Its DNS-01 ACME challenge got
+  presented right before shutdown (2026-08-30) and never got a chance to complete since
+  cert-manager was powered off for the entire outage; on restore it was just sitting there
+  `pending`, not actively retrying. It had actually expired (2026-09-02) partway through the
+  outage. This silently broke HTTPS for everything in the `external` Gatus group (10 endpoints)
+  until noticed and fixed by deleting the stale `CertificateRequest` to force a clean re-issue.
+- **The self-hosted Actions runner's GitHub-side registration was gone.** GitHub deregistered the
+  runner scale-set during the 3-week outage; the controller's cached scale-set ID came back with a
+  `404 RunnerScaleSetNotFoundException`. Not fixed as part of this migration (out of scope), but
+  flagging: if it recurs, the fix is deleting the `AutoscalingRunnerSet` so the controller
+  re-registers a fresh scale-set ID.
+- **UniFi API keys don't survive a gateway replacement.** The `unifi-vpn-restarter` cronjob's
+  stored API key (in 1Password) 401'd against the new controller — expected, but worth noting
+  alongside the ProtonVPN `networkconf` ID (§0 item 5) as "new gateway, new credentials" items.

@@ -55,18 +55,6 @@ whose hardware diverges from the fleet. No overrides exist today.
 - Rendering a worker before `workers.yaml.j2` and `nodes/workers/` exist fails loudly. Adding the
   first worker means creating `workers.yaml.j2` (with `machine: { type: worker }` and a `ca` block
   carrying `crt` only) plus `nodes/workers/<node>.yaml.j2`.
-- A document kind and its legacy `machine`/`cluster` field counterpart are mutually exclusive across
-  the whole patch stack (e.g. `UnattendedInstallConfig` vs `machine.install`, `KubeNodeConfig.labels`
-  vs `machine.nodeLabels`). Pick one form per field and use it in every layer — mixing them makes
-  `talosctl validate` reject the merged config.
-- Never put a `LinkAliasConfig`/`BondConfig`/`VLANConfig` in `cluster.yaml.j2` (or any patch applied
-  fleet-wide) unless it's meant to apply to every node. Documents merge by `kind`+`name`, not by
-  which selector produced them — a `BondConfig` with `links: [net0]` will enslave _any_ node's `net0`
-  alias, even if that node's own per-node file defines "net0" as a completely different physical NIC
-  via its own selector. This took down hyperion-0's primary interface once already (bonded it at
-  `mtu: 9000`, which its switch port didn't support) — see git history around 2026-08-27. Networking
-  for a specific piece of hardware (e.g. whatever host backs the `vpn` Multus network) belongs in
-  that node's own `nodes/<role>/<node>.yaml.j2`, not here.
 
 ## Common tasks
 

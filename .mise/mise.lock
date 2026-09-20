@@ -140,15 +140,17 @@ provenance = "github-attestations"
 version = "26.9.0"
 backend = "core:node"
 
+[tools.node.options]
+compile = "false"
+
 [tools.node."platforms.linux-arm64"]
 checksum = "sha256:26ca5350af859c255118479b08a37075cbc17cdafffe47436d72e4be107e2760"
 url = "https://nodejs.org/dist/v26.9.0/node-v26.9.0.tar.gz"
 install = "source"
 
 [tools.node."platforms.linux-x64"]
-checksum = "sha256:26ca5350af859c255118479b08a37075cbc17cdafffe47436d72e4be107e2760"
-url = "https://nodejs.org/dist/v26.9.0/node-v26.9.0.tar.gz"
-install = "source"
+checksum = "sha256:03d9104fc4f19652e74480fed11c023d75981464b7292f21a601c3f95ce7d90d"
+url = "https://nodejs.org/dist/v26.9.0/node-v26.9.0-linux-x64.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
 checksum = "sha256:26ca5350af859c255118479b08a37075cbc17cdafffe47436d72e4be107e2760"

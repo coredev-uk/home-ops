@@ -74,6 +74,12 @@ spec:
                   storage: 50Gi
     prometheus-node-exporter:
       fullnameOverride: node-exporter
+      permissionInitContainer:
+        fixes:
+          # Talos' kernel restricts /sys/devices/virtual/powercap/*/energy_uj to root
+          # (CVE-2020-8694 mitigation); this init container chowns it to the pod's
+          # group so the rapl collector can read node power/energy metrics.
+          rapl: true
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
     grafana:

@@ -19,5 +19,11 @@ spec:
       name: kopiur-repository-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
+  parameters:
+    epoch:
+      # Maintenance runs fine, but no epoch can close while younger than this,
+      # so index blobs were never compacting (5833 vs the 1000 warn threshold).
+      # 24h (kopia's default) outpaced the backup rate here; 6h lets them compact.
+      minDuration: 6h
   scheduleDefaults:
     timezone: Europe/London

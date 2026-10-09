@@ -1,5 +1,6 @@
 .claude/
 .private/
+__pycache__/
 .pytest_cache/
 .venv/
 *.crt

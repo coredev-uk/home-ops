@@ -26,6 +26,12 @@ spec:
         ref: refs/heads/main
         path: kubernetes/flux/cluster
         interval: 1h
+        # Private repo: authenticates as the github-bot App, minting a
+        # short-lived token per clone. The secret comes from
+        # `just bootstrap flux-auth`, not an ExternalSecret - Flux would have to
+        # clone the repo to create the credential it needs to clone the repo.
+        provider: github
+        pullSecret: flux-git-auth-secret
       kustomize:
         patches:
           - # Increase the number of workers

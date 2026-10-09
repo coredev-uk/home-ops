@@ -10,7 +10,7 @@ nodes := `talosctl config info -o yaml | yq -r -e '.nodes | join (" ")'`
 
 [confirm('Bootstrap cluster? [y|N]')]
 [doc('Bootstrap a Talos & Kubernetes cluster end-to-end')]
-cluster: nodes k8s (kubeconfig "node") base apps kubeconfig
+cluster: nodes k8s (kubeconfig "node") base flux-auth apps kubeconfig
 
 [private]
 nodes:
@@ -54,6 +54,33 @@ base: api-ready nodes-ready
     if ! helmfile -f "{{ source_directory() }}/helmfile/crds.yaml" template -q | yq ea -r -e 'select(.kind == "CustomResourceDefinition")' | kubectl apply --server-side --force-conflicts -f -; then
         just log fatal "Failed to apply base crds" "stage" "{{ recipe_name() }}"
     fi
+
+# The credential source-controller uses to clone this private repo. Must be
+# out-of-band: an ExternalSecret would need Flux to clone the repo first.
+# Idempotent, and also how the App key is rotated.
+[doc('Create or rotate the Flux GitHub App credential for private repo access')]
+flux-auth:
+    just log info "Running stage..." "stage" "{{ recipe_name() }}"
+    if ! kubectl create namespace flux-system --dry-run=client -o yaml \
+        | kubectl apply --server-side --force-conflicts -f - >/dev/null; then
+        just log fatal "Failed to ensure namespace" "stage" "{{ recipe_name() }}" "namespace" "flux-system"
+    fi
+    for f in GITHUB_BOT_APP_ID GITHUB_BOT_APP_INSTALLATION_ID GITHUB_BOT_APP_PRIVATE_KEY; do
+        if ! op read "op://kubernetes/github-bot/$f" >/dev/null 2>&1; then
+            just log fatal "Missing 1Password field" "stage" "{{ recipe_name() }}" "item" "github-bot" "field" "$f"
+        fi
+    done
+    # --from-literal, not `op inject`: the PEM is multi-line and would break
+    # a YAML block scalar's indentation.
+    if ! kubectl create secret generic flux-git-auth-secret \
+        --namespace flux-system \
+        --from-literal=githubAppID="$(op read 'op://kubernetes/github-bot/GITHUB_BOT_APP_ID')" \
+        --from-literal=githubAppInstallationID="$(op read 'op://kubernetes/github-bot/GITHUB_BOT_APP_INSTALLATION_ID')" \
+        --from-literal=githubAppPrivateKey="$(op read 'op://kubernetes/github-bot/GITHUB_BOT_APP_PRIVATE_KEY')" \
+        --dry-run=client -o yaml | kubectl apply --server-side --force-conflicts -f - >/dev/null; then
+        just log fatal "Failed to create Flux git authentication secret" "stage" "{{ recipe_name() }}"
+    fi
+    just log info "Flux git authentication secret applied" "stage" "{{ recipe_name() }}"
 
 [private]
 apps:

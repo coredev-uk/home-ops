@@ -41,7 +41,14 @@ permissions:
 jobs:
   main:
     name: Renovate
-    runs-on: ubuntu-latest
+    # In-cluster runner: hourly on a private repo would burn billed Actions
+    # minutes. renovatebot/github-action needs `docker run`, and containerMode
+    # "kubernetes" has no daemon, so the official image runs as a job container.
+    runs-on: ${{ github.event.repository.name }}-runner
+    container:
+      # Unpinned to match the previous `renovate-version: latest`; Renovate
+      # ships several releases a day.
+      image: ghcr.io/renovatebot/renovate:${{ inputs.version || 'latest' }}
     permissions:
       packages: read
     steps:
@@ -76,7 +83,6 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Run Renovate
-        uses: renovatebot/github-action@230ce922b08968d0a4f6f70f295601daff09ef1d # v46.3.7
         env:
           LOG_LEVEL: ${{ inputs.logLevel || 'debug' }}
           RENOVATE_AUTODISCOVER: true
@@ -85,11 +91,10 @@ jobs:
           RENOVATE_INTERNAL_CHECKS_FILTER: strict
           RENOVATE_PLATFORM: github
           RENOVATE_PLATFORM_COMMIT: true
+          RENOVATE_TOKEN: ${{ steps.app-token.outputs.token }}
           RENOVATE_SECRETS: |-
             {
               "OCHARTED_USERNAME": "${{ steps.load-secrets.outputs.OCHARTED_USERNAME }}",
               "OCHARTED_PASSWORD": "${{ steps.load-secrets.outputs.OCHARTED_PASSWORD }}"
             }
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          renovate-version: ${{ inputs.version || 'latest' }}
+        run: renovate

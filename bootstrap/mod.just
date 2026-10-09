@@ -66,8 +66,8 @@ flux-auth:
         just log fatal "Failed to ensure namespace" "stage" "{{ recipe_name() }}" "namespace" "flux-system"
     fi
     for f in GITHUB_BOT_APP_ID GITHUB_BOT_APP_INSTALLATION_ID GITHUB_BOT_APP_PRIVATE_KEY; do
-        if ! op read "op://kubernetes/github-bot/$f" >/dev/null 2>&1; then
-            just log fatal "Missing 1Password field" "stage" "{{ recipe_name() }}" "item" "github-bot" "field" "$f"
+        if ! err=$(op read "op://kubernetes/github-bot/$f" 2>&1 >/dev/null); then
+            just log fatal "Cannot read 1Password field" "stage" "{{ recipe_name() }}" "field" "$f" "op" "$err"
         fi
     done
     # --from-literal, not `op inject`: the PEM is multi-line and would break

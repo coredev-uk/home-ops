@@ -1,0 +1,102 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: plex-letterboxd
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: plex-letterboxd
+  interval: 1h
+  values:
+    controllers:
+      plex-letterboxd:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        type: cronjob
+        cronjob:
+          # Nightly, after the day's viewing but before kometa's 05:00 run.
+          schedule: 0 4 * * *
+          backoffLimit: 0
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            # Playwright is only needed by "rpa"; sync.py is otherwise pure
+            # stdlib, so "csv" mode alone runs on a plain python image.
+            image:
+              repository: mcr.microsoft.com/playwright/python
+              tag: v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0
+            command:
+              - python3
+              - /app/sync.py
+            env:
+              TZ: Europe/London
+              # rpa drives the import page with a headless browser and depends
+              # on Letterboxd's markup; csv writes the CSV only, for when that
+              # breaks. No api mode - they don't grant it for personal projects.
+              LETTERBOXD_DELIVERY: rpa
+              TAUTULLI_URL: http://tautulli.default.svc.cluster.local
+              # Required - the job refuses to start without it, so a shared
+              # server's other users never reach your diary. cmd=get_users lists
+              # the ids.
+              TAUTULLI_USER_ID: "778751750"
+              # Also catches films scrubbed to the end without finishing.
+              COMPLETION_THRESHOLD: "85"
+              # Empty means never backfill: a first run starts from "now", so
+              # bulk history stays with Letterboxd's own import. A YYYY-MM-DD
+              # date starts from that point instead.
+              SYNC_SINCE: ""
+              # Stops an unexpectedly large delta handing the import page a
+              # huge CSV in one go.
+              MAX_PER_RUN: "50"
+              # Off because kometa's mass_user_rating_update: tmdb overwrites
+              # Plex's userRating nightly, so that field holds TMDB averages
+              # rather than your own stars. Only enable if that stops.
+              SYNC_RATINGS: "false"
+              STATE_DIR: /data
+              # Chromium needs these writable under a read-only root.
+              HOME: /tmp
+              XDG_CACHE_HOME: /tmp/.cache
+            envFrom:
+              - secretRef:
+                  name: plex-letterboxd-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                # Headroom for Chromium; csv mode uses far less.
+                memory: 2Gi
+        pod:
+          restartPolicy: Never
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      # Cursor, logged-entry ledger and CSV exports.
+      state:
+        existingClaim: plex-letterboxd
+        globalMounts:
+          - path: /data
+      script:
+        type: configMap
+        name: plex-letterboxd-configmap
+        globalMounts:
+          - path: /app/sync.py
+            subPath: sync.py
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

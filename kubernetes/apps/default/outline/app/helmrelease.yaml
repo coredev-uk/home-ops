@@ -9,8 +9,6 @@ spec:
     kind: OCIRepository
     name: outline
   dependsOn:
-    - name: postgresql
-      namespace: db
     - name: redis
       namespace: db
   interval: 1h
@@ -78,7 +76,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true

@@ -8,9 +8,6 @@ spec:
   chartRef:
     kind: OCIRepository
     name: atuin
-  dependsOn:
-    - name: postgresql
-      namespace: db
   interval: 1h
   values:
     controllers:

@@ -8,9 +8,6 @@ spec:
   chartRef:
     kind: OCIRepository
     name: pocket-id
-  dependsOn:
-    - name: postgresql
-      namespace: db
   interval: 1h
   values:
     controllers:
@@ -83,7 +80,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true

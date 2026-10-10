@@ -8,9 +8,6 @@ spec:
   chartRef:
     kind: OCIRepository
     name: mealie
-  dependsOn:
-    - name: postgresql
-      namespace: db
   interval: 1h
   values:
     controllers:
@@ -74,7 +71,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 10m

@@ -49,7 +49,7 @@ spec:
               # Empty means never backfill: a first run starts from "now", so
               # bulk history stays with Letterboxd's own import. A YYYY-MM-DD
               # date starts from that point instead.
-              SYNC_SINCE: ""
+              SYNC_SINCE: "2026-09-28"
               # Stops an unexpectedly large delta handing the import page a
               # huge CSV in one go.
               MAX_PER_RUN: "50"

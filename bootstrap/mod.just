@@ -66,7 +66,7 @@ flux-auth:
         just log fatal "Failed to ensure namespace" "stage" "{{ recipe_name() }}" "namespace" "flux-system"
     fi
     for f in GITHUB_BOT_APP_ID GITHUB_BOT_APP_INSTALLATION_ID GITHUB_BOT_APP_PRIVATE_KEY; do
-        if ! err=$(op read "op://kubernetes/github-bot/$f" 2>&1 >/dev/null); then
+        if ! err=$(op read "op://kubernetes/bot-cecil/$f" 2>&1 >/dev/null); then
             just log fatal "Cannot read 1Password field" "stage" "{{ recipe_name() }}" "field" "$f" "op" "$err"
         fi
     done
@@ -74,9 +74,9 @@ flux-auth:
     # a YAML block scalar's indentation.
     if ! kubectl create secret generic flux-git-auth-secret \
         --namespace flux-system \
-        --from-literal=githubAppID="$(op read 'op://kubernetes/github-bot/GITHUB_BOT_APP_ID')" \
-        --from-literal=githubAppInstallationID="$(op read 'op://kubernetes/github-bot/GITHUB_BOT_APP_INSTALLATION_ID')" \
-        --from-literal=githubAppPrivateKey="$(op read 'op://kubernetes/github-bot/GITHUB_BOT_APP_PRIVATE_KEY')" \
+        --from-literal=githubAppID="$(op read 'op://kubernetes/bot-cecil/GITHUB_BOT_APP_ID')" \
+        --from-literal=githubAppInstallationID="$(op read 'op://kubernetes/bot-cecil/GITHUB_BOT_APP_INSTALLATION_ID')" \
+        --from-literal=githubAppPrivateKey="$(op read 'op://kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY')" \
         --dry-run=client -o yaml | kubectl apply --server-side --force-conflicts -f - >/dev/null; then
         just log fatal "Failed to create Flux git authentication secret" "stage" "{{ recipe_name() }}"
     fi

@@ -1,0 +1,77 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: renovate
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: renovate
+  interval: 1h
+  values:
+    controllers:
+      renovate:
+        type: cronjob
+        cronjob:
+          schedule: 20 * * * *
+          backoffLimit: 0
+          concurrencyPolicy: Forbid
+          successfulJobsHistory: 1
+          failedJobsHistory: 1
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            image:
+              repository: ghcr.io/renovatebot/renovate
+              tag: 44.149.0@sha256:33e1ce773404122fd3bcf1dca6ce9b5638a080da68a8972ad942d4d991cec464
+            # The image entrypoint takes the repository as a positional arg.
+            # Set explicitly rather than relying on autodiscover, which the
+            # platform docs advise against under GitHub App auth.
+            args:
+              - coredev-uk/home-ops
+            env:
+              LOG_LEVEL: info
+              RENOVATE_BASE_DIR: /data
+              RENOVATE_PLATFORM: github
+              # Commits via the GitHub API so they are attributed to the App,
+              # which also means no gitAuthor/username config is needed.
+              RENOVATE_PLATFORM_COMMIT: enabled
+              RENOVATE_INTERNAL_CHECKS_FILTER: strict
+              TZ: Europe/London
+            envFrom:
+              - secretRef:
+                  name: renovate-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              # Renovate's containerbase base image installs package-manager
+              # toolchains into /opt/containerbase at runtime, which lockfile
+              # maintenance needs, so the root filesystem cannot be read-only.
+              readOnlyRootFilesystem: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                # Renovate is prone to OOM on large dependency graphs.
+                memory: 4Gi
+        pod:
+          restartPolicy: Never
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        # Matches the uid baked into the image; the cache PVC is chowned to it.
+        runAsUser: 12021
+        runAsGroup: 12021
+        fsGroup: 12021
+        fsGroupChangePolicy: OnRootMismatch
+    persistence:
+      data:
+        existingClaim: renovate
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

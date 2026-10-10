@@ -17,6 +17,10 @@
       description: "Authenticate against the ocharted OCI registry",
       matchHost: "ocharted.hera.ac",
       hostType: "docker",
+      // Renovate runs in-cluster, where this resolves to a private address and
+      // is treated as an internal host. internalHostAccess defaults to "block"
+      // in a future major release, which would refuse these lookups.
+      allowInternal: true,
       username: "{{ secrets.OCHARTED_USERNAME }}",
       password: "{{ secrets.OCHARTED_PASSWORD }}",
     },
@@ -40,6 +44,15 @@
       automerge: true,
       automergeType: "pr",
       ignoreTests: false,
+      schedule: ["before 6am on Monday"],
+    },
+    {
+      // Renovate ships several releases a day, so pinning its own image by
+      // digest would otherwise mean a constant stream of bump PRs. Deliberately
+      // not auto-merged: a bad release would break dependency updates entirely.
+      description: "Batch Renovate's own image updates weekly",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/renovatebot/renovate"],
       schedule: ["before 6am on Monday"],
     },
     {

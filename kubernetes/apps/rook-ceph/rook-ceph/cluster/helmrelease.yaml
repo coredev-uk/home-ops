@@ -46,7 +46,6 @@ spec:
           daemon:
             keyRotationPolicy: KeyGeneration
             keyGeneration: 3
-            keyType: aes256k
           csi:
             keyRotationPolicy: KeyGeneration
             keyGeneration: 2

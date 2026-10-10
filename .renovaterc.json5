@@ -2,24 +2,10 @@
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
     "github>home-operations/renovate-presets#8.1.0",
+    "github>home-operations/renovate-presets//apps/cnpg.json5#8.1.0",
     "github>home-operations/renovate-presets//apps/grafanaDashboards.json5#8.1.0",
     "github>home-operations/renovate-presets//apps/talosFactory.json5#8.1.0",
     ":timezone(Europe/London)",
-  ],
-  lockFileMaintenance: {
-    enabled: true,
-    schedule: ["before 3am on the first day of the month"],
-    commitMessageExtra: "({{manager}})",
-    additionalBranchPrefix: "{{manager}}-",
-  },
-  hostRules: [
-    {
-      description: "Authenticate against the ocharted OCI registry",
-      matchHost: "ocharted.hera.ac",
-      hostType: "docker",
-      username: "{{ secrets.OCHARTED_USERNAME }}",
-      password: "{{ secrets.OCHARTED_PASSWORD }}",
-    },
   ],
   packageRules: [
     // Auto-merge rules
@@ -115,8 +101,11 @@
       minimumGroupSize: 5,
     },
     {
+      // Scheduled tools stay out: a grouped branch takes its schedule from
+      // whichever update sorts first
       description: "Mise Tools Group",
       matchManagers: ["mise"],
+      matchDepNames: ["!node", "!oxfmt"],
       groupName: "mise tools",
       groupSlug: "mise-tools",
     },
@@ -147,39 +136,18 @@
       matchDepNames: ["1password-cli"],
       enabled: false,
     },
-    // Changelog rules
     {
-      description: "Use Kometa GitHub releases for changelogs",
+      description: "Keep CloudNativePG on Postgres 18 until the extension images move with it",
       matchDatasources: ["docker"],
-      matchPackageNames: ["kometateam/kometa"],
-      sourceUrl: "https://github.com/Kometa-Team/Kometa",
-      changelogUrl: "https://github.com/Kometa-Team/Kometa/releases",
+      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
+      allowedVersions: "/^18\\./",
     },
+    // Scheduling rules
     {
-      // Reloader's chart releases are tagged "chart-v<version>" instead of "v<version>",
-      // so Renovate can't match them against the chart version to pull release notes.
-      description: "Fix changelog tag matching for Reloader Helm chart",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/stakater/charts/reloader"],
-      extractVersion: "^(?:chart-v)?(?<version>.*)$",
-    },
-    {
-      // prometheus-community/helm-charts is a monorepo where every chart's releases are
-      // tagged "<chart-name>-<version>", so Renovate can't match tags to the chart version.
-      // The image's org.opencontainers.image.source label also points at the upstream
-      // blackbox_exporter binary repo instead of the chart repo, so sourceUrl needs pinning too.
-      description: "Fix changelog source/tag matching for prometheus-blackbox-exporter Helm chart",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/prometheus-community/charts/prometheus-blackbox-exporter"],
-      sourceUrl: "https://github.com/prometheus-community/helm-charts",
-      extractVersion: "^(?:prometheus-blackbox-exporter-)?(?<version>.*)$",
-    },
-    {
-      // Same monorepo tag-matching issue as prometheus-blackbox-exporter above.
-      description: "Fix changelog tag matching for kube-prometheus-stack Helm chart",
-      matchDatasources: ["docker"],
-      matchPackageNames: ["ghcr.io/prometheus-community/charts/kube-prometheus-stack"],
-      extractVersion: "^(?:kube-prometheus-stack-)?(?<version>.*)$",
+      description: "High-cadence mise tools monthly",
+      matchManagers: ["mise"],
+      matchDepNames: ["node", "oxfmt"],
+      schedule: ["before 3am on the first day of the month"],
     },
     // Labeling rules
     {

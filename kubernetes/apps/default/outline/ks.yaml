@@ -34,12 +34,33 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
+  name: outline-redis
+spec:
+  healthChecks:
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      name: outline-redis
+      namespace: default
+  interval: 1h
+  path: ./kubernetes/apps/default/outline/redis
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: default
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
   name: outline
 spec:
   components:
     - ../../../../components/kopiur/backup
   dependsOn:
     - name: outline-database
+    - name: outline-redis
     - name: rook-ceph-cluster
       namespace: rook-ceph
   interval: 1h

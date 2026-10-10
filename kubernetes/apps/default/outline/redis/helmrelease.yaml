@@ -1,0 +1,69 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: outline-redis
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: outline-redis
+  interval: 1h
+  values:
+    controllers:
+      outline-redis:
+        containers:
+          app:
+            image:
+              repository: mirror.gcr.io/valkey/valkey
+              tag: 8.1.10@sha256:640c5e62cea04b6d6f2084232651d0cc70362d31f4f805e7be94dbed6855e8f2
+            # Everything outline keeps here is a cache, a TTL'd rate-limit
+            # counter, a Bull queue, or a best-effort OIDC logout hint, so the
+            # dataset is disposable and persistence is turned off entirely.
+            # `noeviction` is NOT optional: under an LRU policy Valkey would
+            # silently evict queued Bull jobs instead of refusing writes.
+            args:
+              - --save
+              - ""
+              - --appendonly
+              - "no"
+              - --maxmemory-policy
+              - noeviction
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["valkey-cli", "ping"]
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probe
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 256Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: 6379
+    persistence:
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /data

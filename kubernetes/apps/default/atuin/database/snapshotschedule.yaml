@@ -9,3 +9,4 @@ spec:
     name: atuin-postgres-1
   schedule:
     cron: H */12 * * *
+    runOnCreate: true

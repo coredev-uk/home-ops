@@ -25,22 +25,3 @@ spec:
       owner: outline
       secret:
         name: outline-postgres-credentials
-      # Offline, one-shot import from the Bitnami `postgresql` release in the `db`
-      # namespace. Only honoured at bootstrap; safe to drop (together with
-      # `externalClusters` below) once the migration is complete.
-      import:
-        type: microservice
-        databases:
-          - outline
-        source:
-          externalCluster: bitnami-postgresql
-  externalClusters:
-    - name: bitnami-postgresql
-      connectionParameters:
-        host: postgresql.db.svc.cluster.local
-        user: postgres
-        dbname: postgres
-        sslmode: disable
-      password:
-        name: outline-postgres-import
-        key: password

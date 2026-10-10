@@ -9,3 +9,4 @@ spec:
     name: sportarr-postgres-1
   schedule:
     cron: H */12 * * *
+    runOnCreate: true

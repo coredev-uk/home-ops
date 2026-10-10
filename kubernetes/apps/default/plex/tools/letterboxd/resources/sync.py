@@ -428,6 +428,10 @@ def main() -> int:
     log.info("%d completed film play(s) since the cursor", len(rows))
     if not rows:
         log.info("nothing to sync")
+        # Must persist even when idle, or the next run finds no state and
+        # restarts the window at its own "now", skipping the gap.
+        if not dry_run:
+            state.save()
         return 0
 
     # Oldest first: a first watch must precede its rewatch, and capping then

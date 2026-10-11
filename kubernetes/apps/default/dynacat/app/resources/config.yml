@@ -139,6 +139,9 @@ pages:
                   - title: UNAS
                     url: https://expanse.internal
                     icon: si:ubiquiti
+                  - title: Rook Ceph
+                    url: https://rook.hera.ac
+                    icon: di:rook
 
               - title: Identity & Monitoring
                 links:
@@ -151,21 +154,27 @@ pages:
                   - title: Victoria Logs
                     url: https://vlogs.hera.ac
                     icon: si:victoriametrics
+                  - title: Prometheus
+                    url: https://prometheus.hera.ac
+                    icon: si:prometheus
 
               - title: Ops
                 links:
                   - title: Alertmanager
                     url: https://alertmanager.hera.ac
                     icon: si:prometheus
-                  - title: Headscale
-                    url: https://hs.hera.ac
-                    icon: si:tailscale
-                  - title: Kopia
-                    url: https://kopia.hera.ac
-                    icon: mdi:backup-restore
                   - title: Pi-hole
                     url: https://pihole.hera.ac
                     icon: si:pihole
+                  - title: Flux Operator
+                    url: https://flux-operator.hera.ac
+                    icon: di:flux-cd
+                  - title: Konflate
+                    url: https://konflate.hera.ac
+                    icon: mdi:source-branch-sync
+                  - title: Kritika
+                    url: https://kritika.hera.ac
+                    icon: mdi:robot-outline
 
               - title: Media Discovery & Servers
                 links:
@@ -186,7 +195,7 @@ pages:
                     icon: si:sonarr
                   - title: Sportarr
                     url: https://sportarr.hera.ac
-                    icon: sh:sportarr
+                    icon: di:sportarr
                   - title: Maintainerr
                     url: https://maintainerr.hera.ac
                     icon: sh:maintainerr
@@ -223,12 +232,6 @@ pages:
                   - title: Home Assistant
                     url: https://hass.hera.ac
                     icon: si:homeassistant
-                  - title: Homebridge
-                    url: https://homebridge.hera.ac
-                    icon: si:homebridge
-                  - title: go2rtc
-                    url: https://go2rtc.hera.ac
-                    icon: sh:go2rtc
 
               - title: Personal & Docs
                 links:
@@ -241,6 +244,9 @@ pages:
                   - title: Mealie
                     url: https://mealie.hera.ac
                     icon: si:mealie
+                  - title: The Lounge
+                    url: https://thelounge.hera.ac
+                    icon: di:thelounge
 
           - type: repository
             title: Home Ops Repo
@@ -303,12 +309,6 @@ pages:
             hosts:
               - url: plex:http://plex.default.svc.cluster.local:32400
                 token: ${PLEX_TOKEN}
-
-          - type: dns-stats
-            service: pihole-v6
-            url: http://pihole-web.network.svc.cluster.local
-            password: ${PIHOLE_APP_PASSWORD}
-            hour-format: "24h"
 
           - type: torrenting
             title: Active Torrents

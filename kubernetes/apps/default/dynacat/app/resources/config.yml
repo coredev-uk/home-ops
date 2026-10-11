@@ -251,7 +251,7 @@ pages:
                     icon: si:outline
                   - title: Atuin
                     url: https://atuin.hera.ac
-                    icon: si:atuin
+                    icon: di:atuin
                   - title: Mealie
                     url: https://mealie.hera.ac
                     icon: si:mealie

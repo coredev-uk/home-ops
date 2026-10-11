@@ -329,6 +329,12 @@ pages:
               - url: plex:http://plex.default.svc.cluster.local:32400
                 token: ${PLEX_TOKEN}
 
+          - type: dns-stats
+            service: pihole-v6
+            url: http://pihole-web.network.svc.cluster.local
+            password: ""
+            hour-format: "24h"
+
           - type: torrenting
             title: Active Torrents
             hosts:

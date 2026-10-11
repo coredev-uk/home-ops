@@ -4,6 +4,13 @@ server:
   port: 8080
   proxied: true
   cache-dir: /app/assets/.cache
+  # The config is mounted read-only from a ConfigMap and managed in git, so the
+  # web UI editor could never save anyway. Dynacat defaults this to true and
+  # warns that it is reachable without authentication, so turn it off.
+  allow-editing: false
+  # Server-side to-do storage needs a writable, persistent file; the default
+  # path resolves under the read-only /app/config.
+  db-path: /app/data/dynacat.db
 
 auth:
   secret-key: ${AUTH_SECRET_KEY}
@@ -24,11 +31,13 @@ theme:
 pages:
   - name: Home
     key-bind: "d h"
+    name-icon: mdi:view-dashboard-outline
     head-widgets:
       - type: monitor
         title: Critical Services
         style: compact
         show-failing-only: true
+        show-history: true
         update-interval: 1m
         sites:
           - title: Plex
@@ -91,23 +100,25 @@ pages:
                 name: hyperion-2
                 url: http://hyperion-2.internal:27973
 
-          - type: markets
-            title: Portfolio
-            markets:
-              - symbol: VUSA.L
-                name: S&P 500 ACC
-              - symbol: NVDA
-                name: Nvidia
-              - symbol: MAB.L
-                name: Mitchells & Butlers
+          - type: group
+            widgets:
+              - type: markets
+                title: Portfolio
+                markets:
+                  - symbol: VUSA.L
+                    name: S&P 500 ACC
+                  - symbol: NVDA
+                    name: Nvidia
+                  - symbol: MAB.L
+                    name: Mitchells & Butlers
 
-          - type: markets
-            title: Crypto
-            markets:
-              - symbol: BTC-USD
-                name: Bitcoin
-              - symbol: ETH-USD
-                name: Ethereum
+              - type: markets
+                title: Crypto
+                markets:
+                  - symbol: BTC-USD
+                    name: Bitcoin
+                  - symbol: ETH-USD
+                    name: Ethereum
 
       - size: full
         widgets:
@@ -258,6 +269,24 @@ pages:
             commits-limit: 5
             cache: 1h
 
+          - type: releases
+            title: Upstream Releases
+            show-source-icon: true
+            token: ${GITHUB_TOKEN}
+            limit: 10
+            collapse-after: 5
+            repositories:
+              - home-operations/kritika
+              - Panonim/dynacat
+              - outline/outline
+              - pocket-id/pocket-id
+              - mealie-recipes/mealie
+              - seerr-team/seerr
+              - autobrr/autobrr
+              - autobrr/qui
+              - cloudnative-pg/cloudnative-pg
+              - valkey-io/valkey
+
           - type: to-do
             id: home-ops
             storage: server
@@ -275,16 +304,6 @@ pages:
                 title: "9to5Mac"
               - url: https://hackernewsrss.com/feed.xml
                 title: "HackerNews"
-            limit: 8
-
-          - type: videos
-            style: horizontal-cards
-            title: Video Feed
-            channels:
-              - UCeeFfhMcJa1kjtfZAGskOCA # Tech Linked
-              - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
-              - UCsBjURrPoezykLs9EqgamOA # Fireship
-              - UCUyeluBRhGPCW4rPe_UvBZQ # ThePrimeagen
             limit: 8
 
           - type: group
@@ -345,6 +364,7 @@ pages:
 
   - name: Formula 1
     key-bind: "d f"
+    name-icon: mdi:flag-checkered
     columns:
       - size: small
         widgets:

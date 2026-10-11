@@ -5,8 +5,17 @@ kind: Kustomization
 metadata:
   name: dynacat
 spec:
+  components:
+    - ../../../../components/kopiur/backup
+  dependsOn:
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
   interval: 1h
   path: ./kubernetes/apps/default/dynacat/app
+  postBuild:
+    substitute:
+      APP: dynacat
+      KOPIUR_CAPACITY: 1Gi
   prune: true
   sourceRef:
     kind: GitRepository

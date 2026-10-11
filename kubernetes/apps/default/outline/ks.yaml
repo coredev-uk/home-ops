@@ -34,15 +34,15 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: outline-redis
+  name: outline-valkey
 spec:
   healthChecks:
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
-      name: outline-redis
+      name: outline-valkey
       namespace: default
   interval: 1h
-  path: ./kubernetes/apps/default/outline/redis
+  path: ./kubernetes/apps/default/outline/valkey
   prune: true
   sourceRef:
     kind: GitRepository
@@ -60,7 +60,7 @@ spec:
     - ../../../../components/kopiur/backup
   dependsOn:
     - name: outline-database
-    - name: outline-redis
+    - name: outline-valkey
     - name: rook-ceph-cluster
       namespace: rook-ceph
   interval: 1h

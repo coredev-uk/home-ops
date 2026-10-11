@@ -16,8 +16,8 @@ spec:
     config:
       webUrl: https://{{ .Release.Name }}.hera.ac
       runnerRuntimeClass: gvisor
-      reviewModel: openrouter/~openai/gpt-sol-latest
-      reviewFallback: openrouter/~anthropic/claude-opus-latest
+      reviewModel: openai/~sol-latest
+      reviewFallback: openrouter/~openai/gpt-sol-latest
       confidenceModel: openrouter/~anthropic/claude-sonnet-latest
       embeddingModel: openrouter/voyageai/voyage-code-4
       embeddingDims: 1024
@@ -28,6 +28,9 @@ spec:
           clientId: { env: KRITIKA_GITHUB_CLIENT_ID }
           privateKey: { env: KRITIKA_GITHUB_PRIVATE_KEY }
           webhookSecret: { env: KRITIKA_GITHUB_WEBHOOK_SECRET }
+      providers:
+        openai: { type: openai, apiKey: { env: KRITIKA_OPENAI_API_KEY } }
+        openrouter: { type: openrouter, apiKey: { env: KRITIKA_OPENROUTER_API_KEY } }
       egress:
         allow: ["*"]
         deny: [10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, "*.internal"]

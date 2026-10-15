@@ -6,14 +6,12 @@
 #   - Pi-hole: not addable while running passwordless - its integration
 #     requires an app password/API key that passwordless mode doesn't issue.
 #   - UK Bin Collection: Gloucester's council site needs a Selenium web
-#     driver (JS-rendered page) - blocked until a standalone-chrome
-#     container exists for it to talk to.
+#     driver (JS-rendered page) - now reachable at
+#     http://changedetection-selenium:4444/wd/hub (reusing changedetection's
+#     sidecar), use that when adding the integration.
 #   - Seerr: not added (not using it, or deferred).
 #   - No HomePod media_player exists (no Apple TV/pyatv integration set up) -
 #     UniFi just sees it as a network client (device_tracker.paulshoepodmini).
-#   - Octopus Energy: the 7 "ignore"d config entries are dismissed Energy
-#     Dashboard cost-tracker suggestions, not a real setup - needs the smart
-#     hub first.
 #   - VW car has no device_tracker (GPS) entity - likely one of the commands
 #     hidden by the legacy-gateway 401 flagged earlier. Not an EV, so no
 #     battery/range sensors either.
@@ -260,6 +258,64 @@ views:
 
               **Seerr**: not added.
 
+  - title: Energy
+    path: energy
+    icon: mdi:flash
+    type: sections
+    sections:
+      - type: grid
+        title: Electricity
+        cards:
+          - type: tile
+            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_current_rate
+            name: Current Rate
+          - type: tile
+            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_next_rate
+            name: Next Rate
+          - type: tile
+            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_current_standing_charge
+            name: Standing Charge
+          - type: tile
+            entity: binary_sensor.octopus_energy_electricity_d06g503888_1460001146039_off_peak
+            name: Off Peak
+          - type: entities
+            title: Yesterday
+            entities:
+              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_accumulative_consumption
+              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_accumulative_cost
+              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_rate
+      - type: grid
+        title: Gas
+        cards:
+          - type: tile
+            entity: sensor.octopus_energy_gas_461654_7514536408_current_rate
+            name: Current Rate
+          - type: tile
+            entity: sensor.octopus_energy_gas_461654_7514536408_next_rate
+            name: Next Rate
+          - type: tile
+            entity: sensor.octopus_energy_gas_461654_7514536408_current_standing_charge
+            name: Standing Charge
+          - type: entities
+            title: Yesterday
+            entities:
+              - entity: sensor.octopus_energy_gas_461654_7514536408_previous_accumulative_consumption_kwh
+              - entity: sensor.octopus_energy_gas_461654_7514536408_previous_accumulative_cost
+              - entity: sensor.octopus_energy_gas_461654_7514536408_previous_rate
+      - type: grid
+        title: Octoplus
+        cards:
+          - type: entities
+            title: Rewards
+            entities:
+              - entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_electricity
+              - entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_gas
+              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_octoplus_power_down_baseline
+          - type: calendar
+            title: Power Down Events
+            entities:
+              - entity: calendar.octopus_energy_a_db2bd179_octoplus_power_down
+
   - title: Household
     path: household
     icon: mdi:home-city
@@ -307,7 +363,6 @@ views:
         cards:
           - type: markdown
             content: >-
-              **Bin collection**: Gloucester City Council's site needs a
-              Selenium web driver to render - blocked until a
-              `standalone-chrome` container exists for the integration to
-              talk to. Say the word and I'll add one to the cluster.
+              **Bin collection**: not added yet, but the Selenium blocker is
+              cleared - use `http://changedetection-selenium:4444/wd/hub`
+              as the web driver URL when you add UK Bin Collection Data.

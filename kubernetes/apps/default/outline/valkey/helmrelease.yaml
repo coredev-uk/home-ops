@@ -16,7 +16,7 @@ spec:
           app:
             image:
               repository: mirror.gcr.io/valkey/valkey
-              tag: 8.1.10@sha256:640c5e62cea04b6d6f2084232651d0cc70362d31f4f805e7be94dbed6855e8f2
+              tag: 9.1.2@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd
             # Everything outline keeps here is a cache, a TTL'd rate-limit
             # counter, a Bull queue, or a best-effort OIDC logout hint, so the
             # dataset is disposable and persistence is turned off entirely.

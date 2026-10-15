@@ -19,7 +19,7 @@ spec:
         admin:
           password: { env: KRITIKA_AUTH_ADMIN_PASSWORD }
       review:
-        model: chatgpt/~sol-latest
+        model: openai/~sol-latest
         fallback: openrouter/~openai/gpt-sol-latest
       confidence:
         model: openrouter/~anthropic/claude-sonnet-latest

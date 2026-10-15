@@ -1,12 +1,25 @@
 ---
-# FIXME: every entity_id below is a best-guess placeholder based on each
-# integration's typical default naming. Go to Settings > Devices & Services
-# > click each integration > Entities tab, and swap in your real entity_ids
-# (search this file for "FIXME" to find every line that needs one).
+# Pulled every entity_id below from the live /config/.storage/core.entity_registry
+# and core.config_entries on the running pod - these are real, not guesses.
 #
-# Cards use the built-in `tile` type everywhere so this renders with zero
-# HACS/Marketplace dependencies. Swap to `custom:mushroom-*` cards later if
-# you install Mushroom - the entity/layout structure below stays the same.
+# Known gaps (see Media Stack / Household views for details):
+#   - Sonarr/Radarr are connected but produce zero entities: no monitored
+#     conditions are ticked in their integration options. Settings > Devices
+#     & Services > [Sonarr|Radarr] > Configure > tick Queue/Wanted/Upcoming/
+#     Diskspace, and the sensors above will appear.
+#   - Plex is connected but failing: logs show a refused connection to its
+#     remote relay address (178.79.172.216:8443), not your LAN address.
+#     Check Plex's Remote Access setting / the direct local URL.
+#   - qBittorrent, SABnzbd, Pi-hole, Mealie, Seerr, Tautulli, UK Bin
+#     Collection: no config entry exists yet - not started.
+#   - No HomePod media_player exists (no Apple TV/pyatv integration set up) -
+#     UniFi just sees it as a network client (device_tracker.paulshoepodmini).
+#   - Octopus Energy: the 7 "ignore"d config entries are dismissed Energy
+#     Dashboard cost-tracker suggestions, not a real setup - matches needing
+#     the smart hub first.
+#   - VW car has no device_tracker (GPS) entity - likely one of the commands
+#     hidden by the legacy-gateway 401 flagged earlier. Not an EV, so no
+#     battery/range sensors either.
 
 views:
   - title: Home
@@ -17,27 +30,41 @@ views:
       - type: grid
         cards:
           - type: weather-forecast
-            entity: weather.forecast_home # FIXME: confirm your weather entity
+            entity: weather.pirateweather
             show_forecast: true
       - type: grid
         title: Quick Controls
         cards:
           - type: tile
-            entity: media_player.living_room_tv # FIXME: Sony Bravia entity
+            entity: media_player.bravia_k_55xr80
             name: TV
           - type: tile
-            entity: media_player.homepod # FIXME: HomePod entity
-            name: HomePod
+            entity: lock.garage_volkswagen_579126_central_locking
+            name: Car
           - type: tile
-            entity: switch.pi_hole # FIXME: Pi-hole enable/disable switch
-            name: Pi-hole
+            entity: climate.garage_volkswagen_579126_climate_control
+            name: Car Climate
       - type: grid
         title: Who's Home
         cards:
           - type: tile
-            entity: person.you # FIXME: person entity (from Companion app)
+            entity: device_tracker.pauls_iphone
+            name: Paul
           - type: tile
-            entity: person.partner # FIXME: add/remove per household member
+            entity: device_tracker.dads_iphone
+            name: Dad
+          - type: tile
+            entity: device_tracker.mums_iphone
+            name: Mum
+          - type: tile
+            entity: device_tracker.bens_macbook_pro
+            name: Ben
+          - type: tile
+            entity: device_tracker.guys_apple_watch
+            name: Guy
+          - type: tile
+            entity: device_tracker.kerrys_apple_watch
+            name: Kerry
 
   - title: Entertainment
     path: entertainment
@@ -48,9 +75,19 @@ views:
         title: Living Room
         cards:
           - type: media-control
-            entity: media_player.living_room_tv # FIXME: Sony Bravia entity
-          - type: media-control
-            entity: media_player.homepod # FIXME: HomePod/AirPlay entity
+            entity: media_player.bravia_k_55xr80
+          - type: tile
+            entity: remote.bravia_k_55xr80
+            name: TV Remote
+      - type: grid
+        title: Not Yet Set Up
+        cards:
+          - type: markdown
+            content: >-
+              No HomePod media control exists. UniFi only sees it as a
+              network client (`device_tracker.paulshoepodmini`) - control
+              requires setting up the Apple TV (pyatv) integration against
+              it, which hasn't been done yet.
 
   - title: Network
     path: network
@@ -58,30 +95,71 @@ views:
     type: sections
     sections:
       - type: grid
-        title: Gateway
+        title: Gateway (PTNET)
         cards:
           - type: tile
-            entity: sensor.unifi_gateway_wan_ip # FIXME: check what your gateway model exposes
-            name: WAN
+            entity: sensor.ptnet_state
+            name: State
           - type: tile
-            entity: sensor.unifi_gateway_uptime # FIXME: may not exist on your model
+            entity: sensor.ptnet_uptime
             name: Uptime
+          - type: tile
+            entity: sensor.ptnet_clients
+            name: Clients
+          - type: tile
+            entity: sensor.ptnet_cpu_utilisation
+            name: CPU
+          - type: tile
+            entity: sensor.ptnet_memory_utilisation
+            name: Memory
       - type: grid
-        title: Presence
+        title: WAN Latency
         cards:
-          # FIXME: these are two examples - add one `tile` per device_tracker
-          # created by the UniFi integration, or install the HACS
-          # `auto-entities` card and replace this whole section with:
-          #   type: custom:auto-entities
-          #   card: { type: entities, title: Presence }
-          #   filter:
-          #     include:
-          #       - integration: unifi
-          #         domain: device_tracker
           - type: tile
-            entity: device_tracker.your_phone # FIXME
+            entity: sensor.ptnet_cloudflare_wan_latency
+            name: Cloudflare
           - type: tile
-            entity: device_tracker.partners_phone # FIXME
+            entity: sensor.ptnet_google_wan_latency
+            name: Google
+          - type: tile
+            entity: sensor.ptnet_microsoft_wan_latency
+            name: Microsoft
+      - type: grid
+        title: VPN & Remote Access
+        cards:
+          - type: tile
+            entity: switch.unifi_network_protonvpn
+            name: ProtonVPN
+          - type: tile
+            entity: switch.unifi_network_plex_remote_access
+            name: Plex Remote Access
+      - type: grid
+        title: Office Switch - PoE
+        cards:
+          - type: entities
+            title: PTNET-SW-OFFICE Ports
+            entities:
+              - entity: switch.ptnet_sw_office_port_1_poe
+              - entity: switch.ptnet_sw_office_port_2_poe
+              - entity: switch.ptnet_sw_office_port_3_poe
+              - entity: switch.ptnet_sw_office_port_4_poe
+              - entity: sensor.ptnet_sw_office_uptime
+              - entity: sensor.ptnet_sw_office_cpu_utilisation
+      - type: grid
+        title: Network Presence
+        cards:
+          - type: entities
+            title: Devices
+            entities:
+              - entity: device_tracker.hyperion_0
+              - entity: device_tracker.hyperion_1
+              - entity: device_tracker.hyperon_2
+              - entity: device_tracker.hyperion_unas
+              - entity: device_tracker.sony_bravia_8
+              - entity: device_tracker.paulshoepodmini
+              - entity: device_tracker.macbookpro
+              - entity: device_tracker.iphone_2
+              - entity: device_tracker.watch
 
   - title: Media Stack
     path: media-stack
@@ -89,56 +167,30 @@ views:
     type: sections
     sections:
       - type: grid
-        title: Requests & Watching
+        title: Needs Attention
         cards:
-          - type: tile
-            entity: sensor.seerr_pending_requests # FIXME
-            name: Pending Requests
-          - type: tile
-            entity: sensor.tautulli_watching # FIXME
-            name: Now Watching
+          - type: markdown
+            content: >-
+              **Sonarr & Radarr** are connected (config entries exist) but
+              expose zero sensors - no monitored conditions were ticked
+              during setup. Go to Settings > Devices & Services >
+              Sonarr/Radarr > Configure and enable Queue/Wanted/Upcoming/
+              Diskspace, then this view can get real cards.
+
+
+              **Plex** is connected but currently failing: the log shows a
+              refused connection to `178.79.172.216:8443` - that's a remote
+              relay address, not your LAN. Check whether Remote Access is
+              forcing an external route, or re-add the integration pointed
+              at the local `plex.direct` LAN address.
       - type: grid
-        title: Sonarr / Radarr
+        title: Not Yet Set Up
         cards:
-          - type: entities
-            title: Sonarr
-            entities:
-              - entity: sensor.sonarr_queue # FIXME
-              - entity: sensor.sonarr_wanted # FIXME
-              - entity: sensor.sonarr_upcoming # FIXME
-              - entity: sensor.sonarr_diskspace # FIXME
-          - type: entities
-            title: Radarr
-            entities:
-              - entity: sensor.radarr_queue # FIXME
-              - entity: sensor.radarr_wanted # FIXME
-              - entity: sensor.radarr_upcoming # FIXME
-              - entity: sensor.radarr_diskspace # FIXME
-      - type: grid
-        title: Downloads & DNS
-        cards:
-          - type: entities
-            title: qBittorrent
-            entities:
-              - entity: sensor.qbittorrent_status # FIXME
-              - entity: sensor.qbittorrent_download_speed # FIXME
-              - entity: sensor.qbittorrent_upload_speed # FIXME
-          - type: entities
-            title: SABnzbd
-            entities:
-              - entity: sensor.sabnzbd_queue # FIXME
-              - entity: sensor.sabnzbd_speed # FIXME
-          - type: entities
-            title: Pi-hole
-            entities:
-              - entity: sensor.pi_hole_ads_blocked_today # FIXME
-              - entity: sensor.pi_hole_dns_queries_today # FIXME
-      - type: grid
-        title: Plex
-        cards:
-          - type: tile
-            entity: media_player.plex_living_room # FIXME: only if you have a Plex player entity
-            name: Plex
+          - type: markdown
+            content: >-
+              qBittorrent, SABnzbd, Pi-hole, Mealie, Seerr, and Tautulli
+              have no config entry yet - none of these have been added in
+              Settings > Devices & Services.
 
   - title: Household
     path: household
@@ -146,37 +198,26 @@ views:
     type: sections
     sections:
       - type: grid
-        title: Bins
-        cards:
-          # FIXME: UK Bin Collection Data creates one sensor per bin type
-          # (e.g. general, recycling, garden) - add a tile per bin you have
-          - type: tile
-            entity: sensor.gloucester_general_waste # FIXME
-            name: General Waste
-          - type: tile
-            entity: sensor.gloucester_recycling # FIXME
-            name: Recycling
-      - type: grid
-        title: Meal Planning
-        cards:
-          - type: todo-list
-            entity: todo.mealie_shopping_list # FIXME
-            title: Shopping List
-          - type: todo-list
-            entity: todo.mealie_meal_plan # FIXME
-            title: This Week's Meals
-      - type: grid
         title: Car
         cards:
-          - type: tile
-            entity: sensor.vw_battery_level # FIXME: only if EV/PHEV
-            name: Battery
-          - type: tile
-            entity: sensor.vw_range # FIXME
-            name: Range
-          - type: tile
-            entity: device_tracker.vw_car # FIXME
-            name: Location
-          - type: tile
-            entity: lock.vw_car # FIXME
-            name: Lock
+          - type: entities
+            title: Volkswagen
+            entities:
+              - entity: lock.garage_volkswagen_579126_central_locking
+              - entity: climate.garage_volkswagen_579126_climate_control
+              - entity: switch.garage_volkswagen_579126_window_heating
+              - entity: switch.garage_volkswagen_579126_active_ventilation
+              - entity: sensor.garage_volkswagen_579126_portal_feed_health
+              - entity: button.garage_volkswagen_579126_refresh_data
+          - type: markdown
+            content: >-
+              No location/GPS entity exists for this car - likely one of
+              the commands the legacy-gateway 401 hides. Not an EV, so no
+              battery/range sensors either.
+      - type: grid
+        title: Not Yet Set Up
+        cards:
+          - type: markdown
+            content: >-
+              Bin collection (UK Bin Collection Data) and Mealie have no
+              config entry yet.

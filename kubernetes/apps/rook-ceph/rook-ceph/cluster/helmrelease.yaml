@@ -33,9 +33,6 @@ spec:
         modules:
           - name: pg_autoscaler
             enabled: true
-      network:
-        connections:
-          requireMsgr2: true
       resources:
         osd:
           limits:
@@ -49,7 +46,7 @@ spec:
           csi:
             keyRotationPolicy: KeyGeneration
             keyGeneration: 2
-            keepPriorKeyCountMax: 0 # All nodes rolled onto generation 2 keys
+            keepPriorKeyCountMax: 0
             keyType: aes256k # Talos 1.14+ backports the kernel 7.0 aes256k support
           rbdMirrorPeer:
             keyRotationPolicy: KeyGeneration

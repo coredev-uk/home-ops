@@ -3,20 +3,17 @@
 # and core.config_entries on the running pod - these are real, not guesses.
 #
 # Known gaps (see Media Stack / Household views for details):
-#   - Sonarr/Radarr are connected but produce zero entities: no monitored
-#     conditions are ticked in their integration options. Settings > Devices
-#     & Services > [Sonarr|Radarr] > Configure > tick Queue/Wanted/Upcoming/
-#     Diskspace, and the sensors above will appear.
-#   - Plex is connected but failing: logs show a refused connection to its
-#     remote relay address (178.79.172.216:8443), not your LAN address.
-#     Check Plex's Remote Access setting / the direct local URL.
-#   - qBittorrent, SABnzbd, Pi-hole, Mealie, Seerr, Tautulli, UK Bin
-#     Collection: no config entry exists yet - not started.
+#   - Pi-hole: not addable while running passwordless - its integration
+#     requires an app password/API key that passwordless mode doesn't issue.
+#   - UK Bin Collection: Gloucester's council site needs a Selenium web
+#     driver (JS-rendered page) - blocked until a standalone-chrome
+#     container exists for it to talk to.
+#   - Seerr: not added (not using it, or deferred).
 #   - No HomePod media_player exists (no Apple TV/pyatv integration set up) -
 #     UniFi just sees it as a network client (device_tracker.paulshoepodmini).
 #   - Octopus Energy: the 7 "ignore"d config entries are dismissed Energy
-#     Dashboard cost-tracker suggestions, not a real setup - matches needing
-#     the smart hub first.
+#     Dashboard cost-tracker suggestions, not a real setup - needs the smart
+#     hub first.
 #   - VW car has no device_tracker (GPS) entity - likely one of the commands
 #     hidden by the legacy-gateway 401 flagged earlier. Not an EV, so no
 #     battery/range sensors either.
@@ -44,6 +41,12 @@ views:
           - type: tile
             entity: climate.garage_volkswagen_579126_climate_control
             name: Car Climate
+          - type: tile
+            entity: media_player.plex_plex_for_android_tv_living_room_tv
+            name: Plex
+          - type: tile
+            entity: sensor.tautulli_watching
+            name: Now Watching
       - type: grid
         title: Who's Home
         cards:
@@ -79,6 +82,8 @@ views:
           - type: tile
             entity: remote.bravia_k_55xr80
             name: TV Remote
+          - type: media-control
+            entity: media_player.plex_plex_for_android_tv_living_room_tv
       - type: grid
         title: Not Yet Set Up
         cards:
@@ -167,30 +172,93 @@ views:
     type: sections
     sections:
       - type: grid
-        title: Needs Attention
+        title: Plex & Tautulli
         cards:
-          - type: markdown
-            content: >-
-              **Sonarr & Radarr** are connected (config entries exist) but
-              expose zero sensors - no monitored conditions were ticked
-              during setup. Go to Settings > Devices & Services >
-              Sonarr/Radarr > Configure and enable Queue/Wanted/Upcoming/
-              Diskspace, then this view can get real cards.
-
-
-              **Plex** is connected but currently failing: the log shows a
-              refused connection to `178.79.172.216:8443` - that's a remote
-              relay address, not your LAN. Check whether Remote Access is
-              forcing an external route, or re-add the integration pointed
-              at the local `plex.direct` LAN address.
+          - type: entities
+            title: Plex Library
+            entities:
+              - entity: sensor.hyperion
+              - entity: sensor.hyperion_library_films
+              - entity: sensor.hyperion_library_tv_programmes
+              - entity: sensor.hyperion_library_sports
+              - entity: button.hyperion_scan_clients
+              - entity: update.hyperion_update
+          - type: entities
+            title: Now Playing
+            entities:
+              - entity: sensor.tautulli_watching
+              - entity: sensor.tautulli_direct_plays
+              - entity: sensor.tautulli_direct_streams
+              - entity: sensor.tautulli_transcodes
+              - entity: sensor.tautulli_total_bandwidth
+              - entity: sensor.paul_thompson_state
+              - entity: sensor.paul_thompson_full_title
+              - entity: sensor.mum_state
+              - entity: sensor.mum_full_title
+              - entity: sensor.b_t33_state
+              - entity: sensor.b_t33_full_title
+          - type: entities
+            title: Top This Month
+            entities:
+              - entity: sensor.tautulli_top_film
+              - entity: sensor.tautulli_top_tv_show
+              - entity: sensor.tautulli_top_user
+      - type: grid
+        title: Sonarr / Radarr
+        cards:
+          - type: entities
+            title: Sonarr
+            entities:
+              - entity: sensor.sonarr_shows
+              - entity: sensor.sonarr_queue
+              - entity: sensor.sonarr_wanted
+              - entity: sensor.sonarr_upcoming
+              - entity: sensor.sonarr_disk_space
+              - entity: sensor.sonarr_commands
+              - entity: calendar.sonarr
+          - type: entities
+            title: Radarr
+            entities:
+              - entity: sensor.radarr_films
+              - entity: sensor.radarr_queue
+              - entity: sensor.radarr_disk_space_movies
+              - entity: binary_sensor.radarr_health
+              - entity: calendar.radarr
+      - type: grid
+        title: Downloads
+        cards:
+          - type: entities
+            title: qBittorrent
+            entities:
+              - entity: sensor.qbittorrent_status
+              - entity: sensor.qbittorrent_download_speed
+              - entity: sensor.qbittorrent_upload_speed
+              - entity: sensor.qbittorrent_active_torrents
+              - entity: sensor.qbittorrent_paused_torrents
+              - entity: sensor.qbittorrent_errored_torrents
+              - entity: sensor.qbittorrent_global_ratio
+              - entity: switch.qbittorrent_alternative_speed
+          - type: entities
+            title: SABnzbd
+            entities:
+              - entity: sensor.sabnzbd_status
+              - entity: sensor.sabnzbd_speed
+              - entity: sensor.sabnzbd_queue
+              - entity: sensor.sabnzbd_queue_count
+              - entity: sensor.sabnzbd_left_to_download
+              - entity: button.sabnzbd_pause
+              - entity: button.sabnzbd_resume
       - type: grid
         title: Not Yet Set Up
         cards:
           - type: markdown
             content: >-
-              qBittorrent, SABnzbd, Pi-hole, Mealie, Seerr, and Tautulli
-              have no config entry yet - none of these have been added in
-              Settings > Devices & Services.
+              **Pi-hole**: can't add it while running passwordless - the
+              integration needs an app password/API key that mode doesn't
+              issue.
+
+
+              **Seerr**: not added.
 
   - title: Household
     path: household
@@ -215,9 +283,31 @@ views:
               the commands the legacy-gateway 401 hides. Not an EV, so no
               battery/range sensors either.
       - type: grid
+        title: Meal Planning
+        cards:
+          - type: todo-list
+            entity: todo.mealie_shopping_list
+            title: Shopping List
+          - type: calendar
+            title: This Week's Meals
+            entities:
+              - entity: calendar.mealie_breakfast
+              - entity: calendar.mealie_lunch
+              - entity: calendar.mealie_dinner
+              - entity: calendar.mealie_snack
+              - entity: calendar.mealie_dessert
+          - type: entities
+            title: Mealie
+            entities:
+              - entity: sensor.mealie_recipes
+              - entity: sensor.mealie_categories
+              - entity: sensor.mealie_tags
+      - type: grid
         title: Not Yet Set Up
         cards:
           - type: markdown
             content: >-
-              Bin collection (UK Bin Collection Data) and Mealie have no
-              config entry yet.
+              **Bin collection**: Gloucester City Council's site needs a
+              Selenium web driver to render - blocked until a
+              `standalone-chrome` container exists for the integration to
+              talk to. Say the word and I'll add one to the cluster.

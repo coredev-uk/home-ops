@@ -30,40 +30,46 @@ views:
       - type: grid
         title: Quick Controls
         cards:
-          - type: tile
+          - type: custom:mushroom-entity-card
             entity: media_player.bravia_k_55xr80
             name: TV
-          - type: tile
+            icon: mdi:television
+          - type: custom:mushroom-entity-card
             entity: lock.garage_volkswagen_579126_central_locking
             name: Car
-          - type: tile
+            icon: mdi:car
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-entity-card
             entity: climate.garage_volkswagen_579126_climate_control
             name: Car Climate
-          - type: tile
+          - type: custom:mushroom-entity-card
             entity: media_player.plex_plex_for_android_tv_living_room_tv
             name: Plex
-          - type: tile
+            icon: mdi:plex
+          - type: custom:mushroom-entity-card
             entity: sensor.tautulli_watching
             name: Now Watching
+            icon: mdi:eye
       - type: grid
         title: Who's Home
         cards:
-          - type: tile
+          - type: custom:mushroom-person-card
             entity: device_tracker.pauls_iphone
             name: Paul
-          - type: tile
+          - type: custom:mushroom-person-card
             entity: device_tracker.dads_iphone
             name: Dad
-          - type: tile
+          - type: custom:mushroom-person-card
             entity: device_tracker.mums_iphone
             name: Mum
-          - type: tile
+          - type: custom:mushroom-person-card
             entity: device_tracker.bens_macbook_pro
             name: Ben
-          - type: tile
+          - type: custom:mushroom-person-card
             entity: device_tracker.guys_apple_watch
             name: Guy
-          - type: tile
+          - type: custom:mushroom-person-card
             entity: device_tracker.kerrys_apple_watch
             name: Kerry
 
@@ -118,15 +124,18 @@ views:
       - type: grid
         title: WAN Latency
         cards:
-          - type: tile
-            entity: sensor.ptnet_cloudflare_wan_latency
-            name: Cloudflare
-          - type: tile
-            entity: sensor.ptnet_google_wan_latency
-            name: Google
-          - type: tile
-            entity: sensor.ptnet_microsoft_wan_latency
-            name: Microsoft
+          - type: custom:mini-graph-card
+            name: WAN Latency
+            hours_to_show: 24
+            points_per_hour: 4
+            line_width: 2
+            entities:
+              - entity: sensor.ptnet_cloudflare_wan_latency
+                name: Cloudflare
+              - entity: sensor.ptnet_google_wan_latency
+                name: Google
+              - entity: sensor.ptnet_microsoft_wan_latency
+                name: Microsoft
       - type: grid
         title: VPN & Remote Access
         cards:
@@ -284,6 +293,14 @@ views:
               - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_accumulative_consumption
               - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_accumulative_cost
               - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_rate
+          - type: custom:mini-graph-card
+            name: Rate Today
+            entities:
+              - sensor.octopus_energy_electricity_d06g503888_1460001146039_current_rate
+            hours_to_show: 24
+            points_per_hour: 2
+            show:
+              extrema: true
       - type: grid
         title: Gas
         cards:

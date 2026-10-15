@@ -20,6 +20,13 @@ frontend:
 
 lovelace:
   resource_mode: yaml
+  resources:
+    - url: /local/community/lovelace-mushroom/mushroom.js
+      type: module
+    - url: /local/community/mini-graph-card/mini-graph-card-bundle.js
+      type: module
+    - url: /local/community/scheduler-card/scheduler-card.js
+      type: module
   dashboards:
     lovelace:
       mode: yaml

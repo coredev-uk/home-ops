@@ -60,7 +60,7 @@ spec:
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 10m
@@ -102,7 +102,7 @@ spec:
               allowPrivilegeEscalation: false
               runAsUser: 1200
               runAsGroup: 1201
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 100m
@@ -122,6 +122,11 @@ spec:
         ports:
           http:
             port: *port
+      selenium:
+        controller: changedetection
+        ports:
+          webdriver:
+            port: *seleniumPort
     route:
       app:
         hostnames:

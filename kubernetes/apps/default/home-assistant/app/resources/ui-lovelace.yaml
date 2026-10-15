@@ -17,62 +17,6 @@
 #     battery/range sensors either.
 
 views:
-  - title: Home
-    path: home
-    icon: mdi:home
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: weather-forecast
-            entity: weather.pirateweather
-            show_forecast: true
-      - type: grid
-        title: Quick Controls
-        cards:
-          - type: custom:mushroom-entity-card
-            entity: media_player.bravia_k_55xr80
-            name: TV
-            icon: mdi:television
-          - type: custom:mushroom-entity-card
-            entity: lock.garage_volkswagen_579126_central_locking
-            name: Car
-            icon: mdi:car
-            tap_action:
-              action: toggle
-          - type: custom:mushroom-entity-card
-            entity: climate.garage_volkswagen_579126_climate_control
-            name: Car Climate
-          - type: custom:mushroom-entity-card
-            entity: media_player.plex_plex_for_android_tv_living_room_tv
-            name: Plex
-            icon: mdi:plex
-          - type: custom:mushroom-entity-card
-            entity: sensor.tautulli_watching
-            name: Now Watching
-            icon: mdi:eye
-      - type: grid
-        title: Who's Home
-        cards:
-          - type: custom:mushroom-person-card
-            entity: device_tracker.pauls_iphone
-            name: Paul
-          - type: custom:mushroom-person-card
-            entity: device_tracker.dads_iphone
-            name: Dad
-          - type: custom:mushroom-person-card
-            entity: device_tracker.mums_iphone
-            name: Mum
-          - type: custom:mushroom-person-card
-            entity: device_tracker.bens_macbook_pro
-            name: Ben
-          - type: custom:mushroom-person-card
-            entity: device_tracker.guys_apple_watch
-            name: Guy
-          - type: custom:mushroom-person-card
-            entity: device_tracker.kerrys_apple_watch
-            name: Kerry
-
   - title: Entertainment
     path: entertainment
     icon: mdi:television
@@ -122,21 +66,6 @@ views:
             entity: sensor.ptnet_memory_utilisation
             name: Memory
       - type: grid
-        title: WAN Latency
-        cards:
-          - type: custom:mini-graph-card
-            name: WAN Latency
-            hours_to_show: 24
-            points_per_hour: 4
-            line_width: 2
-            entities:
-              - entity: sensor.ptnet_cloudflare_wan_latency
-                name: Cloudflare
-              - entity: sensor.ptnet_google_wan_latency
-                name: Google
-              - entity: sensor.ptnet_microsoft_wan_latency
-                name: Microsoft
-      - type: grid
         title: VPN & Remote Access
         cards:
           - type: tile
@@ -146,17 +75,17 @@ views:
             entity: switch.unifi_network_plex_remote_access
             name: Plex Remote Access
       - type: grid
-        title: Office Switch - PoE
+        title: Office Switch
         cards:
           - type: entities
-            title: PTNET-SW-OFFICE Ports
+            title: PTNET-SW-OFFICE
             entities:
-              - entity: switch.ptnet_sw_office_port_1_poe
-              - entity: switch.ptnet_sw_office_port_2_poe
-              - entity: switch.ptnet_sw_office_port_3_poe
-              - entity: switch.ptnet_sw_office_port_4_poe
               - entity: sensor.ptnet_sw_office_uptime
               - entity: sensor.ptnet_sw_office_cpu_utilisation
+              - entity: button.ptnet_sw_office_port_1_power_cycle
+              - entity: button.ptnet_sw_office_port_2_power_cycle
+              - entity: button.ptnet_sw_office_port_3_power_cycle
+              - entity: button.ptnet_sw_office_port_4_power_cycle
       - type: grid
         title: Network Presence
         cards:
@@ -168,10 +97,18 @@ views:
               - entity: device_tracker.hyperon_2
               - entity: device_tracker.hyperion_unas
               - entity: device_tracker.sony_bravia_8
-              - entity: device_tracker.paulshoepodmini
-              - entity: device_tracker.macbookpro
-              - entity: device_tracker.iphone_2
-              - entity: device_tracker.watch
+      - type: grid
+        title: Not Yet Enabled
+        cards:
+          - type: markdown
+            content: >-
+              WAN latency (Cloudflare/Google/Microsoft), the office switch's
+              per-port PoE power draw, and device trackers for iPhone/
+              MacBook/HomePod mini/Watch are all disabled by default on the
+              UniFi integration. The power-cycle buttons above work as a
+              substitute for PoE toggle switches, which are also disabled.
+              Enable what you want in Settings > Devices & Services > UniFi
+              Network > Entities.
 
   - title: Media Stack
     path: media-stack
@@ -185,52 +122,43 @@ views:
             title: Plex Library
             entities:
               - entity: sensor.hyperion
-              - entity: sensor.hyperion_library_films
-              - entity: sensor.hyperion_library_tv_programmes
-              - entity: sensor.hyperion_library_sports
               - entity: button.hyperion_scan_clients
               - entity: update.hyperion_update
           - type: entities
             title: Now Playing
             entities:
               - entity: sensor.tautulli_watching
-              - entity: sensor.tautulli_direct_plays
-              - entity: sensor.tautulli_direct_streams
-              - entity: sensor.tautulli_transcodes
               - entity: sensor.tautulli_total_bandwidth
               - entity: sensor.paul_thompson_state
-              - entity: sensor.paul_thompson_full_title
               - entity: sensor.mum_state
-              - entity: sensor.mum_full_title
               - entity: sensor.b_t33_state
-              - entity: sensor.b_t33_full_title
-          - type: entities
-            title: Top This Month
-            entities:
-              - entity: sensor.tautulli_top_film
-              - entity: sensor.tautulli_top_tv_show
-              - entity: sensor.tautulli_top_user
+          - type: markdown
+            content: >-
+              A lot of Plex/Tautulli sensors (library counts, top
+              film/show/user, direct plays/streams, per-user title/progress/
+              resolution) are disabled by default by those integrations -
+              they're not missing, just never turned on. Enable the ones you
+              want in Settings > Devices & Services > [Plex|Tautulli] >
+              Entities, and I'll add them back here.
       - type: grid
         title: Sonarr / Radarr
         cards:
           - type: entities
             title: Sonarr
             entities:
-              - entity: sensor.sonarr_shows
-              - entity: sensor.sonarr_queue
-              - entity: sensor.sonarr_wanted
               - entity: sensor.sonarr_upcoming
-              - entity: sensor.sonarr_disk_space
-              - entity: sensor.sonarr_commands
               - entity: calendar.sonarr
           - type: entities
             title: Radarr
             entities:
-              - entity: sensor.radarr_films
-              - entity: sensor.radarr_queue
               - entity: sensor.radarr_disk_space_movies
               - entity: binary_sensor.radarr_health
               - entity: calendar.radarr
+          - type: markdown
+            content: >-
+              Shows/Queue/Wanted/Commands (Sonarr) and Films/Queue (Radarr)
+              are disabled by default. Enable them in Settings > Devices &
+              Services > [Sonarr|Radarr] > Entities, and I'll add them back.
       - type: grid
         title: Downloads
         cards:
@@ -243,7 +171,6 @@ views:
               - entity: sensor.qbittorrent_active_torrents
               - entity: sensor.qbittorrent_paused_torrents
               - entity: sensor.qbittorrent_errored_torrents
-              - entity: sensor.qbittorrent_global_ratio
               - entity: switch.qbittorrent_alternative_speed
           - type: entities
             title: SABnzbd
@@ -267,6 +194,11 @@ views:
 
               **Seerr**: not added.
 
+
+              **qBittorrent**: global ratio is disabled by default too -
+              same fix, Settings > Devices & Services > qBittorrent >
+              Entities.
+
   - title: Energy
     path: energy
     icon: mdi:flash
@@ -287,12 +219,9 @@ views:
           - type: tile
             entity: binary_sensor.octopus_energy_electricity_d06g503888_1460001146039_off_peak
             name: Off Peak
-          - type: entities
-            title: Yesterday
-            entities:
-              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_accumulative_consumption
-              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_accumulative_cost
-              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_rate
+          - type: tile
+            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_rate
+            name: Previous Rate
           - type: custom:mini-graph-card
             name: Rate Today
             entities:
@@ -313,12 +242,22 @@ views:
           - type: tile
             entity: sensor.octopus_energy_gas_461654_7514536408_current_standing_charge
             name: Standing Charge
-          - type: entities
-            title: Yesterday
-            entities:
-              - entity: sensor.octopus_energy_gas_461654_7514536408_previous_accumulative_consumption_kwh
-              - entity: sensor.octopus_energy_gas_461654_7514536408_previous_accumulative_cost
-              - entity: sensor.octopus_energy_gas_461654_7514536408_previous_rate
+          - type: tile
+            entity: sensor.octopus_energy_gas_461654_7514536408_previous_rate
+            name: Previous Rate
+      - type: grid
+        title: Not Yet Enabled
+        cards:
+          - type: markdown
+            content: >-
+              Yesterday's consumption and cost (electricity and gas) are the
+              most useful part of an energy dashboard, but both are
+              disabled-by-default sensors on this integration. Enable
+              `previous_accumulative_consumption`/`previous_accumulative_cost`
+              for electricity and
+              `previous_accumulative_consumption_kwh`/`previous_accumulative_cost`
+              for gas in Settings > Devices & Services > Octopus Energy >
+              Entities, and I'll wire them in.
       - type: grid
         title: Octoplus
         cards:
@@ -327,7 +266,6 @@ views:
             entities:
               - entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_electricity
               - entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_gas
-              - entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_octoplus_power_down_baseline
           - type: calendar
             title: Power Down Events
             entities:

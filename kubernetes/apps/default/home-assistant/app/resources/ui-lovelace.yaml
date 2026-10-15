@@ -1,0 +1,182 @@
+---
+# FIXME: every entity_id below is a best-guess placeholder based on each
+# integration's typical default naming. Go to Settings > Devices & Services
+# > click each integration > Entities tab, and swap in your real entity_ids
+# (search this file for "FIXME" to find every line that needs one).
+#
+# Cards use the built-in `tile` type everywhere so this renders with zero
+# HACS/Marketplace dependencies. Swap to `custom:mushroom-*` cards later if
+# you install Mushroom - the entity/layout structure below stays the same.
+
+views:
+  - title: Home
+    path: home
+    icon: mdi:home
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: weather-forecast
+            entity: weather.forecast_home # FIXME: confirm your weather entity
+            show_forecast: true
+      - type: grid
+        title: Quick Controls
+        cards:
+          - type: tile
+            entity: media_player.living_room_tv # FIXME: Sony Bravia entity
+            name: TV
+          - type: tile
+            entity: media_player.homepod # FIXME: HomePod entity
+            name: HomePod
+          - type: tile
+            entity: switch.pi_hole # FIXME: Pi-hole enable/disable switch
+            name: Pi-hole
+      - type: grid
+        title: Who's Home
+        cards:
+          - type: tile
+            entity: person.you # FIXME: person entity (from Companion app)
+          - type: tile
+            entity: person.partner # FIXME: add/remove per household member
+
+  - title: Entertainment
+    path: entertainment
+    icon: mdi:television
+    type: sections
+    sections:
+      - type: grid
+        title: Living Room
+        cards:
+          - type: media-control
+            entity: media_player.living_room_tv # FIXME: Sony Bravia entity
+          - type: media-control
+            entity: media_player.homepod # FIXME: HomePod/AirPlay entity
+
+  - title: Network
+    path: network
+    icon: mdi:router-network
+    type: sections
+    sections:
+      - type: grid
+        title: Gateway
+        cards:
+          - type: tile
+            entity: sensor.unifi_gateway_wan_ip # FIXME: check what your gateway model exposes
+            name: WAN
+          - type: tile
+            entity: sensor.unifi_gateway_uptime # FIXME: may not exist on your model
+            name: Uptime
+      - type: grid
+        title: Presence
+        cards:
+          # FIXME: these are two examples - add one `tile` per device_tracker
+          # created by the UniFi integration, or install the HACS
+          # `auto-entities` card and replace this whole section with:
+          #   type: custom:auto-entities
+          #   card: { type: entities, title: Presence }
+          #   filter:
+          #     include:
+          #       - integration: unifi
+          #         domain: device_tracker
+          - type: tile
+            entity: device_tracker.your_phone # FIXME
+          - type: tile
+            entity: device_tracker.partners_phone # FIXME
+
+  - title: Media Stack
+    path: media-stack
+    icon: mdi:server
+    type: sections
+    sections:
+      - type: grid
+        title: Requests & Watching
+        cards:
+          - type: tile
+            entity: sensor.seerr_pending_requests # FIXME
+            name: Pending Requests
+          - type: tile
+            entity: sensor.tautulli_watching # FIXME
+            name: Now Watching
+      - type: grid
+        title: Sonarr / Radarr
+        cards:
+          - type: entities
+            title: Sonarr
+            entities:
+              - entity: sensor.sonarr_queue # FIXME
+              - entity: sensor.sonarr_wanted # FIXME
+              - entity: sensor.sonarr_upcoming # FIXME
+              - entity: sensor.sonarr_diskspace # FIXME
+          - type: entities
+            title: Radarr
+            entities:
+              - entity: sensor.radarr_queue # FIXME
+              - entity: sensor.radarr_wanted # FIXME
+              - entity: sensor.radarr_upcoming # FIXME
+              - entity: sensor.radarr_diskspace # FIXME
+      - type: grid
+        title: Downloads & DNS
+        cards:
+          - type: entities
+            title: qBittorrent
+            entities:
+              - entity: sensor.qbittorrent_status # FIXME
+              - entity: sensor.qbittorrent_download_speed # FIXME
+              - entity: sensor.qbittorrent_upload_speed # FIXME
+          - type: entities
+            title: SABnzbd
+            entities:
+              - entity: sensor.sabnzbd_queue # FIXME
+              - entity: sensor.sabnzbd_speed # FIXME
+          - type: entities
+            title: Pi-hole
+            entities:
+              - entity: sensor.pi_hole_ads_blocked_today # FIXME
+              - entity: sensor.pi_hole_dns_queries_today # FIXME
+      - type: grid
+        title: Plex
+        cards:
+          - type: tile
+            entity: media_player.plex_living_room # FIXME: only if you have a Plex player entity
+            name: Plex
+
+  - title: Household
+    path: household
+    icon: mdi:home-city
+    type: sections
+    sections:
+      - type: grid
+        title: Bins
+        cards:
+          # FIXME: UK Bin Collection Data creates one sensor per bin type
+          # (e.g. general, recycling, garden) - add a tile per bin you have
+          - type: tile
+            entity: sensor.gloucester_general_waste # FIXME
+            name: General Waste
+          - type: tile
+            entity: sensor.gloucester_recycling # FIXME
+            name: Recycling
+      - type: grid
+        title: Meal Planning
+        cards:
+          - type: todo-list
+            entity: todo.mealie_shopping_list # FIXME
+            title: Shopping List
+          - type: todo-list
+            entity: todo.mealie_meal_plan # FIXME
+            title: This Week's Meals
+      - type: grid
+        title: Car
+        cards:
+          - type: tile
+            entity: sensor.vw_battery_level # FIXME: only if EV/PHEV
+            name: Battery
+          - type: tile
+            entity: sensor.vw_range # FIXME
+            name: Range
+          - type: tile
+            entity: device_tracker.vw_car # FIXME
+            name: Location
+          - type: tile
+            entity: lock.vw_car # FIXME
+            name: Lock

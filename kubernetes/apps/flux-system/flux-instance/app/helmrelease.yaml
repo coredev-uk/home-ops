@@ -24,7 +24,7 @@ spec:
         kind: GitRepository
         url: https://github.com/coredev-uk/home-ops
         ref: refs/heads/main
-        path: kubernetes/flux/cluster
+        path: kubernetes/apps
         interval: 1h
         # Private repo: authenticates as the bot-cecil App, minting a
         # short-lived token per clone. The secret comes from

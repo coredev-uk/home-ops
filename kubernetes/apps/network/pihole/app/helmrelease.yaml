@@ -28,6 +28,10 @@ spec:
     extraEnvVars:
       TZ: Europe/London
       FTLCONF_dns_listeningMode: all
+      # 2026.10.0 rejects API calls addressed to a name it does not know with
+      # 401 when no password is set, which breaks external-dns reaching the
+      # in-cluster Service. Trust that name instead of setting a password.
+      FTLCONF_webserver_domain: pihole-web.network.svc.cluster.local
     serviceDns:
       type: LoadBalancer
       mixedService: true

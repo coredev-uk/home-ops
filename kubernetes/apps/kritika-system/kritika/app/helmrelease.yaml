@@ -12,7 +12,7 @@ spec:
   values:
     replicas: 2
     deploymentAnnotations:
-      reloader.stakater.com/auto: "true"
+      secret.reloader.stakater.com/auto: "true"
     config:
       webUrl: https://{{ .Release.Name }}.hera.ac
       auth:
@@ -27,6 +27,9 @@ spec:
       embedding:
         model: openrouter/voyageai/voyage-code-4
         dims: 1024
+        documentPrompt: "Represent the document for retrieval: "
+        queryPrompt: "Represent the query for retrieving supporting documents: "
+        similarFloor: 0.3
       apps:
         github:
           accounts: [coredev-uk]
@@ -51,17 +54,18 @@ spec:
         existingSecret: kritika-postgres-credentials
       runner:
         existingSecret: kritika-postgres-runner
+    gatewayCache:
+      enabled: true
     runner:
-      runtimeClass: gvisor
-      tools:
-        - name: flate
-          image: ghcr.io/home-operations/flate:0.6.5@sha256:e0e2d2de97539b3141977e8bb3bbb50ea5c5afe89477950e5fa972c9862478da
-      resources:
-        requests:
-          cpu: 10m
-          memory: 512Mi
-        limits:
-          memory: 2Gi
+      podTemplate:
+        spec:
+          resources:
+            requests:
+              cpu: 10m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          runtimeClassName: gvisor
     httpRoute:
       enabled: true
       annotations:

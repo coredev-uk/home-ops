@@ -25,6 +25,9 @@ spec:
         radarr:
           apprise:
             url: pover://{{ env "PUSHOVER_USER_KEY" }}@{{ env "RADARR_PUSHOVER_TOKEN" }}
+        profilarr:
+          apprise:
+            url: pover://{{ env "PUSHOVER_USER_KEY" }}@{{ env "PROFILARR_PUSHOVER_TOKEN" }}
         sonarr:
           apprise:
             url: pover://{{ env "PUSHOVER_USER_KEY" }}@{{ env "SONARR_PUSHOVER_TOKEN" }}
@@ -102,6 +105,15 @@ spec:
             url: "{{ .payload.applicationUrl }}/activity/queue"
             url_title: View-Queue
           whenExpr: payload.eventType == "ManualInteractionRequired"
+        # Profilarr's generic webhook POSTs its raw notification object
+        profilarr:
+          target: profilarr
+          title: "{{ .payload.title }}"
+          message: "{{ .payload.message | ellipsis 900 }}"
+          params:
+            priority: '{{ if eq .payload.severity "error" }}high{{ else if eq .payload.severity "warning" }}normal{{ else }}low{{ end }}'
+            url: https://profilarr.hera.ac
+            url_title: Open-Profilarr
     monitoring:
       serviceMonitor:
         enabled: true

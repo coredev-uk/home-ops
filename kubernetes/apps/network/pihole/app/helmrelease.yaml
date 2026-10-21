@@ -15,7 +15,19 @@ spec:
         name: pihole
         namespace: network
   values:
-    replicaCount: 1
+    # Replicas are stateless: each pod rebuilds gravity from `adlists` on start
+    # and its external-dns sidecar writes the local DNS records into it, so no
+    # pod depends on another or on a volume.
+    replicaCount: 2
+    maxSurge: 1
+    maxUnavailable: 0
+    antiaff:
+      enabled: true
+      avoidRelease: pihole
+      strict: true
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
     image:
       repository: pihole/pihole
       tag: 2026.10.0
@@ -30,8 +42,9 @@ spec:
       FTLCONF_dns_listeningMode: all
       # 2026.10.0 rejects API calls addressed to a name it does not know with
       # 401 when no password is set. Trust the in-cluster Service name used by
-      # external-dns and dynacat; httproute.yaml rewrites the dashboard's Host
-      # (pihole.hera.ac) to this name too.
+      # dynacat; httproute.yaml rewrites the dashboard's Host (pihole.hera.ac)
+      # to this name too. The external-dns sidecar uses localhost, which is
+      # always trusted.
       FTLCONF_webserver_domain: pihole-web.network.svc.cluster.local
     serviceDns:
       type: LoadBalancer
@@ -54,13 +67,15 @@ spec:
         initialDelaySeconds: 60
         failureThreshold: 10
         timeoutSeconds: 5
+      # A fresh pod must not take traffic before its sidecar has written the
+      # local records, or clients cache NXDOMAIN for internal names.
       readiness:
         enabled: true
         type: command
         command:
           - /bin/sh
           - -c
-          - dig @127.0.0.1 quad9.net || exit 1
+          - dig @127.0.0.1 quad9.net && dig +short @127.0.0.1 internal.hera.ac | grep -q .
         initialDelaySeconds: 30
         failureThreshold: 10
         timeoutSeconds: 5
@@ -72,6 +87,54 @@ spec:
         - 1.1.1.1
     dnsmasq:
       enableCustomDnsMasq: true
+      # Off-cluster names that no external-dns source describes
+      additionalHostsEntries:
+        - 192.168.20.242 protected.hera.ac
+        - 192.168.20.248 plex-lan.hera.ac
+      customCnameEntries:
+        - cname=auth.hera.ac,kopia.hera.ac,notifiarr.hera.ac,protected.hera.ac
+    extraContainers:
+      # Exits until pihole's API is listening, so expect 1-2 restarts per pod
+      # start; the readiness probe holds traffic until its records exist.
+      - name: external-dns
+        image: registry.k8s.io/external-dns/external-dns:v0.23.0@sha256:1854499e2b08cee47c40a08e356bff20dcb192dbcfde8378fc3f900f12cad5a3
+        args:
+          - --log-level=info
+          - --log-format=text
+          - --interval=1m
+          - --events
+          - --source=gateway-httproute
+          - --source=service
+          - --gateway-namespace=network
+          - --domain-filter=hera.ac
+          - --policy=upsert-only
+          - --registry=noop
+          - --provider=pihole
+          - --pihole-server=http://localhost
+        ports:
+          - name: external-dns
+            containerPort: 7979
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: external-dns
+          initialDelaySeconds: 10
+          failureThreshold: 2
+          timeoutSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+          runAsGroup: 65532
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
     monitoring:
       sidecar:
         enabled: true
@@ -86,13 +149,19 @@ spec:
           limits:
             cpu: 50m
             memory: 64Mi
-    persistentVolumeClaim:
-      enabled: true
-      size: 2Gi
-      storageClass: ceph-block
     resources:
       requests:
         cpu: 100m
         memory: 256Mi
       limits:
         memory: 512Mi
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: Deployment
+              name: pihole
+            patch: |
+              - op: add
+                path: /spec/template/spec/serviceAccountName
+                value: pihole

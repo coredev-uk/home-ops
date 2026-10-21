@@ -219,6 +219,9 @@ pages:
                   - title: Bazarr
                     url: https://bazarr.hera.ac
                     icon: sh:bazarr-light
+                  - title: Profilarr
+                    url: https://profilarr.hera.ac
+                    icon: di:profilarr
                   - title: Prowlarr
                     url: https://prowlarr.hera.ac
                     icon: sh:prowlarr-light

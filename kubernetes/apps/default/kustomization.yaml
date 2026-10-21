@@ -24,12 +24,12 @@ resources:
   - ./mealie/ks.yaml
   - ./outline/ks.yaml
   - ./plex/ks.yaml
+  - ./profilarr/ks.yaml
   - ./prowlarr/ks.yaml
   - ./pocket-id/ks.yaml
   - ./qbittorrent/ks.yaml
   - ./qui/ks.yaml
   - ./radarr/ks.yaml
-  - ./recyclarr/ks.yaml
   - ./sabnzbd/ks.yaml
   - ./seerr/ks.yaml
   - ./sonarr/ks.yaml

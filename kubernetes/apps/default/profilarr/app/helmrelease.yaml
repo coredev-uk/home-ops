@@ -1,0 +1,118 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: profilarr
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: profilarr
+  interval: 1h
+  values:
+    controllers:
+      profilarr:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/dictionarry-hub/profilarr
+              tag: 2.3.0@sha256:11ed9f4c62311b956f1a89b44e19cf0908cd3e5169c3e43d59ab8144bbf7fe7d
+            env:
+              TZ: Europe/London
+              PORT: &port 80
+              ORIGIN: https://profilarr.hera.ac
+              # Pocket ID; the callback is {ORIGIN}/auth/oidc/callback
+              OIDC_DISCOVERY_URL: https://id.hera.ac/.well-known/openid-configuration
+              PARSER_HOST: localhost
+              PARSER_PORT: &parserPort 5000
+            envFrom:
+              - secretRef:
+                  name: "{{ .Release.Name }}-secret"
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /api/v1/health
+                    port: *port
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probes
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 512Mi
+          # Only needed for custom format / quality profile testing
+          parser:
+            image:
+              repository: ghcr.io/dictionarry-hub/profilarr-parser
+              tag: 2.3.0@sha256:02a511132a6881f9e82f08632a7843c4d298fb72bf11bfe73ac0017eb3a03639
+            env:
+              ASPNETCORE_URLS: http://+:5000
+            probes:
+              liveness: &parserProbes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *parserPort
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *parserProbes
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 256Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.hera.ac"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+        advancedMounts:
+          profilarr:
+            app:
+              - path: /config
+      tmp:
+        type: emptyDir

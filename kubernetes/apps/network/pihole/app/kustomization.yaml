@@ -7,4 +7,4 @@ resources:
   - ./httproute.yaml
   - ./helmrelease.yaml
   - ./helmrepository.yaml
-  - ./vmpodscrape.yaml
+  - ./podmonitor.yaml

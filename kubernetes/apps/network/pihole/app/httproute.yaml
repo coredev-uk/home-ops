@@ -22,6 +22,12 @@ spec:
               type: ReplaceFullPath
               replaceFullPath: /admin/
             statusCode: 302
-    - backendRefs:
+    # Pi-hole without a password only answers requests addressed to
+    # webserver.domain (see helmrelease.yaml), so present that name upstream.
+    - filters:
+        - type: URLRewrite
+          urlRewrite:
+            hostname: pihole-web.network.svc.cluster.local
+      backendRefs:
         - name: pihole-web
           port: 80

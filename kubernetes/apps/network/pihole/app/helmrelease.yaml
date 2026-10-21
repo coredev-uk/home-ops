@@ -29,8 +29,9 @@ spec:
       TZ: Europe/London
       FTLCONF_dns_listeningMode: all
       # 2026.10.0 rejects API calls addressed to a name it does not know with
-      # 401 when no password is set, which breaks external-dns reaching the
-      # in-cluster Service. Trust that name instead of setting a password.
+      # 401 when no password is set. Trust the in-cluster Service name used by
+      # external-dns and dynacat; httproute.yaml rewrites the dashboard's Host
+      # (pihole.hera.ac) to this name too.
       FTLCONF_webserver_domain: pihole-web.network.svc.cluster.local
     serviceDns:
       type: LoadBalancer

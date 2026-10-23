@@ -34,12 +34,11 @@ from pathlib import Path
 
 log = logging.getLogger("letterboxd-sync")
 
-# Letterboxd only grants API keys to commercial partners, so this is the
-# key/secret pair Jellyscribe ships (LetterboxdApiConstants.cs). If Letterboxd
-# revokes it, sign-in fails with 401/403; take the new pair from Jellyscribe.
+# Letterboxd only grants API keys to commercial partners, so the key/secret
+# pair (LETTERBOXD_API_KEY / LETTERBOXD_API_SECRET) is the one Jellyscribe
+# ships, kept in 1Password rather than here. If Letterboxd revokes it, sign-in
+# fails with 401/403; take the new pair from Jellyscribe.
 LETTERBOXD_API = "https://api.letterboxd.com/api/v0"
-LETTERBOXD_API_KEY = "ebe3d27ec52a35fc8d1835c6531c37bd72b7a54337666d5bd759379b72ae16f0"
-LETTERBOXD_API_SECRET = "c60ce045d25bc90cb56026a8dd621eebeef995cbecc51951192da75348c977cd"
 
 # Cloudflare in front of the API 403s urllib's default "Python-urllib/x.y".
 USER_AGENT = "plex-letterboxd-sync/1.0"
@@ -287,7 +286,9 @@ class LetterboxdError(Exception):
 class Letterboxd:
     """The slice of Letterboxd's API needed to write diary entries."""
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str, api_secret: str) -> None:
+        self.api_key = api_key
+        self.api_secret = api_secret
         self.token = ""
         self.member_id = ""
 
@@ -312,14 +313,14 @@ class Letterboxd:
             query = urllib.parse.urlencode(
                 {
                     **(params or {}),
-                    "apikey": LETTERBOXD_API_KEY,
+                    "apikey": self.api_key,
                     "nonce": str(uuid.uuid4()),
                     "timestamp": str(int(time.time())),
                 }
             )
             url = f"{LETTERBOXD_API}{path}?{query}"
             signature = hmac.new(
-                LETTERBOXD_API_SECRET.encode(),
+                self.api_secret.encode(),
                 f"{method}\0{url}\0{body or ''}".encode(),
                 hashlib.sha256,
             ).hexdigest()
@@ -480,7 +481,10 @@ def main() -> int:
             state.save()
         return 0
 
-    letterboxd = Letterboxd()
+    letterboxd = Letterboxd(
+        env("LETTERBOXD_API_KEY", required=True),
+        env("LETTERBOXD_API_SECRET", required=True),
+    )
     try:
         letterboxd.sign_in(
             env("LETTERBOXD_USERNAME", required=True),

@@ -25,7 +25,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 log = logging.getLogger("letterboxd-sync")
@@ -205,13 +205,15 @@ class Tautulli:
     def movie_history(self, since: int, threshold: float, user_id: str | None) -> list[dict]:
         """Completed film plays newer than `since`, oldest first.
 
-        `start_date` is day-precision only, so it just keeps the pages small;
-        the row's unix `date` is authoritative, which avoids re-importing
-        everything watched earlier the same day.
+        Tautulli's `start_date` means "only this exact date", so `after`
+        (inclusive, day precision) bounds the query instead. It is set a day
+        early because Tautulli resolves dates in its own timezone, which may
+        differ from ours; the row's unix `date` is authoritative, which also
+        avoids re-importing everything watched earlier the same day.
         """
-        start_date = None
+        after = None
         if since:
-            start_date = datetime.fromtimestamp(since).strftime("%Y-%m-%d")
+            after = (datetime.fromtimestamp(since) - timedelta(days=1)).strftime("%Y-%m-%d")
 
         rows: list[dict] = []
         offset, page_size = 0, 200
@@ -223,7 +225,7 @@ class Tautulli:
                 order_dir="desc",
                 start=offset,
                 length=page_size,
-                start_date=start_date,
+                after=after,
                 user_id=user_id,
                 grouping=1,
             )

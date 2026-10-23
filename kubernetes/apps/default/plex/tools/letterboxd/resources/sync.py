@@ -1,45 +1,50 @@
 #!/usr/bin/env python3
-"""Sync Plex watch history to Letterboxd.
+"""Sync Plex watch history to the Letterboxd diary.
 
 History comes from Tautulli, not Plex, so entries survive the underlying file
 being deleted or the library being rebuilt. A cursor on the PVC makes each run
 incremental; a first run does not backfill (see SYNC_SINCE).
 
-Letterboxd's API is request-only and explicitly not granted "for private or
-personal projects", so the only routes in are the import page driven by a
-headless browser (rpa) or the CSV importer by hand (csv). A CSV is written every
-run either way, as an audit trail and as the fallback when the browser breaks.
+Entries are written through Letterboxd's own API (api.letterboxd.com/api/v0),
+signing in with the account's username and password, the same way the
+Jellyscribe Jellyfin plugin (github.com/builtbyproxy/Jellyscribe) does. The
+diary itself is the dedup source: a film already logged on that date is
+skipped, and an earlier entry makes the new one a rewatch.
 
-Stdlib only, except the rpa path which imports playwright lazily.
+Stdlib only.
 """
 
 from __future__ import annotations
 
-import csv
+import hashlib
+import hmac
 import json
 import logging
+import math
 import os
-import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 log = logging.getLogger("letterboxd-sync")
 
-# Plex userRating and the importer's Rating10 are both 0-10, so no conversion.
-CSV_COLUMNS = [
-    "tmdbID",
-    "imdbID",
-    "Title",
-    "Year",
-    "WatchedDate",
-    "Rating10",
-    "Rewatch",
-]
+# Letterboxd only grants API keys to commercial partners, so this is the
+# key/secret pair Jellyscribe ships (LetterboxdApiConstants.cs). If Letterboxd
+# revokes it, sign-in fails with 401/403; take the new pair from Jellyscribe.
+LETTERBOXD_API = "https://api.letterboxd.com/api/v0"
+LETTERBOXD_API_KEY = "ebe3d27ec52a35fc8d1835c6531c37bd72b7a54337666d5bd759379b72ae16f0"
+LETTERBOXD_API_SECRET = "c60ce045d25bc90cb56026a8dd621eebeef995cbecc51951192da75348c977cd"
+
+# Cloudflare in front of the API 403s urllib's default "Python-urllib/x.y".
+USER_AGENT = "plex-letterboxd-sync/1.0"
+# Longest Retry-After honoured on a 429 before giving up on the run.
+MAX_RETRY_AFTER = 60
 
 
 def env(name: str, default: str | None = None, required: bool = False) -> str:
@@ -71,7 +76,6 @@ class Entry:
     tmdb_id: str | None = None
     imdb_id: str | None = None
     rating10: float | None = None
-    rewatch: bool = False
 
     @property
     def watched_date(self) -> str:
@@ -80,40 +84,24 @@ class Entry:
         return datetime.fromtimestamp(self.watched_at).strftime("%Y-%m-%d")
 
     @property
-    def film_key(self) -> str | None:
-        """Stable identity for dedup across runs."""
-        if self.tmdb_id:
-            return f"tmdb:{self.tmdb_id}"
-        if self.imdb_id:
-            return f"imdb:{self.imdb_id}"
-        # Media deleted from the library returns no metadata, so fall back to
-        # the title/year pair Letterboxd matches on when ids are absent.
-        slug = re.sub(r"[^a-z0-9]+", "-", self.title.lower()).strip("-")
-        return f"title:{slug}:{self.year or 0}" if slug else None
-
-    def csv_row(self) -> dict[str, str]:
-        return {
-            "tmdbID": self.tmdb_id or "",
-            "imdbID": self.imdb_id or "",
-            "Title": self.title,
-            "Year": str(self.year) if self.year else "",
-            "WatchedDate": self.watched_date,
-            "Rating10": f"{self.rating10:g}" if self.rating10 is not None else "",
-            "Rewatch": "true" if self.rewatch else "false",
-        }
+    def stars(self) -> float | None:
+        """Plex's 0-10 as Letterboxd's 0.5-5.0 in half steps, halves rounding up."""
+        if not self.rating10 or self.rating10 <= 0:
+            return None
+        return min(max(math.floor(self.rating10 + 0.5) / 2, 0.5), 5.0)
 
 
 class State:
-    """Cursor and dedup ledger, persisted on the PVC.
+    """The cursor, persisted on the PVC.
 
-    The cursor only advances past entries actually delivered, so a failed run is
-    retried rather than skipped.
+    It advances past each history row once that row is settled (logged, already
+    in the diary, or unmatchable), and is saved after every row, so a failed or
+    interrupted run resumes at the first unsettled row.
     """
 
     def __init__(self, path: Path, initial_cursor: int = 0):
         self.path = path
         self.cursor = 0
-        self.logged: dict[str, str] = {}  # "tmdb:603|2026-10-01" -> iso timestamp
         self._load(initial_cursor)
 
     def _load(self, initial_cursor: int) -> None:
@@ -133,52 +121,39 @@ class State:
             # Refuse to continue rather than silently re-import everything.
             sys.exit(f"state file {self.path} is unreadable ({exc}); fix or remove it")
         self.cursor = int(data.get("cursor", 0))
-        self.logged = dict(data.get("logged", {}))
         log.info(
-            "state: cursor=%s (%s), %d logged entries",
+            "state: cursor=%s (%s)",
             self.cursor,
             datetime.fromtimestamp(self.cursor).isoformat() if self.cursor else "never",
-            len(self.logged),
         )
 
     def save(self) -> None:
-        payload = {"cursor": self.cursor, "logged": self.logged}
         # Write-then-rename: an interrupted run must not truncate state.
         tmp = self.path.with_suffix(".json.tmp")
-        tmp.write_text(json.dumps(payload, indent=2, sort_keys=True))
+        tmp.write_text(json.dumps({"cursor": self.cursor}, indent=2))
         tmp.replace(self.path)
 
-    def seen(self, entry: Entry) -> bool:
-        key = entry.film_key
-        return bool(key) and f"{key}|{entry.watched_date}" in self.logged
 
-    def watched_before(self, entry: Entry) -> bool:
-        key = entry.film_key
-        if not key:
-            return False
-        return any(k.startswith(f"{key}|") for k in self.logged)
-
-    def record(self, entry: Entry) -> None:
-        key = entry.film_key
-        if key:
-            self.logged[f"{key}|{entry.watched_date}"] = datetime.now(
-                timezone.utc
-            ).isoformat()
-
-
-def http_json(url: str, *, timeout: int = 60) -> tuple[int, object]:
-    req = urllib.request.Request(url, method="GET")
+def http_json(
+    url: str,
+    *,
+    method: str = "GET",
+    body: bytes | None = None,
+    headers: dict[str, str] | None = None,
+    timeout: int = 60,
+) -> tuple[int, object, dict[str, str]]:
+    req = urllib.request.Request(url, method=method, data=body, headers=headers or {})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw, status = resp.read(), resp.status
+            raw, status, resp_headers = resp.read(), resp.status, dict(resp.headers)
     except urllib.error.HTTPError as exc:
-        raw, status = exc.read(), exc.code
+        raw, status, resp_headers = exc.read(), exc.code, dict(exc.headers)
     if not raw:
-        return status, None
+        return status, None, resp_headers
     try:
-        return status, json.loads(raw)
+        return status, json.loads(raw), resp_headers
     except json.JSONDecodeError:
-        return status, raw.decode("utf-8", "replace")
+        return status, raw.decode("utf-8", "replace"), resp_headers
 
 
 class Tautulli:
@@ -190,7 +165,7 @@ class Tautulli:
         query = {"apikey": self.api_key, "cmd": cmd}
         query.update({k: v for k, v in params.items() if v is not None})
         url = f"{self.base_url}/api/v2?{urllib.parse.urlencode(query)}"
-        status, payload = http_json(url)
+        status, payload, _ = http_json(url)
         if status != 200 or not isinstance(payload, dict):
             if not fatal:
                 return None
@@ -305,77 +280,151 @@ class Tautulli:
             entry.rating10 = rating if rating > 0 else None
 
 
-def write_csv(entries: list[Entry], out_dir: Path) -> Path:
-    out_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
-    path = out_dir / f"diary-{stamp}.csv"
-    with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
-        writer.writeheader()
-        for entry in entries:
-            writer.writerow(entry.csv_row())
-    # Stable path, so it can be fetched predictably.
-    latest = out_dir / "latest.csv"
-    latest.write_bytes(path.read_bytes())
-    log.info("wrote %d entries to %s (and latest.csv)", len(entries), path.name)
-    return path
+class LetterboxdError(Exception):
+    pass
 
 
-def deliver_rpa(entries: list[Entry], csv_path: Path, state_dir: Path, dry_run: bool) -> list[Entry]:
-    """Drive the import page with a headless browser.
+class Letterboxd:
+    """The slice of Letterboxd's API needed to write diary entries."""
 
-    Depends on Letterboxd's markup and will break when they change it, so a
-    screenshot is saved on failure and the run's CSV stays valid for a manual
-    import.
-    """
-    if dry_run:
-        log.info("[dry-run] would import %d entries via %s", len(entries), csv_path.name)
-        return list(entries)
+    def __init__(self) -> None:
+        self.token = ""
+        self.member_id = ""
 
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        sys.exit("LETTERBOXD_DELIVERY=rpa needs playwright; use the playwright image")
+    def request(
+        self,
+        method: str,
+        path: str,
+        params: dict[str, object] | None = None,
+        *,
+        json_body: dict | None = None,
+        form: dict[str, str] | None = None,
+    ) -> object:
+        """A signed request; one retry on a short 429, LetterboxdError otherwise."""
+        body, ctype = None, None
+        if json_body is not None:
+            body, ctype = json.dumps(json_body), "application/json"
+        elif form is not None:
+            body, ctype = urllib.parse.urlencode(form), "application/x-www-form-urlencoded"
 
-    username = env("LETTERBOXD_USERNAME", required=True)
-    password = env("LETTERBOXD_PASSWORD", required=True)
+        for attempt in range(2):
+            # The signature covers nonce and timestamp, so a retry re-signs.
+            query = urllib.parse.urlencode(
+                {
+                    **(params or {}),
+                    "apikey": LETTERBOXD_API_KEY,
+                    "nonce": str(uuid.uuid4()),
+                    "timestamp": str(int(time.time())),
+                }
+            )
+            url = f"{LETTERBOXD_API}{path}?{query}"
+            signature = hmac.new(
+                LETTERBOXD_API_SECRET.encode(),
+                f"{method}\0{url}\0{body or ''}".encode(),
+                hashlib.sha256,
+            ).hexdigest()
+            headers = {"Accept": "application/json", "User-Agent": USER_AGENT}
+            if ctype:
+                headers["Content-Type"] = ctype
+            if self.token:
+                headers["Authorization"] = f"Bearer {self.token}"
 
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            args=["--no-sandbox", "--disable-dev-shm-usage"]
+            status, payload, resp_headers = http_json(
+                f"{url}&signature={signature}",
+                method=method,
+                body=body.encode() if body is not None else None,
+                headers=headers,
+            )
+            if status == 429 and attempt == 0:
+                try:
+                    wait = int(resp_headers.get("Retry-After") or 5)
+                except ValueError:
+                    wait = 5
+                if wait <= MAX_RETRY_AFTER:
+                    log.warning("letterboxd rate limited %s; retrying in %ds", path, wait)
+                    time.sleep(wait)
+                    continue
+            if 200 <= status < 300:
+                return payload
+            # Error bodies can echo the request, so never the sign-in's.
+            detail = "" if path == "/auth/token" else f": {str(payload)[:300]}"
+            raise LetterboxdError(f"{method} {path} returned HTTP {status}{detail}")
+        raise AssertionError("unreachable")
+
+    def sign_in(self, username: str, password: str) -> None:
+        token = self.request(
+            "POST",
+            "/auth/token",
+            form={"grant_type": "password", "username": username, "password": password},
         )
-        page = browser.new_page()
-        try:
-            page.goto("https://letterboxd.com/sign-in/", wait_until="domcontentloaded")
-            page.fill("#field-username", username)
-            page.fill("#field-password", password)
-            page.click("#signin-button, button[type='submit']")
-            page.wait_for_load_state("networkidle")
+        if not isinstance(token, dict) or not token.get("access_token"):
+            raise LetterboxdError("sign-in reply had no access token")
+        self.token = token["access_token"]
+        me = self.request("GET", "/me")
+        member = (me or {}).get("member") if isinstance(me, dict) else None
+        if not isinstance(member, dict) or not member.get("id"):
+            raise LetterboxdError("/me reply had no member id")
+        self.member_id = member["id"]
+        log.info("signed in to letterboxd as %s", member.get("username") or username)
 
-            if "sign-in" in page.url:
-                raise RuntimeError("still on the sign-in page; credentials rejected?")
+    def find_film(self, entry: Entry) -> dict | None:
+        """The Letterboxd film for an entry: by TMDb id, then IMDb id, then an
+        exact title and year match. None when nothing matches unambiguously."""
+        for prefix, ident in (("tmdb", entry.tmdb_id), ("imdb", entry.imdb_id)):
+            if not ident:
+                continue
+            data = self.request("GET", "/films", {"filmId": f"{prefix}:{ident}", "perPage": 1})
+            items = (data or {}).get("items") or [] if isinstance(data, dict) else []
+            if items:
+                return items[0]
 
-            page.goto("https://letterboxd.com/import/", wait_until="domcontentloaded")
-            page.set_input_files("input[type='file']", str(csv_path))
-            # Parsed client-side, then the confirm control appears; the row
-            # count is not known up front.
-            page.wait_for_selector("text=/Import \\d+ film/i", timeout=120_000)
-            page.click("text=/Import \\d+ film/i")
-            page.wait_for_load_state("networkidle", timeout=120_000)
-            log.info("import submitted for %d entries", len(entries))
-            return list(entries)
-        except Exception as exc:
-            shot = state_dir / "rpa-failure.png"
-            try:
-                page.screenshot(path=str(shot), full_page=True)
-                log.error("saved failure screenshot to %s", shot)
-            except Exception:
-                pass
-            log.error("browser import failed: %s", exc)
-            log.error("the CSV at %s is still valid - import it manually", csv_path)
-            return []
-        finally:
-            browser.close()
+        if not entry.year:
+            return None
+        data = self.request(
+            "GET",
+            "/search",
+            {"input": entry.title, "include": "FilmSearchItem", "perPage": 20},
+        )
+        items = (data or {}).get("items") or [] if isinstance(data, dict) else []
+        wanted = entry.title.casefold()
+        matches = [
+            item["film"]
+            for item in items
+            if isinstance(item.get("film"), dict)
+            and str(item["film"].get("name", "")).casefold() == wanted
+            and item["film"].get("releaseYear") == entry.year
+        ]
+        return matches[0] if len(matches) == 1 else None
+
+    def diary_dates(self, film_id: str) -> set[str]:
+        """Every date this member has the film in their diary, all pages."""
+        dates: set[str] = set()
+        cursor: str | None = None
+        while True:
+            params: dict[str, object] = {"member": self.member_id, "film": film_id, "perPage": 100}
+            if cursor:
+                params["cursor"] = cursor
+            data = self.request("GET", "/log-entries", params)
+            if not isinstance(data, dict):
+                raise LetterboxdError("diary read returned no data")
+            for item in data.get("items") or []:
+                date = (item.get("diaryDetails") or {}).get("diaryDate")
+                if date:
+                    dates.add(str(date)[:10])
+            cursor = data.get("next")
+            if not cursor:
+                return dates
+
+    def log_watch(self, film_id: str, date: str, rewatch: bool, stars: float | None) -> None:
+        body: dict[str, object] = {
+            "filmId": film_id,
+            "diaryDetails": {"diaryDate": date, "rewatch": rewatch},
+            "like": False,
+            "tags": [],
+        }
+        if stars is not None:
+            body["rating"] = stars
+        self.request("POST", "/log-entries", json_body=body)
 
 
 def main() -> int:
@@ -383,10 +432,6 @@ def main() -> int:
         level=os.environ.get("LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s %(levelname)-7s %(message)s",
     )
-
-    delivery = env("LETTERBOXD_DELIVERY", "csv").strip().lower()
-    if delivery not in ("csv", "rpa"):
-        sys.exit(f"LETTERBOXD_DELIVERY must be csv or rpa (got {delivery!r})")
 
     dry_run = env_bool("DRY_RUN")
     state_dir = Path(env("STATE_DIR", "/data"))
@@ -397,9 +442,7 @@ def main() -> int:
     since = env("SYNC_SINCE").strip()
     if since:
         try:
-            initial_cursor = int(
-                datetime.strptime(since, "%Y-%m-%d").timestamp()
-            )
+            initial_cursor = int(datetime.strptime(since, "%Y-%m-%d").timestamp())
         except ValueError:
             sys.exit(f"SYNC_SINCE must be YYYY-MM-DD (got {since!r})")
     else:
@@ -414,6 +457,7 @@ def main() -> int:
 
     threshold = float(env("COMPLETION_THRESHOLD", "85"))
     max_per_run = env_int("MAX_PER_RUN", 50)
+    want_rating = env_bool("SYNC_RATINGS", True)
 
     # Plex servers are usually shared, so an unscoped run must be opted into.
     user_id = env("TAUTULLI_USER_ID") or None
@@ -424,7 +468,7 @@ def main() -> int:
             "TAUTULLI_ALL_USERS=true to deliberately sync every user."
         )
 
-    log.info("delivery=%s dry_run=%s threshold=%s%%", delivery, dry_run, threshold)
+    log.info("dry_run=%s threshold=%s%%", dry_run, threshold)
 
     rows = tautulli.movie_history(state.cursor, threshold, user_id)
     log.info("%d completed film play(s) since the cursor", len(rows))
@@ -436,18 +480,26 @@ def main() -> int:
             state.save()
         return 0
 
-    # Oldest first: a first watch must precede its rewatch, and capping then
-    # leaves a contiguous remainder for the next run.
-    entries: list[Entry] = []
-    want_rating = env_bool("SYNC_RATINGS", True)
-    seen_in_batch: set[str] = set()
+    letterboxd = Letterboxd()
+    try:
+        letterboxd.sign_in(
+            env("LETTERBOXD_USERNAME", required=True),
+            env("LETTERBOXD_PASSWORD", required=True),
+        )
+    except LetterboxdError as exc:
+        log.error("letterboxd sign-in failed: %s", exc)
+        return 1
 
+    # Diary reads can lag a write just made, so a film watched twice in one
+    # batch is tracked here as well.
+    logged_this_run: dict[str, set[str]] = {}
+    logged = skipped = 0
+
+    # Oldest first: a first watch must precede its rewatch, and stopping early
+    # leaves a contiguous remainder for the next run.
     for row in rows:
-        if len(entries) >= max_per_run:
-            log.info(
-                "capped at MAX_PER_RUN=%d; the remainder is picked up next run",
-                max_per_run,
-            )
+        if logged + skipped >= max_per_run:
+            log.info("capped at MAX_PER_RUN=%d; the remainder is picked up next run", max_per_run)
             break
 
         entry = Entry(
@@ -456,68 +508,55 @@ def main() -> int:
             year=int(row["year"]) if str(row.get("year") or "").isdigit() else None,
             watched_at=int(row.get("date") or 0),
         )
-        if not entry.rating_key:
-            log.warning("history row without a rating_key, skipping: %s", entry.title)
-            continue
+        label = f"{entry.title} ({entry.year or '?'}) on {entry.watched_date}"
 
-        tautulli.enrich(entry, want_rating)
-        if not entry.film_key:
-            log.warning("no usable identity for %s, skipping", entry.title)
-            continue
-        if state.seen(entry):
-            log.debug("already logged %s on %s", entry.title, entry.watched_date)
-            continue
+        try:
+            if entry.rating_key:
+                tautulli.enrich(entry, want_rating)
+            film = letterboxd.find_film(entry)
+            if film is None:
+                # Permanent: retrying would block every later watch behind it.
+                log.warning("no unambiguous letterboxd match for %s, skipping", label)
+                skipped += 1
+            else:
+                film_id = str(film["id"])
+                dates = letterboxd.diary_dates(film_id) | logged_this_run.get(film_id, set())
+                if entry.watched_date in dates:
+                    log.info("already in the diary: %s", label)
+                    skipped += 1
+                else:
+                    rewatch = any(d < entry.watched_date for d in dates)
+                    stars = entry.stars
+                    if dry_run:
+                        log.info("[dry-run] would log %s%s", label, " (rewatch)" if rewatch else "")
+                    else:
+                        letterboxd.log_watch(film_id, entry.watched_date, rewatch, stars)
+                        log.info(
+                            "logged %s%s%s",
+                            label,
+                            " (rewatch)" if rewatch else "",
+                            f" rated {stars:g}" if stars is not None else "",
+                        )
+                    logged_this_run.setdefault(film_id, set()).add(entry.watched_date)
+                    logged += 1
+        except LetterboxdError as exc:
+            # Stop rather than hammer a failing API; this row is retried next run.
+            log.error("letterboxd failed on %s: %s", label, exc)
+            log.info("logged %d, skipped %d before the failure", logged, skipped)
+            return 1
 
-        entry.rewatch = entry.film_key in seen_in_batch or state.watched_before(entry)
-        seen_in_batch.add(entry.film_key)
-        entries.append(entry)
-
-    if not entries:
-        log.info("no new entries after filtering; advancing cursor")
-        state.cursor = int(rows[-1].get("date") or state.cursor)
+        state.cursor = entry.watched_at
         if not dry_run:
             state.save()
-        return 0
-
-    by_title = sum(1 for e in entries if (e.film_key or "").startswith("title:"))
-    if by_title:
-        log.warning(
-            "%d of %d entries have no tmdb/imdb id and rely on title/year "
-            "matching; check those on the import page",
-            by_title,
-            len(entries),
-        )
-
-    # Both modes: audit trail, and the fallback if the browser import fails.
-    csv_path = write_csv(entries, state_dir / "exports")
-
-    if delivery == "csv":
-        delivered = entries
-        log.info("csv mode: import %s at https://letterboxd.com/import/", csv_path.name)
-    else:
-        delivered = deliver_rpa(entries, csv_path, state_dir, dry_run)
-
-    if not delivered:
-        log.error("nothing delivered; leaving the cursor unchanged for a retry")
-        return 1
-
-    for entry in delivered:
-        state.record(entry)
-    # Only as far as what actually landed.
-    state.cursor = delivered[-1].watched_at
-
-    if dry_run:
-        log.info("[dry-run] state not persisted")
-    else:
-        state.save()
 
     log.info(
-        "delivered %d/%d entries; cursor now %s",
-        len(delivered),
-        len(entries),
+        "logged %d, skipped %d; cursor now %s%s",
+        logged,
+        skipped,
         datetime.fromtimestamp(state.cursor).isoformat(),
+        " [dry-run, state not persisted]" if dry_run else "",
     )
-    return 0 if len(delivered) == len(entries) else 1
+    return 0
 
 
 if __name__ == "__main__":

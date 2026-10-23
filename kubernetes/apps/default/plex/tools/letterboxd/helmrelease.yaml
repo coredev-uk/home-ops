@@ -25,20 +25,14 @@ spec:
           ttlSecondsAfterFinished: 86400
         containers:
           app:
-            # Playwright is only needed by "rpa"; sync.py is otherwise pure
-            # stdlib, so "csv" mode alone runs on a plain python image.
             image:
-              repository: mcr.microsoft.com/playwright/python
-              tag: v1.63.0-noble@sha256:72bd171a9ffc2b4b59532aaa6210e21014d07093120dc25528870c0b840da1f0
+              repository: docker.io/library/python
+              tag: 3.14-alpine@sha256:601e99e090cb08c2784a42395487709500bc39930307fe72f3f11a8f3c430762
             command:
               - python3
               - /app/sync.py
             env:
               TZ: Europe/London
-              # rpa drives the import page with a headless browser and depends
-              # on Letterboxd's markup; csv writes the CSV only, for when that
-              # breaks. No api mode - they don't grant it for personal projects.
-              LETTERBOXD_DELIVERY: rpa
               TAUTULLI_URL: http://tautulli.default.svc.cluster.local
               # Required - the job refuses to start without it, so a shared
               # server's other users never reach your diary. cmd=get_users lists
@@ -50,17 +44,14 @@ spec:
               # bulk history stays with Letterboxd's own import. A YYYY-MM-DD
               # date starts from that point instead.
               SYNC_SINCE: "2026-09-28"
-              # Stops an unexpectedly large delta handing the import page a
-              # huge CSV in one go.
+              # Stops an unexpectedly large delta flooding the diary in one go.
               MAX_PER_RUN: "50"
               # Off because kometa's mass_user_rating_update: tmdb overwrites
               # Plex's userRating nightly, so that field holds TMDB averages
               # rather than your own stars. Only enable if that stops.
               SYNC_RATINGS: "false"
               STATE_DIR: /data
-              # Chromium needs these writable under a read-only root.
-              HOME: /tmp
-              XDG_CACHE_HOME: /tmp/.cache
+              PYTHONDONTWRITEBYTECODE: "1"
             envFrom:
               - secretRef:
                   name: plex-letterboxd-secret
@@ -70,11 +61,10 @@ spec:
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
-                cpu: 50m
-                memory: 256Mi
+                cpu: 10m
+                memory: 32Mi
               limits:
-                # Headroom for Chromium; csv mode uses far less.
-                memory: 2Gi
+                memory: 128Mi
         pod:
           restartPolicy: Never
     defaultPodOptions:
@@ -85,7 +75,7 @@ spec:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
     persistence:
-      # Cursor, logged-entry ledger and CSV exports.
+      # The sync cursor.
       state:
         existingClaim: plex-letterboxd
         globalMounts:
@@ -96,7 +86,3 @@ spec:
         globalMounts:
           - path: /app/sync.py
             subPath: sync.py
-      tmp:
-        type: emptyDir
-        globalMounts:
-          - path: /tmp

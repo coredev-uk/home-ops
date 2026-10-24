@@ -97,7 +97,7 @@ spec:
       # Exits until pihole's API is listening, so expect 1-2 restarts per pod
       # start; the readiness probe holds traffic until its records exist.
       - name: external-dns
-        image: registry.k8s.io/external-dns/external-dns:v0.23.0@sha256:1854499e2b08cee47c40a08e356bff20dcb192dbcfde8378fc3f900f12cad5a3
+        image: registry.k8s.io/external-dns/external-dns:v0.24.0@sha256:a80a146d2540fa138565e404f0625157271071a06093021f27ae19d8316d10f9
         args:
           - --log-level=info
           - --log-format=text

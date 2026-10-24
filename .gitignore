@@ -11,3 +11,4 @@
 Thumbs.db
 kubeconfig
 talosconfig
+.direnv/

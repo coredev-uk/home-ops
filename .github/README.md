@@ -78,7 +78,7 @@ just talos upgrade-k8s v1.34.1
 
 ## Development Environment
 
-On Nix systems, this repository is configured to use `devenv` (`devenv.nix`, `devenv.yaml`, `.envrc`) for a reproducible local toolchain, including `just`, `kubectl`, `talosctl`, `flux`, and related utilities.
+The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane` and the git hook tools. `op` is taken from the system. Renovate keeps `flake.lock` current; CI and kritika pin their own tool versions in `.github/workflows/ci.yaml` and `.kritika.yaml`.
 
 ## Credits
 

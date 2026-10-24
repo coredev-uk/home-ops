@@ -10,6 +10,13 @@
   // The Main ruleset does not require up-to-date branches, and `auto` would
   // still rebase every automerge PR each time main moves
   rebaseWhen: "conflicted",
+  // Bumps flake.lock (nixpkgs) for the dev shell's tools
+  nix: {
+    enabled: true,
+    lockFileMaintenance: {
+      enabled: true,
+    },
+  },
   packageRules: [
     // Auto-merge rules
     {
@@ -102,12 +109,6 @@
         commitMessageTopic: "{{{groupName}}} group",
       },
       minimumGroupSize: 5,
-    },
-    {
-      description: "Mise Tools Group",
-      matchManagers: ["mise"],
-      groupName: "mise tools",
-      groupSlug: "mise-tools",
     },
     {
       description: "Rook-Ceph Group",

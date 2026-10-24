@@ -22,7 +22,7 @@ spec:
     bgpControlPlane:
       enabled: false
     cgroup:
-      automount:
+      autoMount:
         enabled: false
       hostRoot: /sys/fs/cgroup
     cni:
@@ -48,16 +48,15 @@ spec:
     loadBalancer:
       algorithm: maglev
       mode: dsr
+      serviceTopology: true # spegel-registry relies on trafficDistribution: PreferSameNode
     localRedirectPolicies:
       enabled: true
     operator:
       dashboards:
         enabled: true
       prometheus:
-        enabled: true
         serviceMonitor:
           enabled: true
-      replicas: 2
       rollOutPods: true
     pmtuDiscovery:
       enabled: true

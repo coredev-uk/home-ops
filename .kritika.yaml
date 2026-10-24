@@ -11,3 +11,11 @@ tools:
     filter_bins: crane
   # renovate: datasource=github-releases depName=home-operations/flate
   "github:home-operations/flate": "0.6.5"
+trigger:
+  exclude:
+    # Only major or breaking (`!:`) Renovate updates are worth a model's
+    # review; `@<bot> review` still reviews any pull request on demand
+    - name: non-major-updates
+      expr: >-
+        pr.headRef.startsWith("renovate/") && pr.event != "manual"
+        && !pr.labels.exists(l, l.name == "type/major") && !pr.title.contains("!:")

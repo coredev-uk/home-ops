@@ -332,10 +332,13 @@ pages:
               - url: plex:http://plex.default.svc.cluster.local:32400
                 token: ${PLEX_TOKEN}
 
+          # Pi-hole runs passwordless (admin.enabled: false); dynacat >= 3.0.2
+          # skips /api/auth when no password is set (Panonim/dynacat#177).
+          # pihole-web load-balances across both replicas, and each keeps its
+          # own FTL stats, so figures reflect whichever pod answered.
           - type: dns-stats
             service: pihole-v6
             url: http://pihole-web.network.svc.cluster.local
-            password: ""
             hour-format: "24h"
 
           - type: torrenting

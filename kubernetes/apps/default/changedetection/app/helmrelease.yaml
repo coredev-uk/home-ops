@@ -44,7 +44,6 @@ spec:
                   httpGet:
                     path: /
                     port: *port
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
               startup:
@@ -54,7 +53,6 @@ spec:
                   httpGet:
                     path: /
                     port: *port
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 30
             securityContext:
@@ -95,7 +93,6 @@ spec:
                   httpGet:
                     path: /status
                     port: *seleniumPort
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 30
             securityContext:
@@ -147,8 +144,6 @@ spec:
               - path: /datastore
       tmp:
         type: emptyDir
-        globalMounts:
-          - path: /tmp
       shm:
         type: emptyDir
         medium: Memory

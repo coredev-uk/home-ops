@@ -55,7 +55,6 @@ spec:
                   httpGet:
                     path: /api/app/about
                     port: *port
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
               startup:
@@ -65,7 +64,6 @@ spec:
                   httpGet:
                     path: /api/app/about
                     port: *port
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 30
             securityContext:
@@ -104,5 +102,3 @@ spec:
           - path: /app/data
       tmp:
         type: emptyDir
-        globalMounts:
-          - path: /tmp

@@ -51,7 +51,6 @@ spec:
                   httpGet:
                     path: /_health
                     port: *port
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
               startup:
@@ -61,7 +60,6 @@ spec:
                   httpGet:
                     path: /_health
                     port: *port
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 60
             resources:

@@ -36,14 +36,11 @@ spec:
                   httpGet:
                     path: /readyz
                     port: *port
-                  initialDelaySeconds: 0
-                  periodSeconds: 10
                   timeoutSeconds: 5
-                  failureThreshold: 3
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
-              capabilities: {drop: ["ALL"]}
+              capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: 10m

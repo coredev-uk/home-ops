@@ -11,10 +11,8 @@ spec:
   podMetricsEndpoints:
     - honorLabels: true
       port: prometheus
-      path: /metrics
     - honorLabels: true
       port: external-dns
-      path: /metrics
   selector:
     matchLabels:
       app: pihole

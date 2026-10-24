@@ -19,9 +19,6 @@ spec:
           # Nightly, after the day's viewing but before kometa's 05:00 run.
           schedule: 0 4 * * *
           backoffLimit: 0
-          concurrencyPolicy: Forbid
-          successfulJobsHistory: 1
-          failedJobsHistory: 1
           ttlSecondsAfterFinished: 86400
         containers:
           app:
@@ -65,8 +62,6 @@ spec:
                 memory: 32Mi
               limits:
                 memory: 128Mi
-        pod:
-          restartPolicy: Never
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true

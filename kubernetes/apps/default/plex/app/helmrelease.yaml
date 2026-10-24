@@ -37,14 +37,12 @@ spec:
                   httpGet:
                     path: /identity
                     port: &port 32400
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
               startup:
                 enabled: true
                 spec:
                   failureThreshold: 30
-                  periodSeconds: 10
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -98,8 +96,7 @@ spec:
         rules:
           - name: app
             backendRefs: &backendRefs
-              - identifier: app
-                port: *port
+              - port: *port
             filters:
               - type: RequestHeaderModifier
                 requestHeaderModifier: &pipeline
@@ -114,10 +111,8 @@ spec:
                 requestHeaderModifier: *pipeline
             matches:
               - path:
-                  type: PathPrefix
                   value: /:/eventsource
               - path:
-                  type: PathPrefix
                   value: /:/websockets
           - # Ref: https://forums.plex.tv/t/external-srt-subtitles-are-not-working-w-reverse-proxy/886540
             name: subtitles
@@ -130,7 +125,6 @@ spec:
                     - Range
             matches:
               - path:
-                  type: PathPrefix
                   value: /library/streams
     persistence:
       config:
@@ -140,8 +134,7 @@ spec:
         server: expanse.internal
         path: /var/nfs/shared/Media
         globalMounts:
-          - path: /media
-            readOnly: true
+          - readOnly: true
       tmp:
         type: emptyDir
         globalMounts:

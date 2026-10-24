@@ -36,7 +36,6 @@ spec:
                 spec:
                   exec:
                     command: ["valkey-cli", "ping"]
-                  periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 5
               readiness: *probe
@@ -65,5 +64,3 @@ spec:
     persistence:
       data:
         type: emptyDir
-        globalMounts:
-          - path: /data

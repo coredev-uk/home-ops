@@ -311,6 +311,9 @@ pages:
 
           - type: group
             widgets:
+              - type: hacker-news
+                limit: 10
+                collapse-after: 5
               - type: reddit
                 subreddit: unixporn
                 show-thumbnails: true

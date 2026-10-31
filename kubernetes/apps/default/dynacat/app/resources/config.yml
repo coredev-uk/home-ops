@@ -258,6 +258,9 @@ pages:
                   - title: Mealie
                     url: https://mealie.hera.ac
                     icon: si:mealie
+                  - title: Sure
+                    url: https://sure.hera.ac
+                    icon: mdi:finance
                   - title: The Lounge
                     url: https://thelounge.hera.ac
                     icon: di:thelounge
@@ -284,6 +287,7 @@ pages:
               - outline/outline
               - pocket-id/pocket-id
               - mealie-recipes/mealie
+              - we-promise/sure
               - seerr-team/seerr
               - autobrr/autobrr
               - autobrr/qui

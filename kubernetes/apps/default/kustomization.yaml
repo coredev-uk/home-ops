@@ -34,5 +34,6 @@ resources:
   - ./seerr/ks.yaml
   - ./sonarr/ks.yaml
   - ./sportarr/ks.yaml
+  - ./sure/ks.yaml
   - ./thelounge/ks.yaml
   - ./tautulli/ks.yaml

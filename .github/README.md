@@ -82,9 +82,11 @@ The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.en
 
 ## Renovate and Clarence
 
-Renovate (`.renovaterc.json5`, run every two hours by `.github/workflows/renovate.yaml` as `bot-cecil[bot]`) opens the update pull requests; it never merges them. [Clarence](https://github.com/coredev-uk/clarence) (`kubernetes/apps/clarence`) does: it rules on each Renovate pull request (code checks, then the Jev model on the release notes), labels it `clarence:*`, and merges what its policy passes one at a time, then waits for the Flux Kustomizations and HelmReleases it touched to apply the merge commit, soaks, and opens a revert pull request and halts merging if the deploy is unhealthy. Changes under `.github/workflows/` are verified by CI on `main` instead. The policy is `kubernetes/apps/clarence/clarence/app/policy-home-ops.json`; while a scope's mode is `shadow` Clarence only labels and comments. The same Deployment runs a second controller for `coredev-uk/sona-go`.
+Renovate (`.renovaterc.json5`, run every two hours by `.github/workflows/renovate.yaml` as `bot-cecil[bot]`) opens the update pull requests; it never merges them. [Clarence](https://github.com/coredev-uk/clarence) (`kubernetes/apps/clarence`) does: it rules on each Renovate pull request (code checks, then the Jev model on the release notes), labels it `clarence/*`, and merges what its policy passes one at a time, then waits for the Flux Kustomizations and HelmReleases it touched to apply the merge commit, soaks, and opens a revert pull request and halts merging if the deploy is unhealthy. Changes under `.github/workflows/` are verified by CI on `main` instead. The policy is `kubernetes/apps/clarence/clarence/app/policy-home-ops.json`; while a scope's mode is `shadow` Clarence only labels and comments. The same Deployment runs a second controller for `coredev-uk/sona-go`.
 
-Comment on a pull request (only `coredev-uk`):
+Every open pull request gets one Clarence card, edited in place: the verdict, what it deploys, the checks, Jev's reading and a timeline from queue to live. Its checkboxes (re-run, hold, merge, explain) act on the next poll when `coredev-uk` ticks them. Separate comments appear only when something needs you: an unhealthy deploy, a revert, a dequeue, or a reply to a command.
+
+Comment on a pull request (only `coredev-uk`; `/clarence help` answers anyone):
 
 | Comment                                               | Effect                                                            |
 | ----------------------------------------------------- | ----------------------------------------------------------------- |
@@ -97,8 +99,9 @@ Comment on a pull request (only `coredev-uk`):
 | `/clarence status`                                    | The ruling, checks, queue position, health gate and deploy state  |
 | `/clarence explain`                                   | Which parts of the release notes drive each flagged Jev answer    |
 | `/clarence hold` · `/clarence unhold`                 | Never merge this pull request / undo that                         |
+| `/clarence help`                                      | Every command and the card checkbox it matches                    |
 
-After an unhealthy deploy, fix it, `/clarence merge` or close the revert, then remove `clarence:merged-unhealthy` from the original pull request. Operations, metrics and the full rule set: [docs/clarence.md](https://github.com/coredev-uk/clarence/blob/main/docs/clarence.md).
+After an unhealthy deploy, fix it, `/clarence merge` or close the revert, then remove `clarence/unhealthy` from the original pull request. Operations, metrics and the full rule set: [docs/clarence.md](https://github.com/coredev-uk/clarence/blob/main/docs/clarence.md).
 
 ## Credits
 

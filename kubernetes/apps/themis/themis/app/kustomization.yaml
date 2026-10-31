@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./externalsecret.yaml
+  - ./grafanadashboard.yaml
+  - ./helmrelease.yaml
+  - ./ocirepository.yaml
+  - ./prometheusrule.yaml
+  - ./pvc.yaml
+configMapGenerator:
+  - name: themis-home-ops-policy
+    files:
+      - policy.json=./policy-home-ops.json
+  - name: themis-sona-go-policy
+    files:
+      - policy.json=./policy-sona-go.json
+  - name: themis-dashboard
+    files:
+      - themis.json=./resources/themis.json
+generatorOptions:
+  disableNameSuffixHash: true

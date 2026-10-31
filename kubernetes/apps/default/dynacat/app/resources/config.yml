@@ -183,9 +183,6 @@ pages:
                   - title: Konflate
                     url: https://konflate.hera.ac
                     icon: mdi:source-branch-sync
-                  - title: Kritika
-                    url: https://kritika.hera.ac
-                    icon: mdi:robot-outline
 
               - title: Media Discovery & Servers
                 links:
@@ -279,7 +276,6 @@ pages:
             limit: 10
             collapse-after: 5
             repositories:
-              - home-operations/kritika
               - Panonim/dynacat
               - outline/outline
               - pocket-id/pocket-id

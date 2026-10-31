@@ -1,0 +1,213 @@
+---
+# Themis (github.com/coredev-uk/themis) rules on Renovate pull requests with Jev, labels them and
+# merges what the policy passes, one at a time; then checks the deploy, soaks and reverts.
+# One controller per repository it serves, each with its own policy file and state.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: themis
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: themis
+  interval: 1h
+  values:
+    controllers:
+      # Never two at once per repository: two pods could each merge a pull request
+      # before either checks a deploy, hence one replica and Recreate.
+      home-ops:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        serviceAccount:
+          identifier: themis
+        pod:
+          automountServiceAccountToken: true
+          # SIGTERM lets the current poll finish, so a merge is not cut off before its labels.
+          terminationGracePeriodSeconds: 300
+        containers:
+          app:
+            # Built from coredev-uk/themis main; the tag is the commit SHA, pinned here by hand.
+            image: &image
+              repository: ghcr.io/coredev-uk/themis
+              tag: "0000000000000000000000000000000000000000"
+            args:
+              - -policy=/etc/themis/config/policy.json
+              - -secrets=/etc/themis/secret
+              - -state=/var/lib/themis/state.db
+            probes: &probes
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: &port 8080
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: *port
+                  periodSeconds: 10
+            securityContext: &securityContext
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            # Checks keep a few repository snapshots in memory and render them with kustomize.
+            resources: &resources
+              requests:
+                cpu: 20m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+      # sona-go deploys nowhere: no Kubernetes API access at all.
+      sona-go:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        serviceAccount:
+          identifier: sona-go
+        pod:
+          automountServiceAccountToken: false
+          terminationGracePeriodSeconds: 300
+        containers:
+          app:
+            image: *image
+            args:
+              - -policy=/etc/themis/config/policy.json
+              - -secrets=/etc/themis/secret
+              - -state=/var/lib/themis/state.db
+            probes: *probes
+            securityContext: *securityContext
+            resources: *resources
+    defaultPodOptions:
+      imagePullSecrets:
+        - name: themis-ghcr-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    serviceAccount:
+      themis:
+        forceRename: themis
+      sona-go:
+        forceRename: themis-sona-go
+        automountServiceAccountToken: false
+    # Read-only: Themis maps changed files onto the Kustomizations and HelmReleases that deploy
+    # them, gates merges on node, Ceph and tuppr health, and checks the deploy afterwards.
+    # It never writes to the cluster; Flux deploys what it merges.
+    rbac:
+      roles:
+        themis:
+          forceRename: themis-read
+          type: ClusterRole
+          rules:
+            - apiGroups: ["kustomize.toolkit.fluxcd.io"]
+              resources: ["kustomizations"]
+              verbs: ["get", "list"]
+            - apiGroups: ["helm.toolkit.fluxcd.io"]
+              resources: ["helmreleases"]
+              verbs: ["get", "list"]
+            - apiGroups: ["source.toolkit.fluxcd.io"]
+              resources: ["ocirepositories"]
+              verbs: ["get", "list"]
+            - apiGroups: [""]
+              resources: ["nodes", "pods", "persistentvolumeclaims", "persistentvolumes"]
+              verbs: ["get", "list"]
+            - apiGroups: ["tuppr.home-operations.com"]
+              resources: ["talosupgrades", "kubernetesupgrades"]
+              verbs: ["get", "list"]
+            # The validate check reads each CRD's schema, so custom resources are checked
+            # against what this cluster's API server accepts.
+            - apiGroups: ["apiextensions.k8s.io"]
+              resources: ["customresourcedefinitions"]
+              verbs: ["get", "list"]
+            - apiGroups: ["ceph.rook.io"]
+              resources: ["cephclusters"]
+              verbs: ["get", "list"]
+      bindings:
+        themis:
+          forceRename: themis-read
+          type: ClusterRoleBinding
+          roleRef:
+            identifier: themis
+          subjects:
+            - identifier: themis
+    service:
+      home-ops:
+        controller: home-ops
+        ports:
+          http:
+            port: *port
+      sona-go:
+        controller: sona-go
+        ports:
+          http:
+            port: *port
+    serviceMonitor:
+      home-ops:
+        service:
+          identifier: home-ops
+        endpoints:
+          - port: http
+      sona-go:
+        service:
+          identifier: sona-go
+        endpoints:
+          - port: http
+    persistence:
+      config-home-ops:
+        type: configMap
+        name: themis-home-ops-policy
+        advancedMounts:
+          home-ops:
+            app:
+              - path: /etc/themis/config
+                readOnly: true
+      config-sona-go:
+        type: configMap
+        name: themis-sona-go-policy
+        advancedMounts:
+          sona-go:
+            app:
+              - path: /etc/themis/config
+                readOnly: true
+      secret:
+        type: secret
+        name: themis-secret
+        defaultMode: 0440
+        globalMounts:
+          - path: /etc/themis/secret
+            readOnly: true
+      # Pull credentials, so the image check can see private ghcr.io/coredev-uk images.
+      registry:
+        type: secret
+        name: themis-ghcr-pull
+        defaultMode: 0440
+        globalMounts:
+          - path: /etc/themis/registry
+            readOnly: true
+      state-home-ops:
+        existingClaim: themis-home-ops-state
+        advancedMounts:
+          home-ops:
+            app:
+              - path: /var/lib/themis
+      state-sona-go:
+        existingClaim: themis-sona-go-state
+        advancedMounts:
+          sona-go:
+            app:
+              - path: /var/lib/themis
+      # kubeconform's schema cache; the root filesystem is read-only.
+      tmp:
+        type: emptyDir
+        sizeLimit: 256Mi

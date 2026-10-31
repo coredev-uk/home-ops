@@ -8,7 +8,7 @@
     ":timezone(Europe/London)",
   ],
   // The Main ruleset does not require up-to-date branches, and `auto` would
-  // still rebase every automerge PR each time main moves
+  // rebase every open PR each time main moves
   rebaseWhen: "conflicted",
   // Bumps flake.lock (nixpkgs) for the dev shell's tools
   nix: {
@@ -17,62 +17,9 @@
       enabled: true,
     },
   },
+  // Renovate never merges: Themis (kubernetes/apps/themis) rules on every PR,
+  // merges what its policy passes one at a time and checks each deploy.
   packageRules: [
-    // Auto-merge rules
-    {
-      description: "Auto-merge trusted OCI digests",
-      matchDatasources: ["docker"],
-      matchUpdateTypes: ["digest"],
-      matchPackageNames: ["/home-operations/"],
-      automerge: true,
-      automergeType: "pr",
-      ignoreTests: false,
-    },
-    {
-      description: "Auto-merge high-cadence OCI packages weekly",
-      matchDatasources: ["docker"],
-      matchUpdateTypes: ["minor", "patch"],
-      matchPackageNames: ["/kube-prometheus-stack/"],
-      automerge: true,
-      automergeType: "pr",
-      ignoreTests: false,
-      schedule: ["before 6am on Monday"],
-    },
-    {
-      description: "Auto-merge GitHub Actions",
-      matchManagers: ["github-actions"],
-      matchUpdateTypes: ["minor", "patch", "digest"],
-      automerge: true,
-      automergeType: "pr",
-      minimumReleaseAge: "3 days",
-      ignoreTests: false,
-    },
-    {
-      description: "Auto-merge trusted GitHub Actions",
-      matchManagers: ["github-actions"],
-      matchPackageNames: ["/^actions\\//"],
-      matchUpdateTypes: ["minor", "patch", "digest"],
-      automerge: true,
-      automergeType: "pr",
-      minimumReleaseAge: "1 minute",
-      ignoreTests: false,
-    },
-    {
-      description: "Auto-merge Grafana dashboards",
-      matchDatasources: ["custom.grafana-dashboards"],
-      matchUpdateTypes: ["major"],
-      automerge: true,
-      automergeType: "pr",
-      ignoreTests: false,
-    },
-    {
-      description: "Auto-merge Renovate Presents",
-      matchManagers: ["renovate-config"],
-      matchUpdateTypes: ["minor", "patch"],
-      automerge: true,
-      automergeType: "pr",
-      ignoreTests: false,
-    },
     // Grouping rules
     {
       description: "Actions Runner Controller Group",

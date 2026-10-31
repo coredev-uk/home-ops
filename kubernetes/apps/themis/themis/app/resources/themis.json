@@ -1,0 +1,2449 @@
+{
+  "uid": "themis",
+  "title": "Themis",
+  "description": "What Themis rules, labels and merges, when, and what Jev costs. Docs: github.com/coredev-uk/themis docs/themis.md",
+  "tags": ["infrastructure", "themis", "renovate"],
+  "schemaVersion": 40,
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "timezone": "browser",
+  "templating": {
+    "list": [
+      {
+        "name": "promDatasource",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "Prometheus",
+          "value": "prometheus"
+        },
+        "multi": false
+      },
+      {
+        "name": "service",
+        "label": "Repository",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${promDatasource}"
+        },
+        "query": {
+          "query": "label_values(themis_info, service)",
+          "refId": "service"
+        },
+        "definition": "label_values(themis_info, service)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Status",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Last poll",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "time() - max(themis_last_cycle_timestamp_seconds{service=~\"$service\"})",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 600
+              },
+              {
+                "color": "red",
+                "value": 900
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Time since the last poll cycle completed. Themis polls every 5 minutes; over 15 minutes means it is stuck or failing (see Errors and the log below)."
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Merging",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max(themis_queue_halted{service=~\"$service\"})",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "running",
+                  "index": 0
+                },
+                "1": {
+                  "text": "HALTED",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "HALTED while a pull request carries themis:merged-unhealthy: a merged deploy failed its check, a revert pull request is waiting for you, and Themis merges nothing until the label is removed."
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Mode",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (scope, mode, model, policy) (themis_info{service=~\"$service\"})",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "description": "shadow: Themis labels and comments, you merge. merge: Themis merges what passes. Set per scope in apps/themis/policy.json.",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true
+            },
+            "indexByName": {
+              "scope": 0,
+              "mode": 1,
+              "model": 2,
+              "policy": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Open pull requests by ruling",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 14,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (ruling) (themis_rulings{service=~\"$service\"})",
+          "legendFormat": "{{ruling}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pass"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "review"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "wait"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "justifyMode": "auto"
+      },
+      "description": "Open Chore Bore pull requests by Themis's current ruling: pass, review (a human decides) or wait (a status, release age or reconcile is pending)."
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Errors (24h)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_cycle_errors_total{service=~\"$service\"}[24h])) + sum(increase(themis_ruling_errors_total{service=~\"$service\"}[24h])) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Failed poll cycles plus pull requests Themis could not rule on, last 24 hours. The log below names the cause."
+    },
+    {
+      "id": 40,
+      "type": "row",
+      "title": "Now",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "panels": []
+    },
+    {
+      "id": 41,
+      "type": "table",
+      "title": "Merge queue",
+      "description": "Pull requests queued with /themis merge, in merge order, and what each is waiting for. Rebuilt every poll.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (position, pr, title, by, status, reason, allow) (themis_queue_entry{service=~\"$service\"}) * 1000",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Queue empty",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pr"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "PR"
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open #${__value.raw} on GitHub",
+                    "url": "https://github.com/member87/home-ops/pull/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Queued"
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "position"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 40
+              },
+              {
+                "id": "displayName",
+                "value": "#"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "by"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "displayName",
+                "value": "Queued by"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "allow"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "displayName",
+                "value": "Accepting"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "title"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 320
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "#",
+            "desc": false
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "position": 0,
+              "pr": 1,
+              "title": 2,
+              "by": 3,
+              "Value": 4,
+              "status": 5,
+              "reason": 6,
+              "allow": 7
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "type": "table",
+      "title": "Watching after merge",
+      "description": "Merged pull requests whose deploy Themis is still checking (Flux, HelmRelease, Terrakube, tuppr upgrades). Nothing else merges until these settle.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (pr, title, targets, detail) (themis_watching{service=~\"$service\"}) * 1000",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Nothing merged is waiting to go live",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pr"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "PR"
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open #${__value.raw} on GitHub",
+                    "url": "https://github.com/member87/home-ops/pull/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Merged"
+              },
+              {
+                "id": "unit",
+                "value": "dateTimeFromNow"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "title"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 320
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "targets"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 260
+              },
+              {
+                "id": "displayName",
+                "value": "Waiting for"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "detail"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Now"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "pr": 0,
+              "title": 1,
+              "Value": 2,
+              "targets": 3,
+              "detail": 4
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "type": "table",
+      "title": "Cluster health gate",
+      "description": "What holds every merge right now: nodes NotReady, unhealthy attached Longhorn volumes, tuppr upgrades not Completed, failing Kustomizations. A pull request touching the failing thing itself is exempt.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 17
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (problem) (themis_health_problem{service=~\"$service\"})",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Healthy: nothing holds merges",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true
+            },
+            "indexByName": {
+              "problem": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "type": "table",
+      "title": "Open pull requests",
+      "description": "Every open pull request: author, Themis's ruling (Chore Bore pull requests only), the themis/checks summary and queue state.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 16,
+        "x": 8,
+        "y": 17
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (pr, title, author, ruling, checks, state) (themis_open_pull_request{service=~\"$service\"})",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "No open pull requests",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pr"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "PR"
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open #${__value.raw} on GitHub",
+                    "url": "https://github.com/member87/home-ops/pull/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "title"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "author"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ruling"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "state"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "PR",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true
+            },
+            "indexByName": {
+              "pr": 0,
+              "title": 1,
+              "author": 2,
+              "ruling": 3,
+              "checks": 4,
+              "state": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 50,
+      "type": "row",
+      "title": "History",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "panels": []
+    },
+    {
+      "id": 55,
+      "type": "timeseries",
+      "title": "Comments per hour",
+      "description": "Comments Themis posted (solid) and edited in place, by kind.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (kind, action) (increase(themis_comments_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "{{kind}} {{action}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "stacking": {
+              "mode": "normal"
+            },
+            "fillOpacity": 60
+          },
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 31,
+      "type": "row",
+      "title": "Merge queue (/themis merge)",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 48
+      },
+      "panels": []
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "Queued",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 49
+      },
+      "description": "Pull requests waiting for Themis after /themis merge: on a pending check, or behind a deploy that is being checked.",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max(themis_queue_length{service=~\"$service\"}) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Commands",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 10,
+        "x": 4,
+        "y": 49
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (command) (increase(themis_commands_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "{{command}}",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 34,
+      "type": "timeseries",
+      "title": "Merged and dequeued",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 10,
+        "x": 14,
+        "y": 49
+      },
+      "description": "merged: by /themis merge (command) or on Themis's own ruling (renovate). dequeued: a readiness check failed; the pull request comment says which.",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (kind) (increase(themis_merges_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "merged {{kind}}",
+          "interval": "1h"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_dequeues_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "dequeued",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dequeued"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "row",
+      "title": "What it is doing",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 56
+      },
+      "panels": []
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Rulings written",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 57
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (ruling) (increase(themis_ruling_changes_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "{{ruling}}",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Each bar is an hour. A ruling is written when it changes: a new pull request, a new head commit, a status turning green, or a policy change."
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Open pull requests by ruling",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 57
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (ruling) (themis_rulings{service=~\"$service\"})",
+          "legendFormat": "{{ruling}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 40,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Merges and deploy checks",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 65
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (kind) (increase(themis_merges_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "merged {{kind}}",
+          "interval": "1h"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (outcome) (increase(themis_verifications_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "deploy {{outcome}}",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "barAlignment": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "deploy unhealthy"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Every merge Themis made (command or renovate) and the outcome of the deploy check after it (ok or unhealthy)."
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Labels written",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 65
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (action) (increase(themis_label_writes_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "{{action}}",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Poll cycle duration",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 73
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(themis_cycle_duration_seconds_bucket{service=~\"$service\"}[30m])))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(themis_cycle_duration_seconds_bucket{service=~\"$service\"}[30m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "GitHub API requests",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 73
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (method, status) (increase(themis_github_requests_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "{{method}} {{status}}",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "GitHub rate limit left",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 73
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "min by (resource) (themis_github_rate_limit_remaining{service=~\"$service\"})",
+          "legendFormat": "{{resource}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Requests left in the current window: core is 5000/hour for the App installation, search 30/minute."
+    },
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Jev cost",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 80
+      },
+      "panels": []
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Cost (24h)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 81
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_jev_cost_usd_total{service=~\"$service\"}[24h])) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Jev cost as reported by OpenRouter per response (usage.cost). Counters reset on pod restart, so short gaps undercount slightly."
+    },
+    {
+      "id": 17,
+      "type": "stat",
+      "title": "Cost (30d)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 81
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_jev_cost_usd_total{service=~\"$service\"}[30d])) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Projected per month",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 81
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(rate(themis_jev_cost_usd_total{service=~\"$service\"}[7d])) * 30 * 86400 or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Last 7 days' spend rate times 30 days."
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Per Jev call (7d)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 81
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_jev_cost_usd_total{service=~\"$service\"}[7d])) / (sum(increase(themis_jev_requests_total{service=~\"$service\",result=\"ok\"}[7d])) > 0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 6,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "no Jev calls yet"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Input tokens (24h)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 81
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_jev_input_tokens_total{service=~\"$service\"}[24h])) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      }
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Cached answers (7d)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 81
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_jev_lookups_total{service=~\"$service\",cached=\"true\"}[7d])) / (sum(increase(themis_jev_lookups_total{service=~\"$service\"}[7d])) > 0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "no Jev lookups yet"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Share of rulings that reused the Jev answers stored in the pull request comment instead of paying for a new call."
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Cost per day",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 85
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum(increase(themis_jev_cost_usd_total{service=~\"$service\"}[1d]))",
+          "legendFormat": "USD",
+          "interval": "1d"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 5,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "barAlignment": 0
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "Jev requests",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 85
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "sum by (result) (increase(themis_jev_requests_total{service=~\"$service\"}[1h]))",
+          "legendFormat": "{{result}}",
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "barAlignment": 0
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "ok, retried (429/529/5xx, backed off) and error. Errors leave the pull request unruled until the next poll."
+    },
+    {
+      "id": 24,
+      "type": "row",
+      "title": "Ruling accuracy",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 92
+      },
+      "panels": []
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Passed but you closed it",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 0,
+        "y": 93
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max(themis_shadow_outcomes{service=~\"$service\",ruling=\"pass\",outcome=\"closed\"}) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Pull requests Themis passed that were closed without merging. Must stay 0 before a scope moves to merge mode (docs/themis.md)."
+    },
+    {
+      "id": 26,
+      "type": "stat",
+      "title": "Agreement",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 5,
+        "x": 5,
+        "y": 93
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "(max(themis_shadow_outcomes{service=~\"$service\",ruling=\"pass\",outcome=\"merged\"}) + max(themis_shadow_outcomes{service=~\"$service\",ruling=\"review\",outcome=\"closed\"})) / (sum(themis_shadow_outcomes{service=~\"$service\"}) > 0)",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.9
+              },
+              {
+                "color": "green",
+                "value": 0.95
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "no closed ruled PRs yet"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto",
+        "justifyMode": "auto"
+      },
+      "description": "Closed pull requests where you did what Themis said: merged a pass, or closed a review. The bar for merge mode is 95%."
+    },
+    {
+      "id": 27,
+      "type": "bargauge",
+      "title": "Closed pull requests by ruling and outcome",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 14,
+        "x": 10,
+        "y": 93
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (ruling, outcome) (themis_shadow_outcomes{service=~\"$service\"})",
+          "legendFormat": "{{ruling}} → {{outcome}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "basic",
+        "showUnfilled": true,
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      }
+    },
+    {
+      "id": 28,
+      "type": "table",
+      "title": "Jev answers on open pull requests",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 98
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "expr": "max by (pr, question) (themis_jev_answer{service=~\"$service\"})",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "cellOptions": {
+              "type": "color-text"
+            },
+            "align": "center"
+          },
+          "noValue": "No open pull request has Jev answers (none with release notes to judge)"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "PR",
+            "desc": true
+          }
+        ]
+      },
+      "description": "P(yes) per question. breaking, migration, data_risk and addressed_to_bot send a pull request to review at 0.3 or more; drop_in below 0.7. Thresholds live in apps/themis/policy.json.",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "question",
+            "rowField": "pr",
+            "valueField": "Value"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "pr\\question": "PR"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

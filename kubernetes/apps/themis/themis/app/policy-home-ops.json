@@ -78,7 +78,8 @@
     "auth": {
       "externalGateway": "envoy-external",
       "oidcIssuer": "https://id.hera.ac"
-    }
+    },
+    "talos": "talos"
   },
   "rightSizing": {
     "prometheusUrl": "http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090",

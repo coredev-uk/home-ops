@@ -52,6 +52,7 @@ spec:
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
+                memory: 112Mi
                 cpu: 10m
               limits:
                 memory: 512Mi
@@ -80,6 +81,7 @@ spec:
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
+                memory: 32Mi
                 cpu: 10m
               limits:
                 memory: 256Mi

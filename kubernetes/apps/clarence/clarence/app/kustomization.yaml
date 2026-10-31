@@ -16,6 +16,9 @@ configMapGenerator:
   - name: clarence-sona-go-policy
     files:
       - policy.json=./policy-sona-go.json
+  - name: clarence-self-policy
+    files:
+      - policy.json=./policy-clarence.json
   - name: clarence-dashboard
     files:
       - clarence.json=./resources/clarence.json

@@ -31,7 +31,7 @@ spec:
             # Built from coredev-uk/clarence main; the tag is the commit SHA, pinned here by hand.
             image: &image
               repository: ghcr.io/coredev-uk/clarence
-              tag: 75a3deaf263ef52163d1562ae8843b7606d50c0f@sha256:26bee33cb0d1d621dcf13b877eb07647c0a545711d536437fd5de1158bbdac5c
+              tag: 538928b7b2ff6e43e4684b2b4ad40e0e8df25b4e@sha256:b99e5d54fa649b49aacd0f0bacaa3522e45823bb3051f07676a7a928c8feb08f
             args:
               - -policy=/etc/clarence/config/policy.json
               - -secrets=/etc/clarence/secret
@@ -85,6 +85,27 @@ spec:
             probes: *probes
             securityContext: *securityContext
             resources: *resources
+      # self serves coredev-uk/clarence, Clarence's own source: like sona-go, nothing deploys
+      # (a merge builds an image this file pins by hand), so no Kubernetes API access.
+      self:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        serviceAccount:
+          identifier: self
+        pod:
+          automountServiceAccountToken: false
+          terminationGracePeriodSeconds: 300
+        containers:
+          app:
+            image: *image
+            args:
+              - -policy=/etc/clarence/config/policy.json
+              - -secrets=/etc/clarence/secret
+              - -state=/var/lib/clarence/state.db
+            probes: *probes
+            securityContext: *securityContext
+            resources: *resources
     defaultPodOptions:
       imagePullSecrets:
         - name: clarence-ghcr-pull
@@ -100,6 +121,9 @@ spec:
         forceRename: clarence
       sona-go:
         forceRename: clarence-sona-go
+        automountServiceAccountToken: false
+      self:
+        forceRename: clarence-self
         automountServiceAccountToken: false
     # Read-only: Clarence maps changed files onto the Kustomizations and HelmReleases that deploy
     # them, gates merges on node, Ceph and tuppr health, and checks the deploy afterwards.
@@ -156,6 +180,11 @@ spec:
         ports:
           http:
             port: *port
+      self:
+        controller: self
+        ports:
+          http:
+            port: *port
     # `repo` names the GitHub repository each controller serves, so the dashboard links pull
     # requests to the right one.
     serviceMonitor:
@@ -175,6 +204,14 @@ spec:
             relabelings:
               - targetLabel: repo
                 replacement: sona-go
+      self:
+        service:
+          identifier: self
+        endpoints:
+          - port: http
+            relabelings:
+              - targetLabel: repo
+                replacement: clarence
     persistence:
       config-home-ops:
         type: configMap
@@ -189,6 +226,14 @@ spec:
         name: clarence-sona-go-policy
         advancedMounts:
           sona-go:
+            app:
+              - path: /etc/clarence/config
+                readOnly: true
+      config-self:
+        type: configMap
+        name: clarence-self-policy
+        advancedMounts:
+          self:
             app:
               - path: /etc/clarence/config
                 readOnly: true
@@ -217,6 +262,12 @@ spec:
         existingClaim: clarence-sona-go-state
         advancedMounts:
           sona-go:
+            app:
+              - path: /var/lib/clarence
+      state-self:
+        existingClaim: clarence-self-state
+        advancedMounts:
+          self:
             app:
               - path: /var/lib/clarence
       # kubeconform's schema cache; the root filesystem is read-only.

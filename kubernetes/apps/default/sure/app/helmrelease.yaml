@@ -130,11 +130,20 @@ spec:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /rails/storage
+      # Ruby's Dir.tmpdir rejects a world-writable dir without the sticky
+      # bit. A disk emptyDir lacks it; a tmpfs (Memory) one has it.
       tmp:
         type: emptyDir
-      # Only the pid dir is writable: /rails/tmp/cache holds the build-time
-      # bootsnap cache, which BOOTSNAP_READONLY reads but never writes.
+        medium: Memory
+        sizeLimit: 256Mi
+      # Only the dirs `rails server` creates at boot are writable:
+      # /rails/tmp/cache holds the build-time bootsnap cache, which
+      # BOOTSNAP_READONLY reads but never writes.
       pids:
         type: emptyDir
         globalMounts:
           - path: /rails/tmp/pids
+      sockets:
+        type: emptyDir
+        globalMounts:
+          - path: /rails/tmp/sockets

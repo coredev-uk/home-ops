@@ -20,6 +20,13 @@
   // Renovate never merges: Clarence (kubernetes/apps/clarence) rules on every PR,
   // merges what its policy passes one at a time and checks each deploy.
   packageRules: [
+    {
+      // Only propose a minor or patch once it has been out for 3 days; Clarence also
+      // reads upstream issues opened in that time for regressions
+      description: "Let minor and patch releases settle",
+      matchUpdateTypes: ["minor", "patch"],
+      minimumReleaseAge: "3 days",
+    },
     // Grouping rules
     {
       description: "Actions Runner Controller Group",

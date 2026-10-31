@@ -133,6 +133,10 @@ spec:
             - apiGroups: ["ceph.rook.io"]
               resources: ["cephclusters"]
               verbs: ["get", "list"]
+            # The daily report counts apps the zeroscaler HPA holds at zero as parked.
+            - apiGroups: ["autoscaling"]
+              resources: ["horizontalpodautoscalers"]
+              verbs: ["get", "list"]
       bindings:
         themis:
           forceRename: themis-read

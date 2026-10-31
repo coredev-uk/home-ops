@@ -31,7 +31,7 @@ spec:
             # Built from coredev-uk/themis main; the tag is the commit SHA, pinned here by hand.
             image: &image
               repository: ghcr.io/coredev-uk/themis
-              tag: "0000000000000000000000000000000000000000"
+              tag: 0f8860bfe9229c23361ca230967fa4cbac1f081d
             args:
               - -policy=/etc/themis/config/policy.json
               - -secrets=/etc/themis/secret

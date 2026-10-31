@@ -121,7 +121,7 @@ spec:
     route:
       app:
         hostnames:
-          - sure.hera.ac
+          - "{{ .Release.Name }}.hera.ac"
         parentRefs:
           - name: envoy-internal
             namespace: network

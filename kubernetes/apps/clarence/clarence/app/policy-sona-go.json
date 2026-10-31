@@ -19,12 +19,18 @@
       "name": "ci",
       "paths": [".github/workflows/**"],
       "deploy": "checks"
+    },
+    {
+      "name": "tooling",
+      "paths": [".renovaterc.json5"],
+      "deploy": "none"
     }
   ],
   "modes": {
     "go": "shadow",
     "frontend": "shadow",
-    "ci": "shadow"
+    "ci": "shadow",
+    "tooling": "shadow"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",

@@ -180,9 +180,6 @@ pages:
                   - title: Flux Operator
                     url: https://flux-operator.hera.ac
                     icon: di:flux-cd
-                  - title: Konflate
-                    url: https://konflate.hera.ac
-                    icon: mdi:source-branch-sync
 
               - title: Media Discovery & Servers
                 links:

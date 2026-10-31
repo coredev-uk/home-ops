@@ -156,17 +156,25 @@ spec:
         ports:
           http:
             port: *port
+    # `repo` names the GitHub repository each controller serves, so the dashboard links pull
+    # requests to the right one.
     serviceMonitor:
       home-ops:
         service:
           identifier: home-ops
         endpoints:
           - port: http
+            relabelings:
+              - targetLabel: repo
+                replacement: home-ops
       sona-go:
         service:
           identifier: sona-go
         endpoints:
           - port: http
+            relabelings:
+              - targetLabel: repo
+                replacement: sona-go
     persistence:
       config-home-ops:
         type: configMap

@@ -2,9 +2,11 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: clarence
+
+components:
+  - ../../components/alerts
+
 resources:
-  - ./cluster.yaml
-  - ./database.yaml
-  - ./databaserole.yaml
-  - ./externalsecret.yaml
-  - ./podmonitor.yaml
+  - ./namespace.yaml
+  - ./clarence/ks.yaml

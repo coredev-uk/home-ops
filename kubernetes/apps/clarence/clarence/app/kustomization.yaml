@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./externalsecret.yaml
+  - ./grafanadashboard.yaml
+  - ./helmrelease.yaml
+  - ./ocirepository.yaml
+  - ./prometheusrule.yaml
+  - ./pvc.yaml
+configMapGenerator:
+  - name: clarence-home-ops-policy
+    files:
+      - policy.json=./policy-home-ops.json
+  - name: clarence-sona-go-policy
+    files:
+      - policy.json=./policy-sona-go.json
+  - name: clarence-dashboard
+    files:
+      - clarence.json=./resources/clarence.json
+generatorOptions:
+  disableNameSuffixHash: true

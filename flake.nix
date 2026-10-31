@@ -16,9 +16,9 @@
 
       # Not in nixpkgs: the release binary, statically linked. Renovate does
       # not bump it (it cannot update the hashes); CI pins its own
-      # FLATE_VERSION in .github/workflows/ci.yaml and kritika its own in
-      # .kritika.yaml. To update, set version and the hashes from each
-      # release's flate_<version>_<platform>.tar.gz.sha256 asset.
+      # FLATE_VERSION in .github/workflows/ci.yaml. To update, set version and
+      # the hashes from each release's flate_<version>_<platform>.tar.gz.sha256
+      # asset.
       flate =
         pkgs:
         let

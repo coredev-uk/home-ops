@@ -11,8 +11,7 @@ mappings from the manifests.
 
 Use the sections that fit the pull request: a Renovate update, on a
 `renovate/` branch; a change under `kubernetes/`, a Renovate update's
-included; what a check proves, for every review; and kritika's account,
-when the review runs in kritika.
+included; and what a check proves, for every review.
 
 ## A Renovate update
 
@@ -102,11 +101,14 @@ the take, with the search that came up empty, is enough.
 ### Renovate's rules
 
 `.renovaterc.json5` is the source for how Renovate treats this update:
-its `automerge` rules say whether the PR merges on its own, in which case
-the review is the last look before the merge; its `groupName` rules say
-which PRs move several packages at once, each of which the review
-covers; its labels and the shared preset's `!` on a major update should
-agree with the title, and drift between them is worth a note.
+its `groupName` rules say which PRs move several packages at once, each
+of which the review covers; its labels and the shared preset's `!` on a
+major update should agree with the title, and drift between them is
+worth a note. Renovate never merges: Clarence does, by the policy in
+`kubernetes/apps/clarence/clarence/app/policy-home-ops.json`. A `clarence:*`
+label or Clarence's ruling comment on the PR says whether it passed and may
+merge on its own, in which case the review is the last look before the
+merge.
 
 ## A change under `kubernetes/`
 
@@ -160,18 +162,3 @@ file and line in its explanation.
   the HelmRelease values" carries its proof; "auth checked" does not.
 - What the repository cannot show is not a check: say what could not be
   verified and what to look at after the merge.
-
-## In kritika
-
-kritika's confidence scorer judges the review by its checked lines and the
-sources it lists. It has the description and the diff but no tools: it
-never sees the commands the review ran or what they printed, and a
-release-note entry that no checked line covers lowers its score.
-
-- For an update, give every entry under the release notes' breaking
-  changes and upgrade notes, and every step the upgrade guide names, a
-  checked line of its own, including one that touches nothing here: name
-  the entry, then why it does not apply or what it changes.
-
-kritika's checkout has no git history, so only the head renders, as
-`references/rendering.md` says.

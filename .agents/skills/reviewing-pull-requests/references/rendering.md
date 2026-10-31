@@ -11,7 +11,7 @@ revision in a temporary directory:
 flate diff hr <name> --base origin/main --path kubernetes/apps/<namespace> --no-progress -o diff
 ```
 
-Without history, as in kritika's checkout, build the head alone:
+Without history, as in a shallow checkout, build the head alone:
 
 ```
 flate build hr <name> --path kubernetes/apps/<namespace> --no-progress

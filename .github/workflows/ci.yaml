@@ -48,9 +48,12 @@ jobs:
         id: extract
         env:
           MISE_GITHUB_TOKEN: ${{ github.token }}
+        # The nodes pull ghcr.io/coredev-uk/* (private) with the workload's imagePullSecrets;
+        # talosctl image pull has no credentials, so those are left out of the pull test.
         run: |
+          images=$(mise exec "github:home-operations/flate@${FLATE_VERSION}" -- flate diff images -p ./kubernetes/apps -o json)
           echo 'images<<EOF' >> $GITHUB_OUTPUT
-          mise exec "github:home-operations/flate@${FLATE_VERSION}" -- flate diff images -p ./kubernetes/apps -o json >> $GITHUB_OUTPUT
+          jq -c '[.[] | select(startswith("ghcr.io/coredev-uk/") | not)]' <<< "$images" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
   image-pull:

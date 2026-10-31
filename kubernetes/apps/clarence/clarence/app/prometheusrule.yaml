@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: clarence
+spec:
+  groups:
+    - name: clarence.rules
+      rules:
+        - alert: ClarenceMergingHalted
+          expr: |-
+            max by (service) (clarence_queue_halted) == 1
+          for: 1m
+          annotations:
+            summary: >-
+              {{ $labels.service }} halted merging after an unhealthy deploy; fix it, `/clarence merge` or close the revert, then remove `clarence:merged-unhealthy`
+          labels:
+            severity: critical
+        - alert: ClarenceCycleStale
+          expr: |-
+            time() - max by (service) (clarence_last_cycle_timestamp_seconds) > 900
+          for: 5m
+          annotations:
+            summary: >-
+              {{ $labels.service }} has not finished a poll cycle in over 15 minutes
+          labels:
+            severity: warning
+        - alert: ClarenceCycleErrors
+          expr: |-
+            sum by (service) (increase(clarence_cycle_errors_total[30m])) > 3
+          for: 5m
+          annotations:
+            summary: >-
+              {{ $labels.service }} poll cycles are failing ({{ $value | humanize }} in 30m)
+          labels:
+            severity: warning

@@ -78,7 +78,27 @@ just talos upgrade-k8s v1.34.1
 
 ## Development Environment
 
-The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane` and the git hook tools. `op` is taken from the system. Renovate keeps `flake.lock` current; CI and kritika pin their own tool versions in `.github/workflows/ci.yaml` and `.kritika.yaml`.
+The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane` and the git hook tools. `op` is taken from the system. Renovate keeps `flake.lock` current; CI pins its own tool versions in `.github/workflows/ci.yaml`.
+
+## Renovate and Clarence
+
+Renovate (`.renovaterc.json5`, run every two hours by `.github/workflows/renovate.yaml` as `bot-cecil[bot]`) opens the update pull requests; it never merges them. [Clarence](https://github.com/coredev-uk/clarence) (`kubernetes/apps/clarence`) does: it rules on each Renovate pull request (code checks, then the Jev model on the release notes), labels it `clarence:*`, and merges what its policy passes one at a time, then waits for the Flux Kustomizations and HelmReleases it touched to apply the merge commit, soaks, and opens a revert pull request and halts merging if the deploy is unhealthy. Changes under `.github/workflows/` are verified by CI on `main` instead. The policy is `kubernetes/apps/clarence/clarence/app/policy-home-ops.json`; while a scope's mode is `shadow` Clarence only labels and comments. The same Deployment runs a second controller for `coredev-uk/sona-go`.
+
+Comment on a pull request (only `coredev-uk`):
+
+| Comment                                               | Effect                                                            |
+| ----------------------------------------------------- | ----------------------------------------------------------------- |
+| `/clarence merge`                                     | Queue it for merge at its current head                            |
+| `/clarence merge --allow destructive,image`           | Same, accepting those checks' blocking findings (`health` too)    |
+| `/clarence merge at 03:00` · `after #570` · `--batch` | Same, scheduled                                                   |
+| `/clarence cancel`                                    | Take it out of the queue                                          |
+| `/clarence revert`                                    | On a merged pull request: open a revert pull request and queue it |
+| `/clarence reclassify`                                | Ask Jev again and rerun the checks                                |
+| `/clarence status`                                    | The ruling, checks, queue position, health gate and deploy state  |
+| `/clarence explain`                                   | Which parts of the release notes drive each flagged Jev answer    |
+| `/clarence hold` · `/clarence unhold`                 | Never merge this pull request / undo that                         |
+
+After an unhealthy deploy, fix it, `/clarence merge` or close the revert, then remove `clarence:merged-unhealthy` from the original pull request. Operations, metrics and the full rule set: [docs/clarence.md](https://github.com/coredev-uk/clarence/blob/main/docs/clarence.md).
 
 ## Credits
 

@@ -32,8 +32,8 @@
     }
   ],
   "modes": {
-    "app": "shadow",
-    "ci": "shadow",
+    "app": "merge",
+    "ci": "merge",
     "talos": "shadow",
     "bootstrap": "shadow",
     "tooling": "shadow"

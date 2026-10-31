@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sure-valkey
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: sure-valkey
+  interval: 1h
+  values:
+    controllers:
+      sure-valkey:
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: mirror.gcr.io/valkey/valkey
+              tag: 9.1.3@sha256:3add1a336a920ea54770a001ab6feb3da5fceea96a40373a3a2cd469b815f0b7
+            # Unlike outline, this dataset is NOT disposable: sidekiq-cron only
+            # writes Sure's cron schedule (including the nightly account sync)
+            # into Redis when Sidekiq boots. If Valkey restarted empty while
+            # the worker kept running, nightly syncs would silently stop, so
+            # keep an AOF on a small PVC. `noeviction` keeps Valkey from
+            # silently dropping queued Sidekiq jobs under memory pressure.
+            args:
+              - --appendonly
+              - "yes"
+              - --maxmemory-policy
+              - noeviction
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["valkey-cli", "ping"]
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probe
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 256Mi
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: 6379
+    persistence:
+      data:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /data

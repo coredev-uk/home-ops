@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: sure-postgres-1
+  annotations:
+    kopiur.home-operations.com/allow-identity-change: "true"
+spec:
+  # CNPG stores PGDATA at `pgdata/` with mode 0700 owned by uid 26, so the
+  # mover cannot read it under kopiur's default fsGroup of 65532. Inherit the
+  # uid/gid from the cluster pod (CNPG pins runAsUser at pod level), with an
+  # explicit 26 as the fallback for when no cluster pod is running.
+  mover:
+    inheritSecurityContextFrom:
+      pvcConsumer: {}
+    securityContext:
+      runAsUser: 26
+      runAsGroup: 26
+    podSecurityContext:
+      fsGroup: 26
+  repository:
+    kind: ClusterRepository
+    name: expanse
+  retention:
+    keepDaily: 7
+    keepHourly: 24
+  sources:
+    - pvc:
+        name: sure-postgres-1
+  verification:
+    deep:
+      schedule:
+        cron: H 5 1 * *
+    quick:
+      schedule:
+        cron: H 3 * * *
+  volumeSnapshotClassName: csi-ceph-blockpool

@@ -17,7 +17,7 @@
       enabled: true,
     },
   },
-  // Renovate never merges: Themis (kubernetes/apps/themis) rules on every PR,
+  // Renovate never merges: Clarence (kubernetes/apps/clarence) rules on every PR,
   // merges what its policy passes one at a time and checks each deploy.
   packageRules: [
     // Grouping rules

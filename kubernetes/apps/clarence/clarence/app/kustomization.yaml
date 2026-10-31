@@ -10,14 +10,14 @@ resources:
   - ./prometheusrule.yaml
   - ./pvc.yaml
 configMapGenerator:
-  - name: themis-home-ops-policy
+  - name: clarence-home-ops-policy
     files:
       - policy.json=./policy-home-ops.json
-  - name: themis-sona-go-policy
+  - name: clarence-sona-go-policy
     files:
       - policy.json=./policy-sona-go.json
-  - name: themis-dashboard
+  - name: clarence-dashboard
     files:
-      - themis.json=./resources/themis.json
+      - clarence.json=./resources/clarence.json
 generatorOptions:
   disableNameSuffixHash: true

@@ -8,97 +8,97 @@
   color: "ff9800"
 - name: type/major
   color: "f6412d"
-# Themis (kubernetes/apps/themis): label sync deletes any label missing here
-- name: themis:pass
+# Clarence (kubernetes/apps/clarence): label sync deletes any label missing here
+- name: clarence:pass
   color: "0e8a16"
-  description: "Themis: policy passed"
-- name: themis:review
+  description: "Clarence: policy passed"
+- name: clarence:review
   color: "d93f0b"
-  description: "Themis: needs a human"
-- name: themis:waiting
+  description: "Clarence: needs a human"
+- name: clarence:waiting
   color: "fef2c0"
-  description: "Themis: waiting on a check, release age or reconcile"
-- name: themis:not-eligible
+  description: "Clarence: waiting on a check, release age or reconcile"
+- name: clarence:not-eligible
   color: "bfd4f2"
-  description: "Themis: outside what the policy may merge"
-- name: themis:notes-missing
+  description: "Clarence: outside what the policy may merge"
+- name: clarence:notes-missing
   color: "fbca04"
-  description: "Themis: no release notes to judge"
-- name: themis:prerelease
+  description: "Clarence: no release notes to judge"
+- name: clarence:prerelease
   color: "f9d0c4"
-  description: "Themis: the upstream target is only a prerelease"
-- name: themis:hold
+  description: "Clarence: the upstream target is only a prerelease"
+- name: clarence:hold
   color: "000000"
-  description: "Themis will not merge this"
-- name: themis:queued
+  description: "Clarence will not merge this"
+- name: clarence:queued
   color: "5319e7"
-  description: "Queued with /themis merge"
-- name: themis:verifying
+  description: "Queued with /clarence merge"
+- name: clarence:verifying
   color: "1d76db"
-  description: "Themis merged this and is checking the deploy"
-- name: themis:soaking
+  description: "Clarence merged this and is checking the deploy"
+- name: clarence:soaking
   color: "a2eeef"
-  description: "Live; Themis watches its containers for restarts before merging anything else"
-- name: themis:merged-ok
+  description: "Live; Clarence watches its containers for restarts before merging anything else"
+- name: clarence:merged-ok
   color: "0e8a16"
-  description: "Deploy healthy after Themis merged it"
-- name: themis:merged-unhealthy
+  description: "Deploy healthy after Clarence merged it"
+- name: clarence:merged-unhealthy
   color: "b60205"
   description: "Deploy unhealthy after merge; merging halted until removed"
-- name: themis:revert
+- name: clarence:revert
   color: "b60205"
-  description: "Revert opened by Themis; comment /themis merge to merge it"
-- name: themis:proposal
+  description: "Revert opened by Clarence; comment /clarence merge to merge it"
+- name: clarence:proposal
   color: "c2e0c6"
-  description: "Change proposed by Themis"
-- name: themis:cleanup
+  description: "Change proposed by Clarence"
+- name: clarence:cleanup
   color: "c2e0c6"
-  description: "Cleanup proposed by Themis: drops configuration that points at nothing"
-- name: themis:report
+  description: "Cleanup proposed by Clarence: drops configuration that points at nothing"
+- name: clarence:report
   color: "c2e0c6"
-  description: "Themis's daily report"
-- name: themis:grow
+  description: "Clarence's daily report"
+- name: clarence:grow
   color: "c2e0c6"
-  description: "Themis proposes more room for a nearly full volume"
-- name: themis:vendor
+  description: "Clarence proposes more room for a nearly full volume"
+- name: clarence:vendor
   color: "c2e0c6"
-  description: "Themis re-vendors an upstream manifest at a newer release"
-- name: themis:right-size
+  description: "Clarence re-vendors an upstream manifest at a newer release"
+- name: clarence:right-size
   color: "c2e0c6"
-  description: "Themis proposes requests closer to measured use"
-- name: themis:breaking
+  description: "Clarence proposes requests closer to measured use"
+- name: clarence:breaking
   color: "d93f0b"
   description: "Jev: the release notes describe a breaking change"
-- name: themis:migration
+- name: clarence:migration
   color: "d93f0b"
   description: "Jev: the release asks for a manual step"
-- name: themis:data-risk
+- name: clarence:data-risk
   color: "d93f0b"
   description: "Jev: the release changes stored data"
-- name: themis:addressed-to-bot
+- name: clarence:addressed-to-bot
   color: "d93f0b"
   description: "Jev: the release notes address an automated reviewer"
-- name: themis:security
+- name: clarence:security
   color: "5319e7"
   description: "Jev: the release fixes a security issue; merged ahead of other updates"
-- name: themis:regression
+- name: clarence:regression
   color: "d93f0b"
   description: "Jev: an upstream issue reports a regression in this version"
 - name: scope:app
   color: "c5def5"
-  description: "Touches the app scope of Themis's policy"
+  description: "Touches the app scope of Clarence's policy"
 - name: scope:ci
   color: "c5def5"
-  description: "Touches the ci scope of Themis's policy"
+  description: "Touches the ci scope of Clarence's policy"
 - name: scope:talos
   color: "c5def5"
-  description: "Touches the talos scope of Themis's policy"
+  description: "Touches the talos scope of Clarence's policy"
 - name: scope:bootstrap
   color: "c5def5"
-  description: "Touches the bootstrap scope of Themis's policy"
+  description: "Touches the bootstrap scope of Clarence's policy"
 - name: scope:tooling
   color: "c5def5"
-  description: "Touches the tooling scope of Themis's policy"
+  description: "Touches the tooling scope of Clarence's policy"
 - name: update:major
   color: "ededed"
   description: "Renovate major update"

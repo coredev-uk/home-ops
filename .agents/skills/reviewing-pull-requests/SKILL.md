@@ -104,9 +104,9 @@ the take, with the search that came up empty, is enough.
 its `groupName` rules say which PRs move several packages at once, each
 of which the review covers; its labels and the shared preset's `!` on a
 major update should agree with the title, and drift between them is
-worth a note. Renovate never merges: Themis does, by the policy in
-`kubernetes/apps/themis/themis/app/policy-home-ops.json`. A `themis:*`
-label or Themis's ruling comment on the PR says whether it passed and may
+worth a note. Renovate never merges: Clarence does, by the policy in
+`kubernetes/apps/clarence/clarence/app/policy-home-ops.json`. A `clarence:*`
+label or Clarence's ruling comment on the PR says whether it passed and may
 merge on its own, in which case the review is the last look before the
 merge.
 

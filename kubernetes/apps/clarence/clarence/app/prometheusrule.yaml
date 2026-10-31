@@ -3,32 +3,32 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: themis
+  name: clarence
 spec:
   groups:
-    - name: themis.rules
+    - name: clarence.rules
       rules:
-        - alert: ThemisMergingHalted
+        - alert: ClarenceMergingHalted
           expr: |-
-            max by (service) (themis_queue_halted) == 1
+            max by (service) (clarence_queue_halted) == 1
           for: 1m
           annotations:
             summary: >-
-              {{ $labels.service }} halted merging after an unhealthy deploy; fix it, `/themis merge` or close the revert, then remove `themis:merged-unhealthy`
+              {{ $labels.service }} halted merging after an unhealthy deploy; fix it, `/clarence merge` or close the revert, then remove `clarence:merged-unhealthy`
           labels:
             severity: critical
-        - alert: ThemisCycleStale
+        - alert: ClarenceCycleStale
           expr: |-
-            time() - max by (service) (themis_last_cycle_timestamp_seconds) > 900
+            time() - max by (service) (clarence_last_cycle_timestamp_seconds) > 900
           for: 5m
           annotations:
             summary: >-
               {{ $labels.service }} has not finished a poll cycle in over 15 minutes
           labels:
             severity: warning
-        - alert: ThemisCycleErrors
+        - alert: ClarenceCycleErrors
           expr: |-
-            sum by (service) (increase(themis_cycle_errors_total[30m])) > 3
+            sum by (service) (increase(clarence_cycle_errors_total[30m])) > 3
           for: 5m
           annotations:
             summary: >-

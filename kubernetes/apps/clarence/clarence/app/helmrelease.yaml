@@ -1,16 +1,16 @@
 ---
-# Themis (github.com/coredev-uk/themis) rules on Renovate pull requests with Jev, labels them and
+# Clarence (github.com/coredev-uk/clarence) rules on Renovate pull requests with Jev, labels them and
 # merges what the policy passes, one at a time; then checks the deploy, soaks and reverts.
 # One controller per repository it serves, each with its own policy file and state.
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: themis
+  name: clarence
 spec:
   chartRef:
     kind: OCIRepository
-    name: themis
+    name: clarence
   interval: 1h
   values:
     controllers:
@@ -21,21 +21,21 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
         serviceAccount:
-          identifier: themis
+          identifier: clarence
         pod:
           automountServiceAccountToken: true
           # SIGTERM lets the current poll finish, so a merge is not cut off before its labels.
           terminationGracePeriodSeconds: 300
         containers:
           app:
-            # Built from coredev-uk/themis main; the tag is the commit SHA, pinned here by hand.
+            # Built from coredev-uk/clarence main; the tag is the commit SHA, pinned here by hand.
             image: &image
-              repository: ghcr.io/coredev-uk/themis
-              tag: 0f8860bfe9229c23361ca230967fa4cbac1f081d
+              repository: ghcr.io/coredev-uk/clarence
+              tag: 8435b6887a5c9a572b4e72d789d39448e13aaeff
             args:
-              - -policy=/etc/themis/config/policy.json
-              - -secrets=/etc/themis/secret
-              - -state=/var/lib/themis/state.db
+              - -policy=/etc/clarence/config/policy.json
+              - -secrets=/etc/clarence/secret
+              - -state=/var/lib/clarence/state.db
             probes: &probes
               liveness:
                 enabled: true
@@ -79,15 +79,15 @@ spec:
           app:
             image: *image
             args:
-              - -policy=/etc/themis/config/policy.json
-              - -secrets=/etc/themis/secret
-              - -state=/var/lib/themis/state.db
+              - -policy=/etc/clarence/config/policy.json
+              - -secrets=/etc/clarence/secret
+              - -state=/var/lib/clarence/state.db
             probes: *probes
             securityContext: *securityContext
             resources: *resources
     defaultPodOptions:
       imagePullSecrets:
-        - name: themis-ghcr-pull
+        - name: clarence-ghcr-pull
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
@@ -96,18 +96,18 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile: { type: RuntimeDefault }
     serviceAccount:
-      themis:
-        forceRename: themis
+      clarence:
+        forceRename: clarence
       sona-go:
-        forceRename: themis-sona-go
+        forceRename: clarence-sona-go
         automountServiceAccountToken: false
-    # Read-only: Themis maps changed files onto the Kustomizations and HelmReleases that deploy
+    # Read-only: Clarence maps changed files onto the Kustomizations and HelmReleases that deploy
     # them, gates merges on node, Ceph and tuppr health, and checks the deploy afterwards.
     # It never writes to the cluster; Flux deploys what it merges.
     rbac:
       roles:
-        themis:
-          forceRename: themis-read
+        clarence:
+          forceRename: clarence-read
           type: ClusterRole
           rules:
             - apiGroups: ["kustomize.toolkit.fluxcd.io"]
@@ -138,13 +138,13 @@ spec:
               resources: ["horizontalpodautoscalers"]
               verbs: ["get", "list"]
       bindings:
-        themis:
-          forceRename: themis-read
+        clarence:
+          forceRename: clarence-read
           type: ClusterRoleBinding
           roleRef:
-            identifier: themis
+            identifier: clarence
           subjects:
-            - identifier: themis
+            - identifier: clarence
     service:
       home-ops:
         controller: home-ops
@@ -170,47 +170,47 @@ spec:
     persistence:
       config-home-ops:
         type: configMap
-        name: themis-home-ops-policy
+        name: clarence-home-ops-policy
         advancedMounts:
           home-ops:
             app:
-              - path: /etc/themis/config
+              - path: /etc/clarence/config
                 readOnly: true
       config-sona-go:
         type: configMap
-        name: themis-sona-go-policy
+        name: clarence-sona-go-policy
         advancedMounts:
           sona-go:
             app:
-              - path: /etc/themis/config
+              - path: /etc/clarence/config
                 readOnly: true
       secret:
         type: secret
-        name: themis-secret
+        name: clarence-secret
         defaultMode: 0440
         globalMounts:
-          - path: /etc/themis/secret
+          - path: /etc/clarence/secret
             readOnly: true
       # Pull credentials, so the image check can see private ghcr.io/coredev-uk images.
       registry:
         type: secret
-        name: themis-ghcr-pull
+        name: clarence-ghcr-pull
         defaultMode: 0440
         globalMounts:
-          - path: /etc/themis/registry
+          - path: /etc/clarence/registry
             readOnly: true
       state-home-ops:
-        existingClaim: themis-home-ops-state
+        existingClaim: clarence-home-ops-state
         advancedMounts:
           home-ops:
             app:
-              - path: /var/lib/themis
+              - path: /var/lib/clarence
       state-sona-go:
-        existingClaim: themis-sona-go-state
+        existingClaim: clarence-sona-go-state
         advancedMounts:
           sona-go:
             app:
-              - path: /var/lib/themis
+              - path: /var/lib/clarence
       # kubeconform's schema cache; the root filesystem is read-only.
       tmp:
         type: emptyDir

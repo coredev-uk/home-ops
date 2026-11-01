@@ -33,11 +33,11 @@
     }
   ],
   "modes": {
-    "go": "shadow",
-    "frontend": "shadow",
-    "ci": "shadow",
-    "tooling": "shadow",
-    "code": "shadow"
+    "go": "merge",
+    "frontend": "merge",
+    "ci": "merge",
+    "tooling": "merge",
+    "code": "merge"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",
@@ -48,7 +48,12 @@
   "eligibleUpdateTypes": ["minor", "patch", "digest"],
   "notesOptional": ["digest"],
   "lockfiles": ["go.sum", "frontend/pnpm-lock.yaml"],
-  "requiredChecks": ["Go vet and test (-race)", "Frontend typecheck, lint, format, test, build"],
+  "requiredChecks": [
+    "Go vet and test (-race)",
+    "Frontend typecheck, lint, format, test, build",
+    "Conventional Commits title",
+    "gitleaks"
+  ],
   "requiredContexts": [],
   "stabilityContext": "",
   "minimumReleaseAgeHours": 72,
@@ -129,22 +134,6 @@
         },
         "reviewAbove": 0.7,
         "instructions": "Does the issue in `issue`, opened in `project` after `version` was released, report that something which worked in `previous_version` broke in `version` (a crash, a failed start or migration, lost data, a feature that stopped working), in a way that would hit an existing deployment?"
-      }
-    ]
-  },
-  "manualSteps": {
-    "paths": ["go.mod"],
-    "rules": "AGENTS.md",
-    "maxDiffBytes": 30000,
-    "questions": [
-      {
-        "id": "manual_step",
-        "reviewAbove": 0.5,
-        "instructions": "Does `rules` say that a change like the one in `diff` needs a person to do or check something that merging alone does not do, either before or after the merge? Steps `rules` gives for this kind of change count, such as patches applied to nodes first, files that must be changed together elsewhere, commands to run, or resources to adopt.",
-        "criteria": {
-          "true": "`rules` describes a by-hand step or a companion change for this kind of change that `diff` does not already include.",
-          "false": "`rules` describes no such step for this kind of change; merging completes it."
-        }
       }
     ]
   },

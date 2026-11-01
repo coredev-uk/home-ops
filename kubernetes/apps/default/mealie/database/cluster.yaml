@@ -6,6 +6,8 @@ metadata:
   name: mealie-postgres
 spec:
   instances: 1
+  # One instance: a PDB would block every node drain (Talos upgrades). Drains move the primary instead.
+  enablePDB: false
   imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm
   primaryUpdateStrategy: unsupervised
   primaryUpdateMethod: restart

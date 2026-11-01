@@ -15,10 +15,9 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
       # Not in nixpkgs: the release binary, statically linked. Renovate does
-      # not bump it (it cannot update the hashes); CI pins its own
-      # FLATE_VERSION in .github/workflows/ci.yaml. To update, set version and
-      # the hashes from each release's flate_<version>_<platform>.tar.gz.sha256
-      # asset.
+      # not bump it (it cannot update the hashes), and CI runs this one. To
+      # update, set version and the hashes from each release's
+      # flate_<version>_<platform>.tar.gz.sha256 asset.
       flate =
         pkgs:
         let
@@ -78,7 +77,7 @@
             pkgs.minijinja
             pkgs.talosctl
             pkgs.yq-go
-            # rendering and reading images (reviewing-pull-requests skill)
+            # rendering and reading images
             pkgs.crane
             (flate pkgs)
           ];
@@ -93,8 +92,9 @@
             export TALOSCONFIG="$root/talosconfig"
 
             # direnv re-runs this on every load; install the git hooks once,
-            # lefthook re-syncs them itself when its config changes
-            if [ ! -f "$(git rev-parse --git-path info/lefthook.checksum)" ]; then
+            # lefthook re-syncs them itself when its config changes. CI never
+            # commits, and its output would land in captured command output.
+            if [ -z "''${CI:-}" ] && [ ! -f "$(git rev-parse --git-path info/lefthook.checksum)" ]; then
               lefthook install
             fi
             unset root

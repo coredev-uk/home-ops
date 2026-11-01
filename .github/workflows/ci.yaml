@@ -16,12 +16,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  # renovate: datasource=github-releases depName=home-operations/flate
-  FLATE_VERSION: "0.6.5"
-  # renovate: datasource=custom.talos-factory depName=siderolabs/talos
-  TALOS_VERSION: v1.14.5
-
 jobs:
   image-pull-extract:
     if: ${{ github.event_name == 'pull_request' }}
@@ -38,20 +32,18 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Mise
-        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+      # Tools come from flake.nix, pinned by flake.lock, like the dev shell
+      - name: Setup Nix
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
         with:
-          cache: false
-          install: false
+          github_access_token: ${{ github.token }}
 
       - name: Extract Images
         id: extract
-        env:
-          MISE_GITHUB_TOKEN: ${{ github.token }}
         # The nodes pull ghcr.io/coredev-uk/* (private) with the workload's imagePullSecrets;
         # talosctl image pull has no credentials, so those are left out of the pull test.
         run: |
-          images=$(mise exec "github:home-operations/flate@${FLATE_VERSION}" -- flate diff images -p ./kubernetes/apps -o json)
+          images=$(nix develop --command flate diff images -p ./kubernetes/apps -o json)
           echo 'images<<EOF' >> $GITHUB_OUTPUT
           jq -c '[.[] | select(startswith("ghcr.io/coredev-uk/") | not)]' <<< "$images" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
@@ -73,17 +65,22 @@ jobs:
       max-parallel: 4
       fail-fast: false
     steps:
-      - name: Setup Mise
-        uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          cache: false
-          install: false
+          persist-credentials: false
 
+      - name: Setup Nix
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31.11.3
+        with:
+          github_access_token: ${{ github.token }}
+
+      # Only talosctl, from the flake's locked nixpkgs: the whole dev shell is not worth
+      # fetching once per image
       - name: Pull Image
         env:
           IMAGE: ${{ matrix.image }}
-          MISE_GITHUB_TOKEN: ${{ github.token }}
-        run: mise exec "talosctl@${TALOS_VERSION}" -- talosctl --nodes "$NODE" image pull "$IMAGE"
+        run: nix shell --inputs-from . nixpkgs#talosctl --command talosctl --nodes "$NODE" image pull "$IMAGE"
 
   zizmor:
     name: Zizmor

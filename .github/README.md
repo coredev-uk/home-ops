@@ -47,10 +47,11 @@ This is a practical, single-cluster setup focused on reliability and straightfor
 ## Repository Layout
 
 ```text
+📁 bootstrap      # helmfile and kustomize used to bring up a new cluster
 📁 kubernetes
-├── 📁 apps       # applications
-├── 📁 components # re-useable kustomize components
-└── 📁 flux       # flux system configuration
+├── 📁 apps       # applications, Flux itself under flux-system
+└── 📁 components # re-useable kustomize components
+📁 talos          # Talos machine configuration
 ```
 
 ## Operations
@@ -60,25 +61,20 @@ This is a practical, single-cluster setup focused on reliability and straightfor
 just -l
 
 # bootstrap the full stack (Talos + Kubernetes + apps)
-just bootstrap
-
-# run specific bootstrap stages
-just bootstrap talos
-just bootstrap kube
-just bootstrap apps
+just bootstrap cluster
 
 # Kubernetes utility operations
-just kube sync-ks
-just kube sync-hr
+just kube sync ks
+just kube sync hr
 
-# Talos day-2 operations
+# Talos day-2 operations (tuppr upgrades the cluster from kubernetes/apps/system-upgrade)
 just talos upgrade-node hyperion-0
-just talos upgrade-k8s v1.34.1
+just talos upgrade-k8s <version>
 ```
 
 ## Development Environment
 
-The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane` and the git hook tools. `op` is taken from the system. Renovate keeps `flake.lock` current; CI pins its own tool versions in `.github/workflows/ci.yaml`.
+The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane` and the git hook tools. `op` is taken from the system. Renovate keeps `flake.lock` current; CI installs Nix and runs its tools from the same flake.
 
 ## Renovate and Clarence
 

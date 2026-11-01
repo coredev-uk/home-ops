@@ -30,6 +30,9 @@
       description: "Let minor and patch releases settle",
       matchUpdateTypes: ["minor", "patch"],
       minimumReleaseAge: "3 days",
+      // Container registries publish no release timestamp: without this, Renovate holds
+      // every image update as pending forever instead of proposing it.
+      minimumReleaseAgeBehaviour: "timestamp-optional",
     },
     // Grouping rules
     {

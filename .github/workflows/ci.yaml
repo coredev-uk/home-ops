@@ -9,8 +9,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# A pull request's newer push cancels its older run. On main every commit gets
+# its own run: Clarence checks each merge commit's Build Success, and a shared
+# group would drop a pending run whenever a newer commit lands.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:

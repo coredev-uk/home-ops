@@ -3,7 +3,7 @@
   "baseBranch": "main",
   "renovateLogin": "bot-cecil[bot]",
   "commanders": ["coredev-uk"],
-  "pollSeconds": 60,
+  "pollSeconds": 300,
   "scopes": [
     {
       "name": "go",

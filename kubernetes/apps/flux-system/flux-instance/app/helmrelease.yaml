@@ -20,12 +20,6 @@ spec:
         ref: refs/heads/main
         path: kubernetes/apps
         interval: 1h
-        # Private repo: authenticates as the bot-cecil App, minting a
-        # short-lived token per clone. The secret comes from
-        # `just bootstrap flux-auth`, not an ExternalSecret - Flux would have to
-        # clone the repo to create the credential it needs to clone the repo.
-        provider: github
-        pullSecret: flux-git-auth-secret
       kustomize:
         patches:
           - # Add Kustomization defaults for all child Kustomizations

@@ -37,7 +37,7 @@
     "ci": "merge",
     "talos": "shadow",
     "bootstrap": "shadow",
-    "tooling": "shadow"
+    "tooling": "merge"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",
@@ -75,8 +75,10 @@
     "maxBytes": 20000
   },
   "upstreams": {
+    "ekofr/pihole-exporter": "eko/pihole-exporter",
     "ghcr.io/rook/rook-ceph": "rook/rook",
-    "ghcr.io/rook/rook-ceph-cluster": "rook/rook"
+    "ghcr.io/rook/rook-ceph-cluster": "rook/rook",
+    "ghcr.io/spegel-org/helm-charts/spegel": "spegel-org/spegel"
   },
   "checks": {
     "schemaCache": "/tmp/kubeconform",

@@ -137,21 +137,5 @@
       }
     ]
   },
-  "manualSteps": {
-    "paths": ["go.mod"],
-    "rules": "AGENTS.md",
-    "maxDiffBytes": 30000,
-    "questions": [
-      {
-        "id": "manual_step",
-        "reviewAbove": 0.5,
-        "instructions": "Does `rules` say that a change like the one in `diff` needs a person to do or check something that merging alone does not do, either before or after the merge? Steps `rules` gives for this kind of change count, such as patches applied to nodes first, files that must be changed together elsewhere, commands to run, or resources to adopt.",
-        "criteria": {
-          "true": "`rules` describes a by-hand step or a companion change for this kind of change that `diff` does not already include.",
-          "false": "`rules` describes no such step for this kind of change; merging completes it."
-        }
-      }
-    ]
-  },
   "dashboardUrl": "https://grafana.hera.ac/d/clarence"
 }

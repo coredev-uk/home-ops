@@ -31,7 +31,7 @@ spec:
             # Built from coredev-uk/clarence main; the tag is the commit SHA, pinned here by hand.
             image: &image
               repository: ghcr.io/coredev-uk/clarence
-              tag: 167adfb0809cd320db4273e9081ba092a7bcc96c@sha256:6d786d04d0abc26f561a622309c368891508a674bb5974bb1b2125a6026bed2e
+              tag: c4f9f76022159708fd42d93da9719626fe8de22e@sha256:7fc492f452ed6d13941a01509d337c00511638be9a9b04d8b2b466ed1dbfeddc
             args:
               - -policy=/etc/clarence/config/policy.json
               - -secrets=/etc/clarence/secret
@@ -185,6 +185,24 @@ spec:
         ports:
           http:
             port: *port
+    # GitHub's webhook deliveries for every repository arrive at the home-ops controller, which
+    # checks the signature and forwards other repositories' deliveries to their controller
+    # (webhook.peers in policy-home-ops.json). Only /webhook is public; /metrics stays inside.
+    route:
+      webhook:
+        hostnames:
+          - clarence.hera.ac
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: home-ops
+                port: *port
+            matches:
+              - path:
+                  type: Exact
+                  value: /webhook
     # `repo` names the GitHub repository each controller serves, so the dashboard links pull
     # requests to the right one.
     serviceMonitor:

@@ -4,6 +4,7 @@
   "renovateLogin": "bot-cecil[bot]",
   "commanders": ["coredev-uk"],
   "pollSeconds": 300,
+  "fastPollSeconds": 20,
   "scopes": [
     {
       "name": "go",
@@ -24,13 +25,19 @@
       "name": "tooling",
       "paths": [".renovaterc.json5"],
       "deploy": "none"
+    },
+    {
+      "name": "code",
+      "paths": ["**"],
+      "deploy": "checks"
     }
   ],
   "modes": {
     "go": "shadow",
     "frontend": "shadow",
     "ci": "shadow",
-    "tooling": "shadow"
+    "tooling": "shadow",
+    "code": "shadow"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",
@@ -47,6 +54,7 @@
   "minimumReleaseAgeHours": 72,
   "verify": {
     "timeoutMinutes": 60,
+    "maxInFlight": 3,
     "mainChecks": ["Go vet and test (-race)", "Frontend typecheck, lint, format, test, build"]
   },
   "notes": {
@@ -97,7 +105,7 @@
     },
     {
       "id": "security",
-      "label": "clarence/security",
+      "label": "kind/security",
       "labelOnly": true,
       "reviewAbove": 0.5,
       "instructions": "Do the release notes in `release_notes` say this release fixes a security vulnerability in the packages in `package_updates`?",

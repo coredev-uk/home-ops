@@ -19,7 +19,7 @@
   },
   // The dashboard issue, in Clarence's voice: Renovate finds updates, Clarence merges
   dependencyDashboardTitle: "📦 Renovate Dashboard",
-  dependencyDashboardHeader: "## 📦 Renovate Dashboard\n\n> 📻 **Reporting in.** Every update Renovate found in this repository is below. Renovate only opens the pull requests: Clarence rules on each one and merges what its policy passes, one at a time, then checks the deploy. Tick a box to make Renovate act on the next run.\n\n| | |\n|---|---|\n| **Merged by** | Clarence (`kubernetes/apps/clarence`), see its card on each pull request |\n| **Release age** | minor and patch updates wait 3 days before Renovate opens them |\n| **Cluster report** | the `clarence/report` issue |\n",
+  dependencyDashboardHeader: "## 📦 Renovate Dashboard\n\n> 📻 **Reporting in.** Every update Renovate found in this repository is below. Renovate only opens the pull requests: Clarence rules on each one and merges what its policy passes, one at a time, then checks the deploy. Tick a box to make Renovate act on the next run.\n\n| | |\n|---|---|\n| **Merged by** | Clarence (`kubernetes/apps/clarence`), see its card on each pull request |\n| **Release age** | minor and patch updates wait 3 days before Renovate opens them |\n| **Cluster report** | the `kind/report` issue |\n",
   dependencyDashboardFooter: "<sub>📻 Renovate · runs every two hours from `.github/workflows/renovate.yaml` · merges go through Clarence</sub>",
   // Renovate never merges: Clarence (kubernetes/apps/clarence) rules on every PR,
   // merges what its policy passes one at a time and checks each deploy.

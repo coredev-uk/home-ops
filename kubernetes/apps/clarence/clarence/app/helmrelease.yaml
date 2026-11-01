@@ -185,6 +185,24 @@ spec:
         ports:
           http:
             port: *port
+    # GitHub's webhook deliveries for every repository arrive at the home-ops controller, which
+    # checks the signature and forwards other repositories' deliveries to their controller
+    # (webhook.peers in policy-home-ops.json). Only /webhook is public; /metrics stays inside.
+    route:
+      webhook:
+        hostnames:
+          - clarence.hera.ac
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: home-ops
+                port: *port
+            matches:
+              - path:
+                  type: Exact
+                  value: /webhook
     # `repo` names the GitHub repository each controller serves, so the dashboard links pull
     # requests to the right one.
     serviceMonitor:

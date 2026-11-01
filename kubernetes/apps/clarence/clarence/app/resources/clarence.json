@@ -457,7 +457,7 @@
       "id": 41,
       "type": "table",
       "title": "Merge queue",
-      "description": "Pull requests queued with /clarence merge, in merge order, and what each is waiting for. Rebuilt every poll.",
+      "description": "Pull requests queued with @bot-clarence merge, in merge order, and what each is waiting for. Rebuilt every poll.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -1062,7 +1062,7 @@
     {
       "id": 31,
       "type": "row",
-      "title": "Merge queue (/clarence merge)",
+      "title": "Merge queue (@bot-clarence merge)",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -1086,7 +1086,7 @@
         "x": 0,
         "y": 49
       },
-      "description": "Pull requests waiting for Clarence after /clarence merge: on a pending check, or behind a deploy that is being checked.",
+      "description": "Pull requests waiting for Clarence after @bot-clarence merge: on a pending check, or behind a merge that is being checked.",
       "targets": [
         {
           "refId": "A",
@@ -1196,7 +1196,7 @@
         "x": 14,
         "y": 49
       },
-      "description": "merged: by /clarence merge (command) or on Clarence's own ruling (renovate). dequeued: a readiness check failed; the pull request comment says which.",
+      "description": "merged: by @bot-clarence merge (command) or on Clarence's own ruling (renovate). dequeued: a readiness check failed; the card's timeline says which.",
       "targets": [
         {
           "refId": "A",

@@ -14,7 +14,7 @@ spec:
           for: 1m
           annotations:
             summary: >-
-              {{ $labels.service }} halted merging after an unhealthy deploy; fix it, `/clarence merge` or close the revert, then remove `clarence:merged-unhealthy`
+              {{ $labels.service }} halted merging after an unhealthy deploy; fix it, `@bot-clarence merge` or close the revert, then remove `state/unhealthy`
           labels:
             severity: critical
         - alert: ClarenceCycleStale

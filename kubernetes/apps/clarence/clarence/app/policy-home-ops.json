@@ -4,6 +4,7 @@
   "renovateLogin": "bot-cecil[bot]",
   "commanders": ["coredev-uk"],
   "pollSeconds": 120,
+  "fastPollSeconds": 20,
   "scopes": [
     {
       "name": "app",
@@ -59,6 +60,12 @@
     "upgradeTimeoutMinutes": 480,
     "soakMinutes": 15,
     "mainChecks": ["Build Success"]
+  },
+  "webhook": {
+    "peers": {
+      "coredev-uk/sona-go": "http://clarence-sona-go.clarence.svc.cluster.local:8080",
+      "coredev-uk/clarence": "http://clarence-self.clarence.svc.cluster.local:8080"
+    }
   },
   "health": {
     "cephBlockOn": ["HEALTH_WARN", "HEALTH_ERR"]
@@ -206,7 +213,7 @@
     },
     {
       "id": "security",
-      "label": "clarence/security",
+      "label": "kind/security",
       "labelOnly": true,
       "reviewAbove": 0.5,
       "instructions": "Do the release notes in `release_notes` say this release fixes a security vulnerability in the packages in `package_updates`?",

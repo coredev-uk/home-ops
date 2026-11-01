@@ -33,11 +33,11 @@
     }
   ],
   "modes": {
-    "go": "shadow",
-    "frontend": "shadow",
-    "ci": "shadow",
-    "tooling": "shadow",
-    "code": "shadow"
+    "go": "merge",
+    "frontend": "merge",
+    "ci": "merge",
+    "tooling": "merge",
+    "code": "merge"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",
@@ -48,7 +48,12 @@
   "eligibleUpdateTypes": ["minor", "patch", "digest"],
   "notesOptional": ["digest"],
   "lockfiles": ["go.sum", "frontend/pnpm-lock.yaml"],
-  "requiredChecks": ["Go vet and test (-race)", "Frontend typecheck, lint, format, test, build"],
+  "requiredChecks": [
+    "Go vet and test (-race)",
+    "Frontend typecheck, lint, format, test, build",
+    "Conventional Commits title",
+    "gitleaks"
+  ],
   "requiredContexts": [],
   "stabilityContext": "",
   "minimumReleaseAgeHours": 72,

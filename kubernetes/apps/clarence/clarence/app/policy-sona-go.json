@@ -120,6 +120,12 @@
       }
     }
   ],
+  "upstreams": {
+    "golang.org/x/sync": "golang/sync",
+    "golang.org/x/sys": "golang/sys",
+    "golang.org/x/term": "golang/term",
+    "golang.org/x/tools": "golang/tools"
+  },
   "upstreamIssues": {
     "maxIssues": 30,
     "askPerUpstream": 10,

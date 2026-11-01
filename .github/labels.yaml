@@ -8,44 +8,44 @@
   color: "ff9800"
 - name: type/major
   color: "f6412d"
-# Clarence (kubernetes/apps/clarence): label sync deletes any label missing here.
+# Clarence (kubernetes/apps/clarence) creates these with the same colours and descriptions; label
+# sync deletes any label missing here, so keep them in step with Clarence's label definitions.
 # Verdict, exactly one on a Renovate pull request
-- name: clarence/pass
+- name: verdict/pass
   color: "0e8a16"
-  description: "Clarence: policy passed"
-- name: clarence/review
+  description: "Verdict: policy passed"
+- name: verdict/review
   color: "d93f0b"
-  description: "Clarence: needs a human"
-- name: clarence/wait
+  description: "Verdict: needs a human"
+- name: verdict/wait
   color: "fbca04"
-  description: "Clarence: waiting on checks, age or reconcile"
-# Lifecycle, at most one
-- name: clarence/queued
+  description: "Verdict: waiting on checks, age or reconcile"
+# State, at most one
+- name: state/queued
   color: "5319e7"
-  description: "Queued to merge with /clarence merge"
-- name: clarence/deploying
+  description: "Queued: Clarence merges it once ready"
+- name: state/deploying
   color: "1d76db"
   description: "Merged; Clarence is checking the deploy"
-- name: clarence/live
+- name: state/live
   color: "0e8a16"
   description: "Deploy healthy after Clarence merged it"
-- name: clarence/unhealthy
+- name: state/unhealthy
   color: "b60205"
   description: "Deploy unhealthy; merging halted until removed"
-# Set by people or Jev
-- name: clarence/hold
+- name: state/hold
   color: "000000"
-  description: "Clarence will never merge this"
-- name: clarence/security
+  description: "On hold: Clarence will never merge this"
+# Kind
+- name: kind/security
   color: "5319e7"
-  description: "Jev: fixes a security issue; merged first"
-# Opened by Clarence
-- name: clarence/proposal
+  description: "Fixes a security issue; merged first"
+- name: kind/proposal
   color: "c2e0c6"
-  description: "Pull request Clarence proposes"
-- name: clarence/revert
+  description: "Change Clarence proposes"
+- name: kind/revert
   color: "b60205"
-  description: "Revert by Clarence; /clarence merge to merge"
-- name: clarence/report
+  description: "Revert Clarence opened; merged on command"
+- name: kind/report
   color: "c2e0c6"
   description: "Clarence's daily report"

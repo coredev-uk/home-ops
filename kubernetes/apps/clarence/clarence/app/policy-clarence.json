@@ -152,5 +152,9 @@
       }
     ]
   },
+  "security": {
+    "trivyServer": "http://trivy.clarence.svc.cluster.local:4954",
+    "severities": ["HIGH", "CRITICAL"]
+  },
   "dashboardUrl": "https://grafana.hera.ac/d/clarence"
 }

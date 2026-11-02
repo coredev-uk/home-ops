@@ -58,13 +58,14 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-            # Checks keep a few repository snapshots in memory and render them with kustomize.
+            # Checks keep a few repository snapshots in memory and render them with kustomize;
+            # CVE scans run the Trivy client in the same container, which unpacks image layers.
             resources: &resources
               requests:
                 cpu: 20m
                 memory: 128Mi
               limits:
-                memory: 512Mi
+                memory: 1Gi
       # sona-go deploys nowhere: no Kubernetes API access at all.
       sona-go:
         strategy: Recreate
@@ -288,6 +289,18 @@ spec:
           self:
             app:
               - path: /var/lib/clarence
+      # The Trivy client's cache (security.cacheDir): the Java index, fetched on the first image
+      # with JAR files, and the layers it unpacks while scanning. sona-go scans nothing.
+      trivy-cache:
+        type: emptyDir
+        sizeLimit: 4Gi
+        advancedMounts:
+          home-ops:
+            app:
+              - path: /var/cache/trivy
+          self:
+            app:
+              - path: /var/cache/trivy
       # kubeconform's schema cache; the root filesystem is read-only.
       tmp:
         type: emptyDir

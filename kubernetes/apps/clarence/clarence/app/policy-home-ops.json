@@ -78,6 +78,7 @@
     "ekofr/pihole-exporter": "eko/pihole-exporter",
     "ghcr.io/rook/rook-ceph": "rook/rook",
     "ghcr.io/rook/rook-ceph-cluster": "rook/rook",
+    "ghcr.io/coredns/charts/coredns": "coredns/helm",
     "ghcr.io/spegel-org/helm-charts/spegel": "spegel-org/spegel"
   },
   "checks": {
@@ -179,8 +180,8 @@
     {
       "id": "breaking",
       "criteria": {
-        "true": "A setting, environment variable, command-line flag, API, file path or default behaviour is removed, renamed or changed in a way existing users must react to, or the notes call the change breaking.",
-        "false": "Only bug fixes, new optional features, performance work, dependency updates, documentation, or deprecations that keep working."
+        "true": "A setting, environment variable, command-line flag, API, file path or default behaviour is removed, renamed or changed in a way existing users must react to, or the notes call the change breaking for the way the package in `package_updates` is installed.",
+        "false": "Only bug fixes, new optional features, performance work, dependency updates, documentation, or deprecations that keep working. A change the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater, e.g. 'Docker images are not affected') when the package in `package_updates` is a container image or Helm chart. A renamed container, label or other name the chart or image generates rather than a value users set, or pods restarting once on upgrade."
       },
       "reviewAbove": 0.3,
       "instructions": "Do the release notes in `release_notes` describe a breaking change for an existing deployment of the packages in `package_updates`?"
@@ -189,7 +190,7 @@
       "id": "migration",
       "criteria": {
         "true": "Run a command or migration, edit configuration, or upgrade in a set order, because of a change in this release.",
-        "false": "Nothing to do beyond deploying the new version. Migrations the software runs by itself on start are not a manual step, and general advice repeated for every release, such as 'always take a backup before upgrading', is not one either."
+        "false": "Nothing to do beyond deploying the new version. Migrations the software runs by itself on start are not a manual step, and general advice repeated for every release, such as 'always take a backup before upgrading', is not one either. A step the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater) is not one when the package in `package_updates` is a container image or Helm chart."
       },
       "reviewAbove": 0.3,
       "instructions": "Do the release notes in `release_notes` tell the operator to do something by hand for this particular upgrade?"
@@ -210,6 +211,10 @@
     },
     {
       "id": "drop_in",
+      "criteria": {
+        "true": "Deploying the new version is all it takes. Changes the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater) do not count when the package is a container image or Helm chart, and neither do a renamed container, label or other name the chart or image generates, or pods restarting once on upgrade.",
+        "false": "This upgrade needs a change to the deployment's configuration, data or the way it is deployed."
+      },
       "reviewBelow": 0.3,
       "instructions": "Can a deployment running the `from` version of every package in `package_updates` move to the `to` version with no change to its configuration, data or deployment, according to `release_notes`?"
     },
@@ -235,7 +240,7 @@
         "id": "regression",
         "criteria": {
           "true": "The issue says or clearly shows that it worked before `version` and broke with it, and it is not closed as not planned, a duplicate of an older problem, or user error.",
-          "false": "A bug with no sign it is new in `version` (issue templates ask for the current version, so naming it is not evidence), a feature request, a support question, or too vague to tie to `version`."
+          "false": "A bug with no sign it is new in `version` (issue templates ask for the current version, so naming it is not evidence), a feature request, a support question, or too vague to tie to `version`. A problem the issue dates to `previous_version` or an earlier version (for example 'since v1.34' when `previous_version` is v1.34.0): the deployment already runs it, so this update does not bring it."
         },
         "reviewAbove": 0.7,
         "instructions": "Does the issue in `issue`, opened in `project` after `version` was released, report that something which worked in `previous_version` broke in `version` (a crash, a failed start or migration, lost data, a feature that stopped working), in a way that would hit an existing deployment?"

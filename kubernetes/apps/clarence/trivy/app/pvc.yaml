@@ -1,0 +1,15 @@
+---
+# Trivy's cache: the vulnerability database (1.6 GB unpacked) and what clients sent about each
+# image layer, so a restart neither downloads the database again nor makes Clarence analyse
+# layers it already sent. A cache only: nothing to back up.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trivy-cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: ceph-block

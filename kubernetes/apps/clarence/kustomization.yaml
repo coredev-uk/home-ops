@@ -10,3 +10,4 @@ components:
 resources:
   - ./namespace.yaml
   - ./clarence/ks.yaml
+  - ./trivy/ks.yaml

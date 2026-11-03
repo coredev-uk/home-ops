@@ -240,10 +240,10 @@
         "id": "regression",
         "criteria": {
           "true": "The issue says or clearly shows that it worked before `version` and broke with it, and it is not closed as not planned, a duplicate of an older problem, or user error.",
-          "false": "A bug with no sign it is new in `version` (issue templates ask for the current version, so naming it is not evidence), a feature request, a support question, or too vague to tie to `version`. A problem the issue dates to `previous_version` or an earlier version (for example 'since v1.34' when `previous_version` is v1.34.0): the deployment already runs it, so this update does not bring it."
+          "false": "A bug with no sign it is new in `version` (issue templates ask for the current version, so naming it is not evidence), a feature request, a support question, or too vague to tie to `version`. A problem the issue dates to `previous_version` or an earlier version (for example 'since v1.34' when `previous_version` is v1.34.0): the deployment already runs it, so this update does not bring it. An issue about another product the project also releases than `package` (another OS image, chart or package, e.g. an Ubuntu image issue when `package` is macos)."
         },
         "reviewAbove": 0.7,
-        "instructions": "Does the issue in `issue`, opened in `project` after `version` was released, report that something which worked in `previous_version` broke in `version` (a crash, a failed start or migration, lost data, a feature that stopped working), in a way that would hit an existing deployment?"
+        "instructions": "Does the issue in `issue`, opened in `project` after `version` was released, report that something in `package` which worked in `previous_version` broke in `version` (a crash, a failed start or migration, lost data, a feature that stopped working), in a way that would hit an existing deployment?"
       }
     ]
   },

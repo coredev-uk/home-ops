@@ -27,6 +27,9 @@
 - name: state/deploying
   color: "1d76db"
   description: "Merged; Clarence is checking the deploy"
+- name: state/soaking
+  color: "0052cc"
+  description: "Live; Clarence is watching it for restarts"
 - name: state/live
   color: "0e8a16"
   description: "Deploy healthy after Clarence merged it"

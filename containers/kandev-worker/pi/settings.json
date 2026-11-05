@@ -1,0 +1,16 @@
+{
+  "$schema": "https://pi.dev/schemas/settings.schema.json",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-5-5",
+  "defaultThinkingLevel": "high",
+  "defaultProjectTrust": "always",
+  "defaultTools": ["+grep", "+find", "+ls"],
+  "skills": ["~/.pi/agent/skills"],
+  "quietStartup": true,
+  "collapseChangelog": true,
+  "enableInstallTelemetry": false,
+  "retry": {
+    "maxRetries": 8,
+    "maxAgentDelayMs": 120000
+  }
+}

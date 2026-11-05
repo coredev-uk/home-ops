@@ -1,6 +1,6 @@
 ---
-# Kandev (github.com/kdlbs/kandev): a kanban board that runs coding agents (Claude Code on the
-# Claude Max plan) on tasks and reviews what they change. This pod is the control plane: the web
+# Kandev (github.com/kdlbs/kandev): a kanban board that runs coding agents (Pi, on Claude through
+# pi-claude-bridge) on tasks and reviews what they change. This pod is the control plane: the web
 # UI, the API and the board's SQLite database. The agents run in task pods its Kubernetes
 # executor creates in kandev-agents on hyperion-0 (containers/kandev-worker/pod-template.yaml).
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
@@ -25,13 +25,16 @@ spec:
         pod:
           # The Kubernetes executor's in-cluster connection (kandev-agents' executor Role).
           automountServiceAccountToken: true
+          imagePullSecrets:
+            - name: kandev-pull
         containers:
           app:
             image:
-              repository: ghcr.io/kdlbs/kandev
-              # 0.99.0 fails every Pi session: its new built-in MCP check ignores the .pi/mcp.json
-              # Pi gets Kandev's tools from. .renovaterc.json5 skips that release.
-              tag: 0.98.0@sha256:f9aab231d3b3d3c09b0cfd247c8aa007bac2bc0788d1ae776af79c5307bbf628
+              # Kandev 0.98.0 with Pi offered on remote executors (containers/kandev). 0.99.0
+              # fails every Pi session (github.com/kdlbs/kandev/issues/5090); .renovaterc.json5
+              # skips it. Each Kandev workflow run's summary names its build.
+              repository: ghcr.io/coredev-uk/kandev
+              tag: 097cb13129bd1b57a4bef173d1cc7fd4816b22a5@sha256:b4f3f3d978bfdfee62ebc6ee9cbd8f19c7d107bb7d32c53f898214aca61ac38c
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info

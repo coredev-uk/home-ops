@@ -1,6 +1,7 @@
 # The PodTemplate of Kandev's Kubernetes executor profile. Kandev keeps executor profiles in its
-# database, so this file is pasted into Settings > Executors > Kubernetes rather than applied
-# (no kustomization lists it). The profile's other fields:
+# database, not in Flux, so a change to this file goes into Settings > Executors > Kubernetes by
+# hand. Image updates need nothing: the profile names :main, which the Kandev Worker workflow
+# moves on every merged build, and pulls it for each new task pod. The profile's other fields:
 #   connection: in-cluster (the control plane's kandev ServiceAccount), namespace kandev-agents
 #   platform: linux/amd64, main container: kandev-agent
 #   workspace: managed_pvc, 20Gi, ceph-block, ReadWriteOnce
@@ -27,9 +28,8 @@ template:
       seccompProfile: { type: RuntimeDefault }
     containers:
       - name: kandev-agent
-        # A Kandev Worker run's summary names each build; paste a new one into the profile too.
-        image: ghcr.io/coredev-uk/kandev-worker:89c93fd021a7a2d46ba578f54cb0d15f74832848@sha256:538f3aeb7364ad56a2d2ab64c8c1e5b0707574275b190b086acfffcb37b2e53a
-        imagePullPolicy: IfNotPresent
+        image: ghcr.io/coredev-uk/kandev-worker:main
+        imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
           capabilities: { drop: ["ALL"] }

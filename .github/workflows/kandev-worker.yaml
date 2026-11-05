@@ -1,9 +1,9 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 # Builds the image Kandev's Kubernetes executor runs tasks in (containers/kandev-worker) and
-# publishes it as ghcr.io/coredev-uk/kandev-worker:<commit>. Kandev reads the image from its
-# executor profile (containers/kandev-worker/pod-template.yaml), so a new build reaches tasks
-# once that profile names its digest.
+# publishes it as ghcr.io/coredev-uk/kandev-worker:<commit> and, from main, :main. The executor
+# profile names :main and pulls it for every new task pod, so a merged build reaches new tasks
+# without editing Kandev; running tasks keep the image their pod started with.
 name: Kandev Worker
 
 on:
@@ -11,13 +11,11 @@ on:
     branches:
       - main
     paths:
-      - containers/kandev-worker/Containerfile
-      - containers/kandev-worker/pi/**
+      - containers/kandev-worker/**
       - .github/workflows/kandev-worker.yaml
   pull_request:
     paths:
-      - containers/kandev-worker/Containerfile
-      - containers/kandev-worker/pi/**
+      - containers/kandev-worker/**
       - .github/workflows/kandev-worker.yaml
   workflow_dispatch:
 
@@ -61,7 +59,9 @@ jobs:
           file: containers/kandev-worker/Containerfile
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/coredev-uk/kandev-worker:${{ github.sha }}
+          tags: |
+            ghcr.io/coredev-uk/kandev-worker:${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && 'ghcr.io/coredev-uk/kandev-worker:main' || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

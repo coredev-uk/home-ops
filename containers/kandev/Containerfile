@@ -1,0 +1,29 @@
+# Kandev with one change to its embedded web UI: the new-task dialog offers agents that have no
+# remote-credentials entry on remote executors. Kandev declares none for Pi (PiACP.RemoteAuth()
+# returns nil), so the dialog never offers Pi on the Kubernetes executor ("No compatible agent
+# profiles"). The backend runs those tasks; only the dialog filters them. Pi's task pods get
+# their credentials from the executor profile's environment instead.
+# Drop this image for upstream's once github.com/kdlbs/kandev/pull/4767 (Pi remote credentials)
+# ships in a release that also fixes github.com/kdlbs/kandev/issues/5090.
+FROM ghcr.io/kdlbs/kandev:0.98.0@sha256:f9aab231d3b3d3c09b0cfd247c8aa007bac2bc0788d1ae776af79c5307bbf628 AS kandev
+
+# In the minified bundle, evalAgentCompat (apps/web/lib/agent-executor-compat.ts) returns
+# `{ok:!1,reason:`no-spec`}` for an agent without a remote-credentials entry; this makes it
+# `{ok:!0,...}`. The replacement has the same length, so nothing else in the binary moves. The
+# build fails unless the text occurs exactly once, so a new Kandev version cannot drop the
+# change silently.
+FROM mirror.gcr.io/library/perl:5-slim AS patch
+COPY --from=kandev /app/apps/backend/bin/kandev /kandev
+RUN perl -e ' \
+      local $/; \
+      open my $in, "<:raw", "/kandev" or die $!; my $bin = <$in>; close $in; \
+      my $old = "if(!r)return{ok:!1,reason:`no-spec`}"; \
+      (my $new = $old) =~ s/ok:!1/ok:!0/; \
+      my $count = () = $bin =~ /\Q$old\E/g; \
+      die "expected the no-spec check once, found it $count times\n" unless $count == 1; \
+      $bin =~ s/\Q$old\E/$new/; \
+      open my $out, ">:raw", "/kandev" or die $!; print $out $bin; close $out; \
+    '
+
+FROM kandev
+COPY --from=patch --chown=kandev:kandev --chmod=0755 /kandev /app/apps/backend/bin/kandev

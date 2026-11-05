@@ -1,9 +1,9 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-# Builds the image Kandev's Kubernetes executor runs tasks in
-# (kubernetes/apps/kandev/kandev/worker/Containerfile) and publishes it as
-# ghcr.io/coredev-uk/kandev-worker:<commit>. Kandev reads the image from its executor profile
-# (worker/pod-template.yaml), so a new build reaches tasks once that profile names its digest.
+# Builds the image Kandev's Kubernetes executor runs tasks in (containers/kandev-worker) and
+# publishes it as ghcr.io/coredev-uk/kandev-worker:<commit>. Kandev reads the image from its
+# executor profile (containers/kandev-worker/pod-template.yaml), so a new build reaches tasks
+# once that profile names its digest.
 name: Kandev Worker
 
 on:
@@ -11,11 +11,11 @@ on:
     branches:
       - main
     paths:
-      - kubernetes/apps/kandev/kandev/worker/Containerfile
+      - containers/kandev-worker/Containerfile
       - .github/workflows/kandev-worker.yaml
   pull_request:
     paths:
-      - kubernetes/apps/kandev/kandev/worker/Containerfile
+      - containers/kandev-worker/Containerfile
       - .github/workflows/kandev-worker.yaml
   workflow_dispatch:
 
@@ -55,8 +55,8 @@ jobs:
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: kubernetes/apps/kandev/kandev/worker
-          file: kubernetes/apps/kandev/kandev/worker/Containerfile
+          context: containers/kandev-worker
+          file: containers/kandev-worker/Containerfile
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ghcr.io/coredev-uk/kandev-worker:${{ github.sha }}

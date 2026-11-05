@@ -2,7 +2,7 @@
 # Kandev (github.com/kdlbs/kandev): a kanban board that runs coding agents (Claude Code on the
 # Claude Max plan) on tasks and reviews what they change. This pod is the control plane: the web
 # UI, the API and the board's SQLite database. The agents run in task pods its Kubernetes
-# executor creates in kandev-agents (worker/pod-template.yaml), on the same node.
+# executor creates in kandev-agents (containers/kandev-worker/pod-template.yaml), on the same node.
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
@@ -73,7 +73,8 @@ spec:
               limits:
                 memory: 2Gi
     defaultPodOptions:
-      # The board and its agents stay on one node (worker/pod-template.yaml pins the task pods).
+      # The board and its agents stay on one node (containers/kandev-worker/pod-template.yaml
+      # pins the task pods).
       nodeSelector:
         kubernetes.io/hostname: hyperion-0
       # The image's entrypoint only chowns /data as root; as UID 1000 it starts Kandev directly

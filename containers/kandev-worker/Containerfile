@@ -1,4 +1,4 @@
-# The image Kandev's Kubernetes executor runs each task in (worker/pod-template.yaml), published
+# The image Kandev's Kubernetes executor runs each task in (pod-template.yaml beside it), published
 # by .github/workflows/kandev-worker.yaml as ghcr.io/coredev-uk/kandev-worker:<commit>.
 #
 # Kandev's universal image (Node, git, gh, Go, Rust, pnpm, build tools) plus single-user Nix and

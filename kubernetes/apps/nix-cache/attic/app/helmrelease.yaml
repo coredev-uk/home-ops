@@ -1,0 +1,183 @@
+---
+# Attic binary cache server. atlas pulls https://nix-cache.hera.ac/coredev (public: reading needs
+# no token); only the builder's token can push. The cache skips anything signed by
+# cache.nixos.org, nix-community or nix-citizen (its upstream keys, which the builder sets on
+# every run), so it holds only the paths nobody else builds.
+#
+# The image is upstream's last published build (ghcr.io/zhaofengli/attic stopped publishing
+# after 90dcbd6, 2025-09-24) and has no version tags, so Renovate cannot bump it: move the tag
+# and digest by hand when upstream publishes again.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: attic
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: attic
+  interval: 1h
+  values:
+    controllers:
+      # SQLite on ReadWriteOnce claims: one replica, hence Recreate.
+      attic:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/zhaofengli/attic
+              tag: 90dcbd6acdc70353aa7488b0c914a433b7caee92@sha256:18574aba70fc89d2b695273fbe2e7b2f8ad7e8e786b4cc535124fbe14bada1d0
+            args:
+              - -f
+              - /config/server.toml
+            envFrom:
+              - secretRef:
+                  name: attic-secret
+            # TCP, not HTTP: allowed-hosts rejects the kubelet's Host header, and the cache only
+            # exists after the builder's first run creates it.
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: &port 8080
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: *port
+                  periodSeconds: 10
+            securityContext: &securityContext
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 20m
+                memory: 128Mi
+              limits:
+                memory: 1Gi
+          # Prometheus metrics for the Nix Cache dashboard (resources/exporter.py): the cache's
+          # contents from Attic's database, the last build from the builder's status file.
+          exporter:
+            image:
+              repository: docker.io/library/python
+              tag: 3.15.2-alpine@sha256:20a82dbc2783112ddb91d1534603f802d222a3e63e593cd002eb2ac534e70211
+            command: ["python", "-u", "-B", "/scripts/exporter.py"]
+            env:
+              ATTIC_DB: /db/server.db
+              BUILD_STATUS: /status/status.json
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: &metricsPort 9102
+                  initialDelaySeconds: 5
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: *metricsPort
+                  periodSeconds: 10
+            securityContext: *securityContext
+            resources:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                memory: 128Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: attic
+        ports:
+          http:
+            port: *port
+          metrics:
+            port: *metricsPort
+    # No auth in front: Nix substituters cannot follow a login. Read-only without a token, and
+    # internal only; pushes go to the Service, not through here.
+    route:
+      app:
+        hostnames:
+          - nix-cache.hera.ac
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
+    serviceMonitor:
+      app:
+        service:
+          identifier: app
+        endpoints:
+          - port: metrics
+    persistence:
+      config:
+        type: configMap
+        name: attic-config
+        advancedMounts:
+          attic:
+            app:
+              - path: /config
+                readOnly: true
+      scripts:
+        type: configMap
+        name: nix-cache-exporter
+        advancedMounts:
+          attic:
+            exporter:
+              - path: /scripts
+                readOnly: true
+      # Which store paths the cache holds, and its Nix signing key. Backed up by kopiur (ks.yaml).
+      # The exporter mounts it read-write although it only reads: Attic runs SQLite in WAL
+      # mode, and a WAL reader has to update the -shm file.
+      db:
+        existingClaim: "{{ .Release.Name }}"
+        advancedMounts:
+          attic:
+            app:
+              - path: /db
+            exporter:
+              - path: /db
+      chunks:
+        existingClaim: attic-chunks
+        advancedMounts:
+          attic:
+            app:
+              - path: /storage
+      status:
+        existingClaim: nix-cache-status
+        advancedMounts:
+          attic:
+            exporter:
+              - path: /status
+                readOnly: true
+      tmp:
+        type: emptyDir
+        sizeLimit: 1Gi
+        advancedMounts:
+          attic:
+            app:
+              - path: /tmp

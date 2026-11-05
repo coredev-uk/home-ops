@@ -101,6 +101,18 @@ Clarence answers a command with a reaction, and the reason goes on the card's ti
 
 After an unhealthy deploy, fix it, `@bot-clarence merge` or close the revert, then remove `state/unhealthy` from the original pull request.
 
+## Nix Cache
+
+`kubernetes/apps/nix-cache` serves an [Attic](https://github.com/zhaofengli/attic) binary cache at `https://nix-cache.hera.ac/coredev` (public, envoy-internal only) for [coredev-uk/nixos](https://github.com/coredev-uk/nixos). Every night at 01:00 the `nix-cache-builder` CronJob runs `nix flake update` on that repository. It then builds every `x86_64-linux` nixosConfiguration and homeConfiguration (`atlas`, `paul@atlas`), pushes whatever cache.nixos.org, nix-community and nix-citizen do not already sign, and pushes `flake.lock` to `main` with a deploy key. If any target fails, nothing is pushed. The builder needs a privileged pod for the Nix sandbox, so it runs under RuntimeClass `kata` (`siderolabs/kata-containers` in the Talos schematic) on `hyperion-0`. Its Nix store is an ext4 image on a Ceph volume. The Grafana dashboard is _Nix Cache_, and the alert is `NixCacheBuildStale`.
+
+One-time setup, in 1Password item `nix-cache`:
+
+- `ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64`: `openssl genrsa -traditional 4096 | base64 -w0` (Attic needs a PKCS#1 key)
+- `ATTIC_TOKEN`: `atticadm -f kubernetes/apps/nix-cache/attic/app/resources/server.toml make-token --sub nix-cache-builder --validity 10y --pull coredev --push coredev --create-cache coredev --configure-cache coredev --configure-cache-retention coredev`, with the key above in the environment
+- `NIXOS_DEPLOY_KEY`: the private half of a write deploy key on coredev-uk/nixos; its `Main` ruleset needs Deploy keys as a bypass actor
+
+The first run creates the cache and logs its public key (`[nix-cache] cache coredev: Public Key: ...`). Add that key and `https://nix-cache.hera.ac/coredev` to `hosts/default.nix` in coredev-uk/nixos. Run a build now with `kubectl -n nix-cache create job --from=cronjob/nix-cache-builder nix-cache-builder-manual`.
+
 ## Credits
 
 Many patterns and parts of this setup were sourced from [onedr0p/home-ops](https://github.com/onedr0p/home-ops). Credit to that project for the structure and inspiration.

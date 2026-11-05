@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./externalsecret.yaml
+  - ./helmrelease.yaml
+  - ./networkpolicy.yaml
+  - ./ocirepository.yaml
+  - ./pvc.yaml
+# Each run mounts the current ConfigMap: a CronJob needs no rollout when run.sh changes.
+configMapGenerator:
+  - name: nix-cache-builder
+    files:
+      - run.sh=./resources/run.sh
+      - nix.conf=./resources/nix.conf
+      - known_hosts=./resources/known_hosts
+generatorOptions:
+  disableNameSuffixHash: true

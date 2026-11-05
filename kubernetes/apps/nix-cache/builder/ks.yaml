@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: nix-cache-builder
+spec:
+  # Never schedule the privileged builder before its VM isolation exists. attic owns the
+  # nix-cache-status claim the builder writes its status to.
+  dependsOn:
+    - name: attic
+    - name: kata
+      namespace: kube-system
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+  interval: 1h
+  path: ./kubernetes/apps/nix-cache/builder/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: nix-cache

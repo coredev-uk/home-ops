@@ -1,0 +1,19 @@
+---
+# Nix binary cache for the NixOS desktop (github.com/coredev-uk/nixos): Attic serves what
+# cache.nixos.org and the other public caches do not have, and a nightly CronJob updates the
+# flake, builds every Linux host and Home Manager configuration, pushes the result and then the
+# new flake.lock. The builder is privileged for the Nix sandbox and its loop mount, under
+# RuntimeClass kata, so that privilege stops at the pod's own VM.
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: nix-cache
+
+components:
+  - ../../components/alerts
+  - ../../components/kopiur/secret
+
+resources:
+  - ./namespace.yaml
+  - ./attic/ks.yaml
+  - ./builder/ks.yaml

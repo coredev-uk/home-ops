@@ -39,15 +39,6 @@ spec:
           # run.sh passes SIGTERM to Nix and marks the store as cleanly stopped once Nix has
           # cleaned up; past this the VM is killed and the next run checks the whole store.
           terminationGracePeriodSeconds: 300
-          # The VM grows to Kata's 2048MiB plus the 8Gi limit; only hyperion-0 (32GB) has room.
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: In
-                        values: ["hyperion-0"]
         containers:
           app:
             image:
@@ -61,12 +52,13 @@ spec:
             securityContext:
               privileged: true
             # Kata sizes the VM from the limits: 5 vCPUs and 10GiB, for evaluation plus two
-            # parallel builds of two cores each (resources/nix.conf). Requests stay low: it runs
-            # at 01:00, when the node is quiet.
+            # parallel builds of two cores each (resources/nix.conf). Requests stay minimal: it
+            # runs at 01:00 when the nodes are idle, and the requested CPU and memory are close
+            # to full on every node (the RuntimeClass adds 250m and 2304Mi on top).
             resources:
               requests:
-                cpu: 500m
-                memory: 2Gi
+                cpu: 100m
+                memory: 1Gi
                 ephemeral-storage: 1Gi
               limits:
                 cpu: "4"

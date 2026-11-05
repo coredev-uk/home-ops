@@ -16,3 +16,7 @@ spec:
       containerdRegistryConfigPath: /etc/cri/conf.d/hosts
       mirroredRegistries:
         - _default
+      # A peer answers a tag with the digest it last pulled, so a moved tag (kandev-worker:main,
+      # pulled Always) kept starting pods on the old image. Tags go to the registry; layers still
+      # come from peers by digest.
+      resolveTags: false

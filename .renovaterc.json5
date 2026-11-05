@@ -108,6 +108,14 @@
       matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
       allowedVersions: "/^18\\./",
     },
+    {
+      // requireBuiltinMCPDelivery rejects agents that receive Kandev's built-in MCP server
+      // through a project file, as Pi does (.pi/mcp.json), so no Pi task starts
+      description: "Skip Kandev 0.99.0, which cannot start Pi",
+      matchDatasources: ["docker"],
+      matchPackageNames: ["ghcr.io/kdlbs/kandev"],
+      allowedVersions: "!/^v?0\\.99\\.0$/",
+    },
     // Labeling rules
     {
       matchUpdateTypes: ["major"],

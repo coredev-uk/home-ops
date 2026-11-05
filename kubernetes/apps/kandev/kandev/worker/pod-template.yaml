@@ -1,0 +1,54 @@
+# The PodTemplate of Kandev's Kubernetes executor profile. Kandev keeps executor profiles in its
+# database, so this file is pasted into Settings > Executors > Kubernetes rather than applied
+# (no kustomization lists it). The profile's other fields:
+#   connection: in-cluster (the control plane's kandev ServiceAccount), namespace kandev-agents
+#   platform: linux/amd64, main container: kandev-agent
+#   workspace: managed_pvc, 20Gi, ceph-block, ReadWriteOnce
+#
+# No gVisor: Kandev reaches agentctl in the pod through `kubectl port-forward`, which fails under
+# runsc (the kubelet dials localhost in the pod's network namespace, which gVisor's netstack
+# does not serve; tested on hyperion-0). kandev-agents' CiliumNetworkPolicy and this pod's
+# security context are the boundary instead.
+apiVersion: v1
+kind: PodTemplate
+template:
+  spec:
+    automountServiceAccountToken: false
+    nodeSelector:
+      kubernetes.io/hostname: hyperion-0
+    imagePullSecrets:
+      - name: kandev-worker-pull
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile: { type: RuntimeDefault }
+    containers:
+      - name: kandev-agent
+        # The tag and digest the Kandev Worker workflow's run summary names for the commit to use.
+        image: ghcr.io/coredev-uk/kandev-worker:<commit>@sha256:<digest>
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: { drop: ["ALL"] }
+        # The Nix store is in the container's writable layer, so a repository's devenv closure
+        # (sona-go: GTK, GStreamer, sway) counts against ephemeral storage, not the workspace.
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+            ephemeral-storage: 5Gi
+          limits:
+            memory: 8Gi
+            ephemeral-storage: 30Gi
+        volumeMounts:
+          - name: shm
+            mountPath: /dev/shm
+    volumes:
+      # sway, WebKitGTK and Chromium want more shared memory than the runtime's 64Mi.
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Gi

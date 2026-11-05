@@ -1,0 +1,71 @@
+# The image Kandev's Kubernetes executor runs each task in (worker/pod-template.yaml), published
+# by .github/workflows/kandev-worker.yaml as ghcr.io/coredev-uk/kandev-worker:<commit>.
+#
+# Kandev's universal image (Node, git, gh, Go, Rust, pnpm, build tools) plus single-user Nix and
+# devenv: the repositories in ~/code bring their toolchains through flake.nix or devenv.nix
+# (sona-go: GTK, GStreamer, sway for MyGo's headless tests), so one image serves them all and a
+# repository's pins decide its tools. Kandev installs the agent CLIs (Claude Code's ACP adapter)
+# into /workspace at launch, and injects agentctl, HOME (/run/kandev/home, memory-backed) and
+# the workspace mount.
+FROM ghcr.io/kdlbs/kandev:0.98.0-universal@sha256:c4ec2befcbc5108e1a56a2ead98632f0c4877b62c1eeef92b9ebd7a2d0c7a0ad
+
+LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
+
+# Nix's release, its installer's hash (releases.nixos.org/nix/nix-<version>/install.sha256) and
+# the nixpkgs commit devenv comes from (nixpkgs-unstable); sona-go needs devenv 2.4 or later.
+ARG NIX_VERSION=2.34.9
+ARG NIX_INSTALL_SHA256=a03ce2e9eaf4ea1560260b9a93e311dbaf589d28fb5c9318f8d9e768ee6339d8
+ARG NIXPKGS_REV=13e53762c5afaf384d4614e94527a9ccfafe41d0
+
+USER root
+
+# The installer unpacks a .tar.xz. /nix belongs to the agent's user (UID 1000): one user, no
+# daemon, so the store is written directly.
+# sandbox: an unprivileged container has no user namespaces for Nix's build sandbox.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends xz-utils \
+ && rm -rf /var/lib/apt/lists/* \
+ && mkdir -m 0755 /nix /etc/nix \
+ && chown 1000 /nix \
+ && printf '%s\n' \
+      'experimental-features = nix-command flakes' \
+      'sandbox = false' \
+      'build-users-group =' \
+      'max-jobs = auto' \
+      'extra-substituters = https://devenv.cachix.org' \
+      'extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=' \
+      > /etc/nix/nix.conf
+
+USER kandev
+
+# HOME during the build is a scratch directory: the base image's /data is a VOLUME, and Kandev
+# gives tasks their own HOME. Nix and devenv go into a profile under /nix that PATH names, so
+# nothing depends on the build's HOME.
+RUN set -eu; \
+    export HOME=/tmp/nix-build-home; \
+    mkdir -p "$HOME"; \
+    curl -fsSL "https://releases.nixos.org/nix/nix-${NIX_VERSION}/install" -o /tmp/install-nix; \
+    echo "${NIX_INSTALL_SHA256}  /tmp/install-nix" | sha256sum -c -; \
+    sh /tmp/install-nix --no-daemon --no-channel-add --no-modify-profile; \
+    "$HOME/.nix-profile/bin/nix" profile add --profile /nix/var/nix/profiles/agent \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#nix" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#devenv"; \
+    rm -rf "$HOME" /tmp/install-nix; \
+    /nix/var/nix/profiles/agent/bin/nix-collect-garbage --quiet; \
+    /nix/var/nix/profiles/agent/bin/nix --version; \
+    /nix/var/nix/profiles/agent/bin/devenv version
+
+# Caches go to the task's workspace PVC, not the memory-backed HOME.
+ENV PATH=/nix/var/nix/profiles/agent/bin:$PATH \
+    XDG_CACHE_HOME=/workspace/.cache \
+    XDG_DATA_HOME=/workspace/.local/share \
+    XDG_STATE_HOME=/workspace/.local/state \
+    GOCACHE=/workspace/.cache/go-build \
+    GOMODCACHE=/workspace/.cache/go-mod \
+    CARGO_HOME=/workspace/.cache/cargo \
+    npm_config_cache=/workspace/.cache/npm \
+    npm_config_store_dir=/workspace/.pnpm-store
+
+WORKDIR /workspace
+ENTRYPOINT []
+CMD ["sleep", "infinity"]

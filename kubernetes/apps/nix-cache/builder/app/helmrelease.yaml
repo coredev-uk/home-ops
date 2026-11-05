@@ -39,15 +39,6 @@ spec:
           # run.sh passes SIGTERM to Nix and marks the store as cleanly stopped once Nix has
           # cleaned up; past this the VM is killed and the next run checks the whole store.
           terminationGracePeriodSeconds: 300
-          # The VM grows to Kata's 2048MiB plus the 8Gi limit; only hyperion-0 (32GB) has room.
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: kubernetes.io/hostname
-                        operator: In
-                        values: ["hyperion-0"]
         containers:
           app:
             image:

@@ -1,0 +1,35 @@
+# atticd configuration. The JWT signing key comes from ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64
+# (attic-secret); changing it invalidates the builder's token.
+listen = "[::]:8080"
+
+# atlas reaches the cache through envoy-internal, the builder through the Service.
+allowed-hosts = ["nix-cache.hera.ac", "attic.nix-cache.svc.cluster.local:8080"]
+
+# Only the attic client reads this (atlas uses the binary cache URL directly), and the only
+# attic client is the builder: keep its uploads inside the cluster.
+api-endpoint = "http://attic.nix-cache.svc.cluster.local:8080/"
+
+[database]
+url = "sqlite:///db/server.db?mode=rwc"
+
+[storage]
+type = "local"
+path = "/storage"
+
+# Attic's default chunking (64 KiB average): the chunks live on a local ext4 filesystem (Ceph
+# RBD), where a file per chunk costs little. Changing it later stops new uploads from
+# deduplicating against the chunks already stored.
+[chunking]
+nar-size-threshold = 65536
+min-size = 16384
+avg-size = 65536
+max-size = 262144
+
+[compression]
+type = "zstd"
+
+# A path nobody has fetched for 30 days is dropped. The builder pushes the full closure every
+# night, so a dropped path that is still part of a current system comes straight back.
+[garbage-collection]
+interval = "12 hours"
+default-retention-period = "30 days"

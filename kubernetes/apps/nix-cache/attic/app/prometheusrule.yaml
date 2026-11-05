@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: nix-cache
+spec:
+  groups:
+    - name: nix-cache.rules
+      rules:
+        # Falls back to the CronJob's creation time, so a builder that has never succeeded
+        # still alerts.
+        - alert: NixCacheBuildStale
+          expr: |-
+            time() - max(
+              kube_cronjob_status_last_successful_time{namespace="nix-cache", cronjob="nix-cache-builder"}
+              or kube_cronjob_created{namespace="nix-cache", cronjob="nix-cache-builder"}
+            ) > 108000
+          for: 10m
+          annotations:
+            summary: >-
+              The nightly NixOS build has not succeeded for {{ $value | humanizeDuration }}; coredev-uk/nixos keeps its last pushed flake.lock. The Nix Cache dashboard shows the failed phase
+          labels:
+            severity: warning

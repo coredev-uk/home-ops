@@ -28,7 +28,7 @@ template:
     containers:
       - name: kandev-agent
         # A Kandev Worker run's summary names each build; paste a new one into the profile too.
-        image: ghcr.io/coredev-uk/kandev-worker:9933156c34a58c6b0fd10131195b13bf1e6b6918@sha256:a6b54187167e51bac0c73db2ce960870bf60a2a0d7658a3e18492b73c8d34c85
+        image: ghcr.io/coredev-uk/kandev-worker:89c93fd021a7a2d46ba578f54cb0d15f74832848@sha256:538f3aeb7364ad56a2d2ab64c8c1e5b0707574275b190b086acfffcb37b2e53a
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false

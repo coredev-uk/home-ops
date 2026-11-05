@@ -10,6 +10,18 @@
   // The Main ruleset does not require up-to-date branches, and `auto` would
   // rebase every open PR each time main moves
   rebaseWhen: "conflicted",
+  customManagers: [
+    {
+      // The npm manager bumps containers/kandev-worker/pi/npm/package.json, what the image
+      // installs; this bumps the same packages where Pi's settings declare them. Both updates of a
+      // package share a branch name, so they land in one pull request.
+      customType: "regex",
+      description: "Pi packages in the Kandev worker's Pi settings",
+      managerFilePatterns: ["/^containers/kandev-worker/pi/settings\\.json$/"],
+      matchStrings: ['"npm:(?<depName>(?:@[^/"]+/)?[^@"]+)@(?<currentValue>[^"]+)"'],
+      datasourceTemplate: "npm",
+    },
+  ],
   // Bumps flake.lock (nixpkgs) for the dev shell's tools
   nix: {
     enabled: true,

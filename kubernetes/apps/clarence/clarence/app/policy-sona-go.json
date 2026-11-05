@@ -12,11 +12,6 @@
       "deploy": "checks"
     },
     {
-      "name": "frontend",
-      "paths": ["frontend/package.json", "frontend/pnpm-lock.yaml"],
-      "deploy": "checks"
-    },
-    {
       "name": "ci",
       "paths": [".github/workflows/**"],
       "deploy": "checks"
@@ -34,7 +29,6 @@
   ],
   "modes": {
     "go": "merge",
-    "frontend": "merge",
     "ci": "merge",
     "tooling": "merge",
     "code": "merge"
@@ -47,10 +41,11 @@
   "mergeMethod": "squash",
   "eligibleUpdateTypes": ["minor", "patch", "digest"],
   "notesOptional": ["digest"],
-  "lockfiles": ["go.sum", "frontend/pnpm-lock.yaml"],
+  "lockfiles": ["go.sum"],
   "requiredChecks": [
     "Go vet and test (-race)",
-    "Frontend typecheck, lint, format, test, build",
+    "UI tests (goldens)",
+    "E2E (headless sway)",
     "Conventional Commits title",
     "gitleaks"
   ],
@@ -60,7 +55,7 @@
   "verify": {
     "timeoutMinutes": 60,
     "maxInFlight": 3,
-    "mainChecks": ["Go vet and test (-race)", "Frontend typecheck, lint, format, test, build"]
+    "mainChecks": ["Go vet and test (-race)", "UI tests (goldens)", "E2E (headless sway)"]
   },
   "notes": {
     "minBytes": 40,

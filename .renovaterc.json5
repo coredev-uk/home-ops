@@ -10,6 +10,17 @@
   // The Main ruleset does not require up-to-date branches, and `auto` would
   // rebase every open PR each time main moves
   rebaseWhen: "conflicted",
+  customManagers: [
+    {
+      // Pi's packages for Kandev's task pods. settings.json is their only list: the worker image
+      // installs from it (containers/kandev-worker/pi-packages.mjs).
+      customType: "regex",
+      description: "Pi packages in the Kandev worker's Pi settings",
+      managerFilePatterns: ["/^containers/kandev-worker/pi/settings\\.json$/"],
+      matchStrings: ['"npm:(?<depName>(?:@[^/"]+/)?[^@"]+)@(?<currentValue>[^"]+)"'],
+      datasourceTemplate: "npm",
+    },
+  ],
   // Bumps flake.lock (nixpkgs) for the dev shell's tools
   nix: {
     enabled: true,

@@ -79,7 +79,8 @@
     "ghcr.io/rook/rook-ceph": "rook/rook",
     "ghcr.io/rook/rook-ceph-cluster": "rook/rook",
     "ghcr.io/coredns/charts/coredns": "coredns/helm",
-    "ghcr.io/spegel-org/helm-charts/spegel": "spegel-org/spegel"
+    "ghcr.io/spegel-org/helm-charts/spegel": "spegel-org/spegel",
+    "ghcr.io/prometheus-community/charts/prometheus-adapter": "prometheus-community/helm-charts"
   },
   "checks": {
     "schemaCache": "/tmp/kubeconform",
@@ -181,7 +182,7 @@
       "id": "breaking",
       "criteria": {
         "true": "A setting, environment variable, command-line flag, API, file path or default behaviour is removed, renamed or changed in a way existing users must react to, or the notes call the change breaking for the way the package in `package_updates` is installed.",
-        "false": "Only bug fixes, new optional features, performance work, dependency updates, documentation, or deprecations that keep working. A change the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater, e.g. 'Docker images are not affected') when the package in `package_updates` is a container image or Helm chart. A renamed container, label or other name the chart or image generates rather than a value users set, or pods restarting once on upgrade."
+        "false": "Only bug fixes, new optional features, performance work, dependency updates, documentation, or deprecations that keep working. A change the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater, e.g. 'Docker images are not affected') when the package in `package_updates` is a container image or Helm chart. A raised minimum language runtime or OS version (Python, Node.js, .NET, Go, glibc) when the package is a container image, which ships its own runtime. A renamed container, label or other name the chart or image generates rather than a value users set, or pods restarting once on upgrade. A failure that used to be ignored and is now reported as an error."
       },
       "reviewAbove": 0.3,
       "instructions": "Do the release notes in `release_notes` describe a breaking change for an existing deployment of the packages in `package_updates`?"
@@ -190,7 +191,7 @@
       "id": "migration",
       "criteria": {
         "true": "Run a command or migration, edit configuration, or upgrade in a set order, because of a change in this release.",
-        "false": "Nothing to do beyond deploying the new version. Migrations the software runs by itself on start are not a manual step, and general advice repeated for every release, such as 'always take a backup before upgrading', is not one either. A step the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater) is not one when the package in `package_updates` is a container image or Helm chart."
+        "false": "Nothing to do beyond deploying the new version. Migrations the software runs by itself on start (database or media-info migrations included) are not a manual step, and general advice repeated for every release, such as 'always take a backup before upgrading' or 'if you are using docker, update the container image instead of updating inside the container', is not one either. A step the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater, switching a non-docker install's update branch) is not one when the package in `package_updates` is a container image or Helm chart."
       },
       "reviewAbove": 0.3,
       "instructions": "Do the release notes in `release_notes` tell the operator to do something by hand for this particular upgrade?"
@@ -212,10 +213,10 @@
     {
       "id": "drop_in",
       "criteria": {
-        "true": "Deploying the new version is all it takes. Changes the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater) do not count when the package is a container image or Helm chart, and neither do a renamed container, label or other name the chart or image generates, or pods restarting once on upgrade.",
+        "true": "Deploying the new version is all it takes. Changes the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater) do not count when the package is a container image or Helm chart, and neither do a raised minimum language runtime or OS version the image ships itself, migrations the software runs by itself on start, a renamed container, label or other name the chart or image generates, or pods restarting once on upgrade.",
         "false": "This upgrade needs a change to the deployment's configuration, data or the way it is deployed."
       },
-      "reviewBelow": 0.3,
+      "reviewBelow": 0.15,
       "instructions": "Can a deployment running the `from` version of every package in `package_updates` move to the `to` version with no change to its configuration, data or deployment, according to `release_notes`?"
     },
     {

@@ -15,9 +15,12 @@ spec:
         replicas: 2
         container:
           imageRepository: mirror.gcr.io/envoyproxy/envoy
+          # Envoy uses under 100Mi. Without a memory request Kubernetes requests the limit, so
+          # envoy-protected's two pods reserved 4Gi on hyperion-0, room Kandev's task pods need.
           resources:
             requests:
               cpu: 100m
+              memory: 256Mi
             limits:
               memory: 2Gi
   shutdown:

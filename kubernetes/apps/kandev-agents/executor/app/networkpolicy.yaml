@@ -23,3 +23,9 @@ spec:
     - toCIDR:
         - 172.16.0.0/12
         - 192.168.0.0/16
+    # Cilium gives the nodes' addresses identities of their own, which the CIDRs above do not
+    # match: without these a task pod reached the kube-apiserver on 192.168.110.11:6443.
+    - toEntities:
+        - host
+        - remote-node
+        - kube-apiserver

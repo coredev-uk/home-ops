@@ -52,7 +52,7 @@ spec:
                 - name: gpu
               requests:
                 cpu: 280m
-                memory: 288Mi
+                memory: 864Mi
               limits:
                 memory: 4Gi
     defaultPodOptions:

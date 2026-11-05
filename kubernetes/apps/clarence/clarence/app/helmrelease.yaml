@@ -191,6 +191,12 @@ spec:
     # (webhook.peers in policy-home-ops.json). Only /webhook is public; /metrics stays inside.
     route:
       webhook:
+        # Gatus probes /webhook, not /, which no rule matches: a GET there reaches Clarence,
+        # which answers 405 to anything but a POST.
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 405"]
+            path: /webhook
         hostnames:
           - clarence.hera.ac
         parentRefs:

@@ -77,6 +77,8 @@
     "timeoutMinutes": 30,
     "upgradeTimeoutMinutes": 480,
     "soakMinutes": 15,
+    "maxInFlight": 5,
+    "unheldAuthors": ["coredev-uk"],
     "mainChecks": ["Build Success"],
     "gatus": {
       "enabled": true,

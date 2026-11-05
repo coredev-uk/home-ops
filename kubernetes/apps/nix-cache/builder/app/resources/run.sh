@@ -105,11 +105,14 @@ on_exit() {
   phase=$failed_phase
   write_status "$rc" || log "could not write $STATUS"
   # Only once the store passed its check: a VM killed mid-run leaves no marker, and neither does
-  # a run stopped while checking a store that was already suspect.
+  # a run stopped while checking a store that was already suspect. The store is mounted without
+  # barriers, so this is the one point its contents are flushed through to the Ceph volume:
+  # sync writes the image's dirty pages back, `sync FILE` fsyncs the image itself.
   if [ "$store_checked" = true ]; then
     sync
     touch "$CLEAN_MARKER"
     sync
+    sync "$STORE_IMG"
   fi
   exit "$rc"
 }
@@ -144,7 +147,10 @@ mount_image() {
   # costs fits, because the RuntimeClass overhead makes the pod cgroup as big as the VM.
   loop_dev=$(losetup --find --show "$STORE_IMG")
   # discard: space Nix frees is punched out of the sparse image instead of staying allocated.
-  mount -o noatime,discard "$loop_dev" /mnt/store
+  # barrier=0: every journal commit and fsync would otherwise flush the image through virtiofs
+  # to Ceph (~35ms each); with them the first run spent 96% of its time flushing. The store is
+  # a cache: after a VM is killed, the missing clean marker makes the next run check it.
+  mount -o noatime,discard,barrier=0 "$loop_dev" /mnt/store
 }
 unmount_image() {
   umount /mnt/store

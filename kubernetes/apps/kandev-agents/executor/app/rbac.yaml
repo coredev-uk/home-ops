@@ -1,0 +1,32 @@
+---
+# What Kandev's Kubernetes executor does in this namespace, and nothing else: one pod and one
+# workspace PVC per task (managed_pvc), and exec and port-forward to reach agentctl in it.
+# Kandev reads its pods and claims by exact name, so it needs no list, Secret or cluster access.
+# The subject is the control plane's ServiceAccount (kandev/kandev/app/helmrelease.yaml).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kandev-executor
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "create", "delete", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/exec", "pods/portforward"]
+    verbs: ["get", "create"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kandev-executor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kandev-executor
+subjects:
+  - kind: ServiceAccount
+    name: kandev
+    namespace: kandev

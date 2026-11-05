@@ -180,6 +180,9 @@ pages:
                   - title: Flux Operator
                     url: https://flux-operator.hera.ac
                     icon: di:flux-cd
+                  - title: Kandev
+                    url: https://kandev.hera.ac
+                    icon: mdi:view-column
 
               - title: Media Discovery & Servers
                 links:

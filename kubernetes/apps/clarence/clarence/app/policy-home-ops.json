@@ -5,6 +5,24 @@
   "commanders": ["coredev-uk"],
   "pollSeconds": 120,
   "fastPollSeconds": 20,
+  "selfPath": "kubernetes/apps/clarence/clarence/app/policy-home-ops.json",
+  "renovate": {
+    "stopUpdatingLabel": "stop-updating"
+  },
+  "trust": {
+    "after": 3,
+    "reviewAbove": 0.8,
+    "reviewBelow": 0.05
+  },
+  "calibration": {
+    "propose": true,
+    "maxReviewAbove": 0.7,
+    "minReviewBelow": 0.05,
+    "minMerged": 3
+  },
+  "autoMerge": {
+    "nodeHeadroom": 0.1
+  },
   "scopes": [
     {
       "name": "app",
@@ -59,7 +77,15 @@
     "timeoutMinutes": 30,
     "upgradeTimeoutMinutes": 480,
     "soakMinutes": 15,
-    "mainChecks": ["Build Success"]
+    "mainChecks": ["Build Success"],
+    "gatus": {
+      "enabled": true,
+      "failFor": 3
+    },
+    "logs": {
+      "enabled": true,
+      "url": "http://victoria-logs.o11y.svc.cluster.local:9428"
+    }
   },
   "webhook": {
     "peers": {
@@ -97,7 +123,8 @@
     "refreshHours": 168,
     "lookbackDays": 90,
     "minDays": 5,
-    "exclude": []
+    "exclude": [],
+    "autoMerge": true
   },
   "volumes": {
     "everyHours": 24,
@@ -105,7 +132,8 @@
     "forDays": 3,
     "target": 0.6,
     "storageClasses": ["ceph-block", "ceph-filesystem"],
-    "exclude": []
+    "exclude": [],
+    "autoMerge": true
   },
   "vendor": {
     "everyHours": 24
@@ -174,7 +202,9 @@
   },
   "jev": {
     "baseUrl": "https://openrouter.ai/api/v1",
-    "model": "typesafe/jev-1.14"
+    "model": "typesafe/jev-1.14",
+    "autoExplain": true,
+    "autoExplainPerDay": 20
   },
   "questions": [
     {

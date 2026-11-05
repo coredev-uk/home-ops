@@ -29,7 +29,9 @@ spec:
           app:
             image:
               repository: ghcr.io/kdlbs/kandev
-              tag: v0.99.0@sha256:382b3bc8473b1432b4512f87457409df2dfac13f726d015e4f4e3bccc6962eb6
+              # 0.99.0 fails every Pi session: its new built-in MCP check ignores the .pi/mcp.json
+              # Pi gets Kandev's tools from. .renovaterc.json5 skips that release.
+              tag: 0.98.0@sha256:f9aab231d3b3d3c09b0cfd247c8aa007bac2bc0788d1ae776af79c5307bbf628
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info

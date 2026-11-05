@@ -42,8 +42,14 @@ RUN apt-get update \
 # Pi's agent directory (PI_CODING_AGENT_DIR below), so every task starts with these settings
 # rather than an empty, memory-backed HOME:
 # - settings.json: trusts the checkout (RPC mode skips untrusted project resources, and Kandev
-#   delivers its MCP tools as .pi/mcp.json), adds grep/find/ls, loads the skills Kandev writes to
-#   ~/.pi/agent/skills, and retries through provider overloads.
+#   delivers its MCP tools as .pi/mcp.json), adds grep/find/ls plus Pi's built-in codemode and
+#   tool_search, loads the skills Kandev writes to ~/.pi/agent/skills, retries through provider
+#   overloads, and lists the packages below.
+# - npm/package.json: those packages, the tools oh-my-pi ships with: pi-subagents (delegation and
+#   multi-agent workflows), rpiv-todo (a todo list, with its rpiv-i18n dependency), pi-web-access
+#   (web search and fetch; Exa needs no key) and pi-lens (LSP, linters, type checks, ast-grep).
+#   Installed below the way Pi installs them on start, so a task pod does not fetch 250MB first.
+#   Keep its versions and settings.json's in step.
 # - AGENTS.md: what the pod is and how to work in it, for every repository.
 # - auth.json: Anthropic's key from PI_ANTHROPIC_API_KEY (an executor profile secret), so Claude
 #   Code in the same profile keeps its subscription token instead of an ANTHROPIC_API_KEY.
@@ -52,6 +58,11 @@ COPY --chown=1000:1000 pi/ /opt/pi/agent/
 RUN chmod 0600 /opt/pi/agent/auth.json
 
 USER kandev
+
+# Pi installs packages without their peers (the peers are Pi itself).
+RUN cd /opt/pi/agent/npm \
+ && npm_config_cache=/tmp/npm-cache npm install --legacy-peer-deps --no-audit --no-fund \
+ && rm -rf /tmp/npm-cache
 
 # HOME during the build is a scratch directory: the base image's /data is a VOLUME, and Kandev
 # gives tasks their own HOME. Nix and devenv go into a profile under /nix that PATH names, so
@@ -88,7 +99,8 @@ ENV PATH=/nix/var/nix/profiles/agent/bin:$PATH \
     PI_CODING_AGENT_DIR=/opt/pi/agent \
     PI_SKIP_VERSION_CHECK=1 \
     PI_TELEMETRY=0 \
-    PI_CACHE_RETENTION=long
+    PI_CACHE_RETENTION=long \
+    PI_LENS_HOME=/var/cache/agent/pi-lens
 
 WORKDIR /workspace
 ENTRYPOINT []

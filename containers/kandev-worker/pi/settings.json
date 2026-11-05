@@ -4,8 +4,15 @@
   "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "high",
   "defaultProjectTrust": "always",
-  "defaultTools": ["+grep", "+find", "+ls"],
+  "defaultTools": ["+grep", "+find", "+ls", "+codemode", "+tool_search"],
   "skills": ["~/.pi/agent/skills"],
+  "packages": [
+    "npm:pi-subagents@0.85.0",
+    "npm:@juicesharp/rpiv-i18n@2.15.0",
+    "npm:@juicesharp/rpiv-todo@2.15.0",
+    "npm:pi-web-access@0.47.0",
+    "npm:pi-lens@4.4.9"
+  ],
   "quietStartup": true,
   "collapseChangelog": true,
   "enableInstallTelemetry": false,

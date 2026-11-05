@@ -4,9 +4,9 @@
 # Kandev's universal image (Node, git, gh, Go, Rust, pnpm, build tools) plus single-user Nix and
 # devenv: the repositories in ~/code bring their toolchains through flake.nix or devenv.nix
 # (sona-go: GTK, GStreamer, sway for MyGo's headless tests), so one image serves them all and a
-# repository's pins decide its tools. Kandev installs the agent CLIs (Claude Code's ACP adapter)
-# into /workspace at launch, and injects agentctl, HOME (/run/kandev/home, memory-backed) and
-# the workspace mount.
+# repository's pins decide its tools. Kandev installs the agent CLIs (Claude Code's and Pi's ACP
+# adapters) at launch, and injects agentctl, HOME (/run/kandev/home, memory-backed) and the
+# workspace mount, whose root is the repository checkout.
 FROM ghcr.io/kdlbs/kandev:0.98.0-universal@sha256:c4ec2befcbc5108e1a56a2ead98632f0c4877b62c1eeef92b9ebd7a2d0c7a0ad
 
 LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
@@ -34,7 +34,22 @@ RUN apt-get update \
       'max-jobs = auto' \
       'extra-substituters = https://devenv.cachix.org' \
       'extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=' \
-      > /etc/nix/nix.conf
+      > /etc/nix/nix.conf \
+ && install -d -o 1000 -g 1000 /var/cache/agent /opt/pi/agent \
+ && printf '%s\n' '/.pi/mcp.json' > /etc/gitignore-agent \
+ && git config --system core.excludesFile /etc/gitignore-agent
+
+# Pi's agent directory (PI_CODING_AGENT_DIR below), so every task starts with these settings
+# rather than an empty, memory-backed HOME:
+# - settings.json: trusts the checkout (RPC mode skips untrusted project resources, and Kandev
+#   delivers its MCP tools as .pi/mcp.json), adds grep/find/ls, loads the skills Kandev writes to
+#   ~/.pi/agent/skills, and retries through provider overloads.
+# - AGENTS.md: what the pod is and how to work in it, for every repository.
+# - auth.json: Anthropic's key from PI_ANTHROPIC_API_KEY (an executor profile secret), so Claude
+#   Code in the same profile keeps its subscription token instead of an ANTHROPIC_API_KEY.
+# Pi writes its sessions and trust.json here too: the pod's writable layer, kept across Stop.
+COPY --chown=1000:1000 pi/ /opt/pi/agent/
+RUN chmod 0600 /opt/pi/agent/auth.json
 
 USER kandev
 
@@ -55,16 +70,25 @@ RUN set -eu; \
     /nix/var/nix/profiles/agent/bin/nix --version; \
     /nix/var/nix/profiles/agent/bin/devenv version
 
-# Caches go to the task's workspace PVC, not the memory-backed HOME.
+# Caches go to the pod's writable layer (ephemeral storage, kept across Stop), not the
+# memory-backed HOME and not /workspace: its root is the checkout, where they would show up as
+# untracked files an agent could commit.
+# Pi: PI_SKIP_VERSION_CHECK keeps "new version" notices out of the chat (Kandev pins pi-acp),
+# and PI_CACHE_RETENTION=long asks for Anthropic's one-hour prompt cache, which outlives the
+# pauses while a task waits for review.
 ENV PATH=/nix/var/nix/profiles/agent/bin:$PATH \
-    XDG_CACHE_HOME=/workspace/.cache \
-    XDG_DATA_HOME=/workspace/.local/share \
-    XDG_STATE_HOME=/workspace/.local/state \
-    GOCACHE=/workspace/.cache/go-build \
-    GOMODCACHE=/workspace/.cache/go-mod \
-    CARGO_HOME=/workspace/.cache/cargo \
-    npm_config_cache=/workspace/.cache/npm \
-    npm_config_store_dir=/workspace/.pnpm-store
+    XDG_CACHE_HOME=/var/cache/agent/xdg \
+    XDG_DATA_HOME=/var/cache/agent/share \
+    XDG_STATE_HOME=/var/cache/agent/state \
+    GOCACHE=/var/cache/agent/go-build \
+    GOMODCACHE=/var/cache/agent/go-mod \
+    CARGO_HOME=/var/cache/agent/cargo \
+    npm_config_cache=/var/cache/agent/npm \
+    npm_config_store_dir=/var/cache/agent/pnpm-store \
+    PI_CODING_AGENT_DIR=/opt/pi/agent \
+    PI_SKIP_VERSION_CHECK=1 \
+    PI_TELEMETRY=0 \
+    PI_CACHE_RETENTION=long
 
 WORKDIR /workspace
 ENTRYPOINT []

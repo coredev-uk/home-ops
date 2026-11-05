@@ -12,10 +12,12 @@ on:
       - main
     paths:
       - containers/kandev-worker/Containerfile
+      - containers/kandev-worker/pi/**
       - .github/workflows/kandev-worker.yaml
   pull_request:
     paths:
       - containers/kandev-worker/Containerfile
+      - containers/kandev-worker/pi/**
       - .github/workflows/kandev-worker.yaml
   workflow_dispatch:
 

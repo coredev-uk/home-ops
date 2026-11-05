@@ -50,6 +50,11 @@ RUN apt-get update \
 #   checks, ast-grep). The packages are installed below, so a task pod does not fetch 250MB on
 #   start. settings.json is their only list: Renovate bumps it, and the build derives the rest.
 # - AGENTS.md: what the pod is and how to work in it, for every repository.
+# - mcp.json: Kandev's MCP tools (task title, plan, questions) from the agentctl instance in this
+#   pod. Kandev only writes .pi/mcp.json when it knows a standalone agentctl port, which a
+#   Kubernetes task has none of ("skipping project MCP config: agentctl instance port
+#   unavailable"). A pod runs one instance, on AGENTCTL_INSTANCE_PORT_BASE (41001). A project
+#   .pi/mcp.json, when Kandev writes one, overrides this entry.
 # - auth.json: Anthropic's key from PI_ANTHROPIC_API_KEY when an executor profile sets one;
 #   without it Pi uses ANTHROPIC_OAUTH_TOKEN, the Claude login (billed as extra usage).
 # Pi writes its sessions and trust.json here too: the pod's writable layer, kept across Stop.

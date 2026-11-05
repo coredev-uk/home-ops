@@ -7,7 +7,7 @@
 # repository's pins decide its tools. Kandev installs the agent CLIs (Claude Code's and Pi's ACP
 # adapters) at launch, and injects agentctl, HOME (/run/kandev/home, memory-backed) and the
 # workspace mount, whose root is the repository checkout.
-FROM ghcr.io/kdlbs/kandev:0.98.0-universal@sha256:c4ec2befcbc5108e1a56a2ead98632f0c4877b62c1eeef92b9ebd7a2d0c7a0ad
+FROM ghcr.io/kdlbs/kandev:v0.99.0-universal@sha256:ec4cd54aaca157463e56264f48edeca9a3e3e4876b504269b2bcba839ea38746
 
 LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
 

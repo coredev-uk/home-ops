@@ -22,6 +22,8 @@ spec:
         log:
           rotation:
             enabled: false
+        # CPU requests well under the defaults rook wrote: every CSI container idles near 0 (7
+        # days of 5m peaks under 20m), and they were reserving ~4 cores across the nodes.
         nodePlugin:
           priorityClassName: system-node-critical
           resources:
@@ -29,13 +31,13 @@ spec:
               limits:
                 memory: 1Gi
               requests:
-                cpu: 250m
+                cpu: 50m
                 memory: 512Mi
             registrar:
               limits:
                 memory: 256Mi
               requests:
-                cpu: 50m
+                cpu: 10m
                 memory: 128Mi
         controllerPlugin:
           priorityClassName: system-cluster-critical
@@ -44,13 +46,13 @@ spec:
               limits:
                 memory: 256Mi
               requests:
-                cpu: 100m
+                cpu: 20m
                 memory: 128Mi
             omapGenerator:
               limits:
                 memory: 1Gi
               requests:
-                cpu: 250m
+                cpu: 50m
                 memory: 512Mi
             plugin:
               limits:
@@ -61,19 +63,19 @@ spec:
               limits:
                 memory: 256Mi
               requests:
-                cpu: 100m
+                cpu: 20m
                 memory: 128Mi
             resizer:
               limits:
                 memory: 256Mi
               requests:
-                cpu: 100m
+                cpu: 20m
                 memory: 128Mi
             snapshotter:
               limits:
                 memory: 256Mi
               requests:
-                cpu: 100m
+                cpu: 20m
                 memory: 128Mi
     drivers:
       rbd:

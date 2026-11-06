@@ -30,7 +30,15 @@ spec:
         modules:
           - name: pg_autoscaler
             enabled: true
+      # Chart defaults request 1000m per mon and 500m per mgr; each uses under 100m (7 days of
+      # 5m peaks), and on the 6-core nodes those requests left no CPU to schedule into.
       resources:
+        mon:
+          requests:
+            cpu: 200m
+        mgr:
+          requests:
+            cpu: 200m
         osd:
           limits:
             memory: 8Gi # Required for bootstrap
@@ -61,6 +69,9 @@ spec:
               - name: /dev/disk/by-id/wwn-0x5001b444a4337ebf
           - name: hyperion-2
             devices:
+              # osd.1: a DRAM-less SATA SSD, ~10x the commit latency of the other two. Its primary
+              # affinity is 0 (`ceph osd primary-affinity osd.1 0`, kept in the OSD map, not here),
+              # so it serves no reads and leads no writes. A replacement OSD starts at 1.
               - name: /dev/disk/by-id/ata-ESSENCORE_SATA_SSD_ESS3D1P06CNA06100
     monitoring:
       enabled: true

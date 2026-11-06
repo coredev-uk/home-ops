@@ -134,7 +134,7 @@
     "above": 0.85,
     "forDays": 3,
     "target": 0.6,
-    "storageClasses": ["ceph-block", "ceph-filesystem"],
+    "storageClasses": ["ceph-block"],
     "exclude": [],
     "autoMerge": true
   },

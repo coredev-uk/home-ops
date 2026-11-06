@@ -69,13 +69,24 @@ spec:
       config:
         data:
           config.yaml: |-
+            originRequest:
+              http2Origin: true
+              keepAliveTimeout: 3600s
+              tcpKeepAlive: 7200s
             ingress:
+              # envoy-protected (Pocket ID in front): cloudflared picks the origin by Host, so
+              # each protected host is listed here to be reachable from outside.
+              - hostname: auth.hera.ac
+                originRequest:
+                  originServerName: protected.hera.ac
+                service: https://envoy-protected.{{ .Release.Namespace }}.svc.cluster.local:443
+              - hostname: kandev.hera.ac
+                originRequest:
+                  originServerName: protected.hera.ac
+                service: https://envoy-protected.{{ .Release.Namespace }}.svc.cluster.local:443
               - hostname: "*.hera.ac"
                 originRequest:
-                  http2Origin: true
-                  keepAliveTimeout: 3600s
                   originServerName: external.hera.ac
-                  tcpKeepAlive: 7200s
                 service: https://envoy-external.{{ .Release.Namespace }}.svc.cluster.local:443
               - service: http_status:404
     persistence:

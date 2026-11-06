@@ -10,3 +10,8 @@ spec:
       recordType: CNAME
       targets:
         - ${CLOUDFLARE_TUNNEL_ID}.cfargotunnel.com
+    # The public target of envoy-protected's routes; the tunnel's config picks which reach it.
+    - dnsName: protected.hera.ac
+      recordType: CNAME
+      targets:
+        - ${CLOUDFLARE_TUNNEL_ID}.cfargotunnel.com

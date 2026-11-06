@@ -49,6 +49,9 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: envoy-external
+  labels:
+    # cloudflare-dns publishes the routes of gateways with this label.
+    hera.ac/cloudflare-dns: "true"
   annotations:
     external-dns.kubernetes.io/target: &hostname external.hera.ac
     gatus.home-operations.com/endpoint: |-
@@ -108,14 +111,20 @@ spec:
         certificateRefs:
           - name: hera-ac-tls
 ---
-# envoy-internal behind Pocket ID: securitypolicy-oidc.yaml signs every request on its https
+# Pocket ID in front of every route: securitypolicy-oidc.yaml signs every request on its https
 # listener in before it reaches a route, and auth.hera.ac (httproute-oidc-callback.yaml) takes
-# the callback, so a route only names this gateway to be protected.
+# the callback, so a route only names this gateway to be protected. On the LAN its hosts resolve
+# to this gateway's address. From outside, cloudflare-dns publishes them behind protected.hera.ac,
+# which points at the Cloudflare tunnel, but the tunnel sends a host here only if its config
+# lists that host (cloudflare-tunnel/app/helmrelease.yaml); any other host goes to envoy-external
+# and gets a 404.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/gateway_v1.json
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: envoy-protected
+  labels:
+    hera.ac/cloudflare-dns: "true"
   annotations:
     external-dns.kubernetes.io/target: &hostname protected.hera.ac
     gatus.home-operations.com/endpoint: |-

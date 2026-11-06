@@ -37,7 +37,8 @@ RUN apt-get update \
       > /etc/nix/nix.conf \
  && install -d -o 1000 -g 1000 /var/cache/agent /opt/pi/agent \
  && printf '%s\n' '/.pi/mcp.json' '/.kandev/' > /etc/gitignore-agent \
- && git config --system core.excludesFile /etc/gitignore-agent
+ && git config --system core.excludesFile /etc/gitignore-agent \
+ && git config --system --add safe.directory /workspace
 
 # Pi's agent directory (PI_CODING_AGENT_DIR below), so every task starts with these settings
 # rather than an empty, memory-backed HOME:

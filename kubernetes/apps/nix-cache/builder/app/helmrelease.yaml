@@ -36,6 +36,15 @@ spec:
           restartPolicy: Never
           automountServiceAccountToken: false
           enableServiceLinks: false
+          # The status claim is ReadWriteOnce and Attic's exporter has it mounted: run on its node.
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - topologyKey: kubernetes.io/hostname
+                  labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: attic
+                      app.kubernetes.io/controller: attic
           # run.sh passes SIGTERM to Nix and marks the store as cleanly stopped once Nix has
           # cleaned up; past this the VM is killed and the next run checks the whole store.
           terminationGracePeriodSeconds: 300
@@ -83,7 +92,7 @@ spec:
         globalMounts:
           - path: /store
       status:
-        existingClaim: nix-cache-status
+        existingClaim: nix-cache-build-status
         globalMounts:
           - path: /status
       tmp:

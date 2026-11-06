@@ -99,6 +99,17 @@ spec:
               limits:
                 memory: 128Mi
     defaultPodOptions:
+      # hyperion-0 runs Kandev's task pods, and the nightly builder's VM (up to 8Gi) follows
+      # Attic to its node for the status claim.
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values: [hyperion-0]
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
@@ -168,7 +179,7 @@ spec:
             app:
               - path: /storage
       status:
-        existingClaim: nix-cache-status
+        existingClaim: nix-cache-build-status
         advancedMounts:
           attic:
             exporter:

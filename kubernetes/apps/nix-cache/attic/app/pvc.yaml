@@ -15,16 +15,16 @@ spec:
       storage: 50Gi
   storageClassName: ceph-block
 ---
-# The builder's status file (status.json), read by the exporter beside Attic. CephFS, because
-# the builder's VM and Attic's pod can land on different nodes.
+# The builder's status file (status.json), read by the exporter beside Attic. ReadWriteOnce, so
+# the builder's pod affinity (builder/app/helmrelease.yaml) puts it on Attic's node.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nix-cache-status
+  name: nix-cache-build-status
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
-  storageClassName: ceph-filesystem
+  storageClassName: ceph-block

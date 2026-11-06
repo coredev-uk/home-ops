@@ -6,7 +6,7 @@ metadata:
   name: nix-cache-builder
 spec:
   # Never schedule the privileged builder before its VM isolation exists. attic owns the
-  # nix-cache-status claim the builder writes its status to.
+  # nix-cache-build-status claim the builder writes its status to.
   dependsOn:
     - name: attic
     - name: kata

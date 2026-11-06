@@ -59,6 +59,16 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         retention: 30d
         retentionSize: 40GiB
+        # hyperion-0 runs Kandev's task pods; Prometheus's 2-3Gi fits on the other nodes.
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values: [hyperion-0]
         resources:
           requests:
             cpu: 100m

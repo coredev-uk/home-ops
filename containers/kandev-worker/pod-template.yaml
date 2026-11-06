@@ -15,8 +15,24 @@ kind: PodTemplate
 template:
   spec:
     automountServiceAccountToken: false
-    nodeSelector:
-      kubernetes.io/hostname: hyperion-0
+    # hyperion-0 first (14 cores, and Attic and Prometheus prefer other nodes to leave it room);
+    # hyperion-2 once it is full, so a task runs slower rather than failing to schedule. Never
+    # hyperion-1: its 128G system disk could not hold a task's Nix store in ephemeral storage.
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values: [hyperion-0, hyperion-2]
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values: [hyperion-0]
     imagePullSecrets:
       - name: kandev-worker-pull
     securityContext:
@@ -36,7 +52,7 @@ template:
         # The Nix store is in the container's writable layer, so a repository's devenv closure
         # (sona-go: GTK, GStreamer, sway) counts against ephemeral storage, not the workspace.
         # A sona-go task (devenv, go build, the UI tests) uses several GiB: requesting 4Gi keeps
-        # the scheduler from packing more task pods onto hyperion-0 than it can hold beside Ceph.
+        # the scheduler from packing more task pods onto a node than it can hold beside Ceph.
         resources:
           requests:
             cpu: 500m

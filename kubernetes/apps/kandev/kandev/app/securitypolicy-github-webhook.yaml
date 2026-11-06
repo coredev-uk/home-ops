@@ -1,0 +1,16 @@
+---
+# GitHub App webhooks reach Kandev without Pocket ID: a policy on a route replaces the gateway's
+# (network/envoy-gateway/app/securitypolicy-oidc.yaml), and the route (helmrelease.yaml) matches
+# only /api/v1/github/app/registrations/<id>/webhook, whose deliveries Kandev verifies by HMAC.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: kandev-github-webhook
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: kandev-github-webhook
+  authorization:
+    defaultAction: Allow

@@ -39,7 +39,6 @@ spec:
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info
-              KANDEV_FEATURES_AUTH: true
             probes:
               liveness:
                 enabled: true

@@ -46,6 +46,11 @@ spec:
       # to this name too. The external-dns sidecar uses localhost, which is
       # always trusted.
       FTLCONF_webserver_domain: pihole-web.network.svc.cluster.local
+      # Answer every query type for the gateway names locally. They are public Cloudflare records
+      # too, so Pi-hole otherwise forwards AAAA and HTTPS queries upstream and gets Cloudflare's
+      # IPv6 and ECH config. Browsers then send ECH to the LAN gateway, which cannot accept it,
+      # and check its *.hera.ac certificate against cloudflare-ech.com: a certificate error.
+      FTLCONF_misc_dnsmasq_lines: local=/external.hera.ac/;local=/internal.hera.ac/;local=/protected.hera.ac/
     serviceDns:
       type: LoadBalancer
       mixedService: true

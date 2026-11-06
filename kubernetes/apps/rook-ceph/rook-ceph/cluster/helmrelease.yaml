@@ -18,6 +18,8 @@ spec:
       cleanupPolicy:
         wipeDevicesFromOtherClusters: false
       csi:
+        # The chart renders this key as null when unset, which the CephCluster CRD rejects.
+        cephfs: {}
         readAffinity:
           enabled: false # https://github.com/ceph/ceph-csi/issues/5772
       dashboard:

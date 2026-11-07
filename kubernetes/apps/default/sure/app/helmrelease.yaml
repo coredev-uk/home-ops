@@ -86,7 +86,7 @@ spec:
             resources:
               requests:
                 cpu: 50m
-                memory: 512Mi
+                memory: 848Mi
               limits:
                 memory: 1Gi
             securityContext: &securityContext
@@ -102,9 +102,9 @@ spec:
             resources:
               requests:
                 cpu: 50m
-                memory: 384Mi
+                memory: 1152Mi
               limits:
-                memory: 1Gi
+                memory: 1472Mi
             securityContext: *securityContext
     defaultPodOptions:
       securityContext:

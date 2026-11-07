@@ -7,4 +7,4 @@ resources:
   - ./helmrelease.yaml
   - ./networkpolicy.yaml
   - ./ocirepository.yaml
-  - ./securitypolicy-github-webhook.yaml
+  - ./securitypolicy-github.yaml

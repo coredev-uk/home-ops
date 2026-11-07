@@ -48,6 +48,9 @@ spec:
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info
+              # Task pods fetch per-repository GitHub leases here for git and gh; without it they
+              # get no GitHub credentials and push fails.
+              KANDEV_GITHUB_CREDENTIAL_BROKER_PUBLIC_BASE_URL: https://kandev.hera.ac
             envFrom:
               - secretRef:
                   name: kandev-secret
@@ -119,9 +122,10 @@ spec:
         parentRefs:
           - name: envoy-protected
             namespace: network
-      # GitHub App webhook deliveries, which cannot sign in: securitypolicy-github-webhook.yaml
-      # lifts Pocket ID for this path alone, and Kandev checks each delivery's HMAC signature.
-      github-webhook:
+      # Callers that cannot sign in: securitypolicy-github.yaml lifts Pocket ID for these paths
+      # alone. GitHub App webhook deliveries carry an HMAC signature, and task pods redeem
+      # GitHub credential leases from the broker with the lease itself; Kandev checks both.
+      github:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
@@ -132,6 +136,9 @@ spec:
               - path:
                   type: RegularExpression
                   value: ^/api/v1/github/app/registrations/[0-9a-f-]{36}/webhook$
+              - path:
+                  type: Exact
+                  value: /api/v1/github/credentials/resolve
             backendRefs:
               - identifier: app
                 port: *port

@@ -30,8 +30,8 @@ spec:
           # carries on from there.
           activeDeadlineSeconds: 14400
         pod:
-          # The Nix sandbox and the loop mount need privilege; under kata it stops at the pod's
-          # own VM, with no host device or node filesystem in reach.
+          # The Nix sandbox, the loop mount and qemu-i386's binfmt_misc entry need privilege;
+          # under kata it stops at the pod's own VM, with no host device or node filesystem in reach.
           runtimeClassName: kata
           restartPolicy: Never
           automountServiceAccountToken: false

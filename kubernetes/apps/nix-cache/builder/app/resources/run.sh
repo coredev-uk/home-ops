@@ -7,7 +7,8 @@
 # Runs as root in the pod's Kata VM. The Nix store is persistent: an ext4 image on a Ceph
 # volume, loop-mounted over /nix, so a run only fetches and builds what changed and nothing
 # heavy lands on the node's disk. Builds run in the Nix sandbox as nixbld users, which cannot
-# read /secrets.
+# read /secrets. i686-linux builds (Steam's 32-bit graphics stack) run under qemu-i386: the VM's
+# kernel has no 32-bit support, so they otherwise fail with "Exec format error".
 # The single-quoted $names are jq's, not the shell's.
 # shellcheck disable=SC2016
 set -euo pipefail
@@ -31,6 +32,7 @@ UTIL_LINUX=/nix/store/2lgg8jqyzjp60svh7kmp39kqwnig31p2-util-linux-2.42.4-bin
 E2FSPROGS=/nix/store/9l2mjms2iidc51mh6sfyjmhzshxa3v8k-e2fsprogs-1.47.4-bin
 JQ=/nix/store/9l0j15jg8634hkb6d4c9y95mpxl0nhrd-jq-1.8.2-bin/bin/jq
 ATTIC=/nix/store/ki30bh61j71vp2jih6mfxhmfdiqxrr69-attic-0-unstable-2026-07-06/bin/attic
+QEMU_I386=/nix/store/lxv8rdcy5mg92q74ia507z4sl2017xs6-qemu-user-static-x86_64-unknown-linux-musl-11.1.2/bin/qemu-i386
 
 log() { echo "[nix-cache] $*"; }
 
@@ -201,8 +203,18 @@ fi
 mkdir -p /nix/var/nix/builds "$PROFILES" /nix/var/nix/gcroots/nix-cache
 # GC roots for the tools, so a garbage collection in the middle of a run keeps them.
 nix build --out-link /nix/var/nix/gcroots/nix-cache/tool \
-  "$UTIL_LINUX" "$E2FSPROGS" "${JQ%/bin/jq}" "${ATTIC%/bin/attic}"
+  "$UTIL_LINUX" "$E2FSPROGS" "${JQ%/bin/jq}" "${ATTIC%/bin/attic}" "${QEMU_I386%/bin/qemu-i386}"
 log "store: $(df -h --output=used,size /nix | tail -1 | xargs)"
+
+# 32-bit x86 ELF executables go to the static qemu-i386; Nix already counts i686-linux among
+# its platforms. F opens the interpreter now, so it runs inside the sandbox, where its path is
+# not mounted. The kernel decodes the \x escapes itself: they must reach it as text.
+[ -e /proc/sys/fs/binfmt_misc/register ] || mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+if [ ! -e /proc/sys/fs/binfmt_misc/qemu-i386 ]; then
+  i386_magic='\x7fELF\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x03\x00'
+  i386_mask='\xff\xff\xff\xff\xff\xfe\xfe\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff'
+  echo ":qemu-i386:M::$i386_magic:$i386_mask:$QEMU_I386:F" >/proc/sys/fs/binfmt_misc/register
+fi
 
 # --- update the flake -----------------------------------------------------------------
 next_phase update

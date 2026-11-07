@@ -78,6 +78,12 @@ spec:
     monitoring:
       enabled: true
       createPrometheusRules: true
+      prometheusRuleOverrides:
+        # It extrapolates two days of every node filesystem five days ahead, so a one-off step
+        # (images landing on a node) reads as a full disk. node-exporter's NodeFilesystemSpaceFillingUp
+        # and NodeFilesystemAlmostOutOfSpace (kube-prometheus-stack) cover local disks by free space.
+        CephNodeDiskspaceWarning:
+          disabled: true
     toolbox:
       enabled: true
     route:

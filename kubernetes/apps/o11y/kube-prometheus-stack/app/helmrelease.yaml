@@ -94,6 +94,10 @@ spec:
         folder: o11y
         matchLabels:
           dashboards: grafana
+    defaultRules:
+      disabled:
+        # Replaced by hpa-rules below, which skips the zeroscaler HPAs.
+        KubeHpaMaxedOut: true
     additionalPrometheusRulesMap:
       dockerhub-rules:
         groups:
@@ -105,6 +109,26 @@ spec:
                 expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
                 labels:
                   severity: critical
+      # The default KubeHpaMaxedOut, limited to HPAs that can scale past one replica. The zeroscaler
+      # HPAs (components/zeroscaler) go from 0 to 1 on the NFS probe, so they sit at their maximum
+      # whenever NFS is up and said nothing by firing.
+      hpa-rules:
+        groups:
+          - name: hpa
+            rules:
+              - alert: KubeHpaMaxedOut
+                annotations:
+                  description: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} has been running at max replicas for longer than 15 minutes.
+                  runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpamaxedout
+                  summary: HPA is running at max replicas
+                expr: |-
+                  kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}
+                    == kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"}
+                  and on (namespace, horizontalpodautoscaler)
+                  kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"} > 1
+                for: 15m
+                labels:
+                  severity: warning
       oom-rules:
         groups:
           - name: oom

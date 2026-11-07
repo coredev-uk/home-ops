@@ -27,6 +27,15 @@ You run unattended in a Kandev task pod. Nobody answers questions mid-turn: deci
 
 ## Splitting work
 
-- Inside the task, `subagent` delegates a focused piece (a review, a search, a parallel change) to a child agent in this pod.
-- Kandev's MCP tools (`create_task_kandev` and the other `*_kandev` tools) create subtasks that run as their own agents, in their own pods. Use them for independent pieces instead of doing unrelated work in one task.
+You (Opus) plan and decide; `subagent` children (Sonnet) do the bulk of the reading and building. This is your standing authorization to delegate.
+
+- Small change (one file or a few lines, obvious fix): do it yourself.
+- Anything larger, such as a feature, a multi-file change, or a fix whose cause is unknown:
+    1. Send `scout` children to map the code you need, in parallel when the areas are separate.
+    2. Write the plan yourself: the slices, which files each owns, and the interfaces between them. Ask `oracle` to challenge the plan when the design is not obvious.
+    3. Hand each slice to a `worker`, with the plan and its acceptance criteria in its task. Slices that touch different files run in parallel with `worktree: true`, so each worker writes in its own worktree and you apply its patch to `/workspace` afterwards; commit first, because worktrees branch from a clean HEAD. Slices that share files run one after another in `/workspace`.
+    4. Run `reviewer` children on the combined diff (for example correctness and tests in parallel), have a `worker` apply what they find, then run the repository's checks yourself.
+- Children run in the background: wait for every one to finish (`bg_wait`) and apply its result before you end the turn. Nothing resumes your turn after it ends.
+- At most three children run at once: each one runs its own builds and language servers inside this pod's memory.
+- Kandev's MCP tools (`create_task_kandev` and the other `*_kandev` tools) create subtasks that run as their own agents, in their own pods. Use them for independent pieces of work that should become separate pull requests, instead of doing unrelated work in one task.
 - A runnable subtask needs `workspace_mode: "new_workspace"`: on Kubernetes a subtask cannot share its parent's pod.

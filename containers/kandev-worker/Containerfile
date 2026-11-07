@@ -50,6 +50,11 @@ RUN apt-get update \
 #   pi-web-access (web search and fetch; Exa needs no key) and pi-lens (LSP, linters, type
 #   checks, ast-grep). The packages are installed below, so a task pod does not fetch 250MB on
 #   start. settings.json is their only list: Renovate bumps it, and the build derives the rest.
+#   Its subagents block runs children on Sonnet (scout on Haiku, oracle on the parent's Opus).
+# - extensions/subagent/config.json: pi-subagents offers `subagent` from the first request (the
+#   claude-bridge fixes the tool list per prompt, so enabling it mid-turn would only take effect
+#   on a next prompt an unattended task never gets), puts worktrees in the writable layer (the
+#   default sits beside the checkout, at /worktrees) and runs at most three children at once.
 # - AGENTS.md: what the pod is and how to work in it, for every repository.
 # - mcp.json: Kandev's MCP tools (task title, plan, questions) from the agentctl instance in this
 #   pod. Kandev only writes .pi/mcp.json when it knows a standalone agentctl port, which a

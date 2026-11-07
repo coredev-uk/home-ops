@@ -1,0 +1,6 @@
+{
+  "toolActivation": "eager",
+  "worktreeBaseDir": "/var/cache/agent/worktrees",
+  "globalConcurrencyLimit": 3,
+  "parallel": { "concurrency": 3 }
+}

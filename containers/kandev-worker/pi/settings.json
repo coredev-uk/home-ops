@@ -20,5 +20,16 @@
   "retry": {
     "maxRetries": 8,
     "maxAgentDelayMs": 120000
+  },
+  "subagents": {
+    "defaultModel": "claude-bridge/claude-sonnet-5-5",
+    "agentOverrides": {
+      "scout": {
+        "model": "claude-bridge/claude-haiku-5-5"
+      },
+      "oracle": {
+        "model": "inherit"
+      }
+    }
   }
 }

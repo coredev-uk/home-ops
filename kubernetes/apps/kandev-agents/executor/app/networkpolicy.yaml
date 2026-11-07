@@ -1,9 +1,12 @@
 ---
-# Task pods run agents with their permission prompts bypassed, so they get the internet (GitHub,
-# npm, cache.nixos.org, api.anthropic.com) and cluster DNS, but not the home network or the nodes.
-# Nothing connects in: Kandev reaches agentctl through the API server's port-forward, which
-# arrives on the pod's loopback. The control plane's own policy (kandev/kandev/app) keeps agents
-# out of Kandev's API.
+# Task pods run agents with their permission prompts bypassed, so egress is an allowlist: the
+# internet (GitHub, npm, cache.nixos.org, api.anthropic.com), cluster DNS, and envoy-protected for
+# Kandev's GitHub credential broker. Nothing else in the cluster, the home network or the nodes.
+# A LoadBalancer address such as kandev.hera.ac's 192.168.110.242 reaches a gateway pod, because
+# Cilium translates it before policy applies: only envoy-protected's pods are allowed, so
+# envoy-internal's apps and every other pod and Service stay out of reach. Nothing connects in:
+# Kandev reaches agentctl through the API server's port-forward, which arrives on the pod's
+# loopback. The control plane's own policy (kandev/kandev/app) keeps agents out of Kandev's API.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -13,7 +16,28 @@ spec:
   endpointSelector: {}
   enableDefaultDeny:
     ingress: true
-    egress: false
+    egress: true
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: network
+            gateway.envoyproxy.io/owning-gateway-name: envoy-protected
+      toPorts:
+        - ports:
+            - port: "10443"
+              protocol: TCP
+    - toEntities:
+        - world
+  # world also covers addresses outside the cluster on the home network. The pod and Service
+  # ranges are left to the allowlist above, so a deny cannot override the DNS and broker rules.
   egressDeny:
     - toCIDRSet:
         - cidr: 10.0.0.0/8

@@ -110,11 +110,12 @@
     },
     {
       // requireBuiltinMCPDelivery rejects agents that receive Kandev's built-in MCP server
-      // through a project file, as Pi does (.pi/mcp.json), so no Pi task starts
-      description: "Skip Kandev 0.99.0, which cannot start Pi",
+      // through a project file, as Pi does (.pi/mcp.json), so no Pi task starts. The fix
+      // (kdlbs/kandev#5096) landed after v0.99.1 was tagged.
+      description: "Skip Kandev 0.99.0 and 0.99.1, which cannot start Pi",
       matchDatasources: ["docker"],
       matchPackageNames: ["ghcr.io/kdlbs/kandev"],
-      allowedVersions: "!/^v?0\\.99\\.0$/",
+      allowedVersions: "!/^v?0\\.99\\.[01]$/",
     },
     // Labeling rules
     {

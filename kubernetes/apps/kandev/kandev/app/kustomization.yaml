@@ -7,4 +7,4 @@ resources:
   - ./helmrelease.yaml
   - ./networkpolicy.yaml
   - ./ocirepository.yaml
-  - ./securitypolicy-github.yaml
+  - ./securitypolicy-broker.yaml

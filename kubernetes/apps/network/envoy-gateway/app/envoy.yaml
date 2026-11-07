@@ -16,7 +16,7 @@ spec:
         container:
           imageRepository: mirror.gcr.io/envoyproxy/envoy
           # Envoy uses under 100Mi. Without a memory request Kubernetes requests the limit, so
-          # envoy-protected's two pods reserved 4Gi on hyperion-0, room Kandev's task pods need.
+          # each gateway's two pods reserved 4Gi, room Kandev's task pods need on hyperion-0.
           resources:
             requests:
               cpu: 100m
@@ -111,22 +111,21 @@ spec:
         certificateRefs:
           - name: hera-ac-tls
 ---
-# Pocket ID in front of every route: securitypolicy-oidc.yaml signs every request on its https
-# listener in before it reaches a route, and auth.hera.ac (httproute-oidc-callback.yaml) takes
-# the callback, so a route only names this gateway to be protected. On the LAN its hosts resolve
-# to this gateway's address. From outside, cloudflare-dns publishes them behind protected.hera.ac,
-# which points at the Cloudflare tunnel, but the tunnel sends a host here only if its config
-# lists that host (cloudflare-tunnel/app/helmrelease.yaml); any other host goes to envoy-external
-# and gets a 404.
+# Kandev's own gateway, LAN only, with Pocket ID in front of every route
+# (securitypolicy-kandev.yaml). Only routes from the kandev namespace attach. Task pods reach it
+# for Kandev's GitHub credential broker, which kandev-agents' network policy allows and nothing
+# else there. kandev.hera.ac stays in public DNS behind kandev-gateway.hera.ac, which points at the
+# Cloudflare tunnel; the tunnel routes no Kandev host, so from outside it answers 404. The public
+# record is there because Kandev only registers a GitHub App whose URL resolves publicly.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/gateway_v1.json
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: envoy-protected
+  name: envoy-kandev
   labels:
     hera.ac/cloudflare-dns: "true"
   annotations:
-    external-dns.kubernetes.io/target: &hostname protected.hera.ac
+    external-dns.kubernetes.io/target: &hostname kandev-gateway.hera.ac
     gatus.home-operations.com/endpoint: |-
       group: internal
       guarded: true
@@ -138,7 +137,7 @@ spec:
   infrastructure:
     annotations:
       external-dns.kubernetes.io/hostname: *hostname
-      lbipam.cilium.io/ips: 192.168.110.242
+      lbipam.cilium.io/ips: 192.168.110.247
   listeners:
     - name: http
       protocol: HTTP
@@ -148,7 +147,10 @@ spec:
       port: 443
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: kandev
       tls:
         certificateRefs:
           - name: hera-ac-tls
@@ -226,7 +228,7 @@ spec:
     - name: envoy-internal
       namespace: network
       sectionName: http
-    - name: envoy-protected
+    - name: envoy-kandev
       namespace: network
       sectionName: http
   rules:

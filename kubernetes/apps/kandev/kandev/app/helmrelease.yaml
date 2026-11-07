@@ -30,7 +30,7 @@ spec:
             - name: kandev-pull
           # Public DNS, not the cluster's: registering a GitHub App requires the public URL
           # (kandev.hera.ac) to resolve only to public addresses, and Pi-hole answers with
-          # envoy-protected's LAN address. Kandev reaches the Kubernetes API by IP, so it needs
+          # envoy-kandev's LAN address. Kandev reaches the Kubernetes API by IP, so it needs
           # no cluster names.
           dnsPolicy: None
           dnsConfig:
@@ -112,30 +112,27 @@ spec:
         ports:
           http:
             port: *port
-    # envoy-protected signs users in with Pocket ID: Kandev's own login is off, and only Envoy
-    # reaches the pod (networkpolicy.yaml).
+    # envoy-kandev (LAN only) signs users in with Pocket ID: Kandev's own login is off, and only
+    # Envoy reaches the pod (networkpolicy.yaml).
     route:
       app:
         forceRename: kandev
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
-          - name: envoy-protected
+          - name: envoy-kandev
             namespace: network
-      # Callers that cannot sign in: securitypolicy-github.yaml lifts Pocket ID for these paths
-      # alone. GitHub App webhook deliveries carry an HMAC signature, and task pods redeem
-      # GitHub credential leases from the broker with the lease itself; Kandev checks both.
-      github:
+      # Task pods redeem GitHub credential leases here and cannot sign in:
+      # securitypolicy-broker.yaml lifts Pocket ID for this path alone, and Kandev checks the
+      # lease itself.
+      broker:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
         parentRefs:
-          - name: envoy-protected
+          - name: envoy-kandev
             namespace: network
         rules:
           - matches:
-              - path:
-                  type: RegularExpression
-                  value: ^/api/v1/github/app/registrations/[0-9a-f-]{36}/webhook$
               - path:
                   type: Exact
                   value: /api/v1/github/credentials/resolve

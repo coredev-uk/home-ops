@@ -50,7 +50,7 @@ spec:
       # too, so Pi-hole otherwise forwards AAAA and HTTPS queries upstream and gets Cloudflare's
       # IPv6 and ECH config. Browsers then send ECH to the LAN gateway, which cannot accept it,
       # and check its *.hera.ac certificate against cloudflare-ech.com: a certificate error.
-      FTLCONF_misc_dnsmasq_lines: local=/external.hera.ac/;local=/internal.hera.ac/;local=/protected.hera.ac/
+      FTLCONF_misc_dnsmasq_lines: local=/external.hera.ac/;local=/internal.hera.ac/;local=/kandev-gateway.hera.ac/
     serviceDns:
       type: LoadBalancer
       mixedService: true

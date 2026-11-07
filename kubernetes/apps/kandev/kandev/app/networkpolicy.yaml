@@ -1,8 +1,9 @@
 ---
-# Kandev's own login is off (Envoy's OIDC stands in), so only Envoy may reach the pod: an agent in
-# kandev-agents, or any other pod, would otherwise reach the API and the secrets it stores
-# unauthenticated. The host entity keeps the kubelet's probes. Egress stays open: GitHub, npm and
-# the Kubernetes API, which carries the executor's exec and port-forward to task pods.
+# Kandev's own login is off (envoy-kandev's OIDC stands in), so only that gateway may reach the
+# pod: an agent in kandev-agents, or any other pod, would otherwise reach the API and the secrets
+# it stores unauthenticated. The host entity keeps the kubelet's probes. Egress stays open:
+# GitHub, npm and the Kubernetes API, which carries the executor's exec and port-forward to task
+# pods.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/cilium.io/ciliumnetworkpolicy_v2.json
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -19,7 +20,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: network
-            app.kubernetes.io/name: envoy
+            gateway.envoyproxy.io/owning-gateway-name: envoy-kandev
       toPorts:
         - ports:
             - port: "38429"

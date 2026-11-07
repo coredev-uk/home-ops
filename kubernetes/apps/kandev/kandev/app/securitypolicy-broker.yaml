@@ -1,0 +1,16 @@
+---
+# Lifts Pocket ID for the kandev-broker route (helmrelease.yaml): a policy on a route replaces the
+# gateway's (network/envoy-gateway/app/securitypolicy-kandev.yaml). The route matches only the
+# GitHub credential broker, whose callers (task pods) prove themselves with a task-scoped lease.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: kandev-broker
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: kandev-broker
+  authorization:
+    defaultAction: Allow

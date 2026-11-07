@@ -7,7 +7,6 @@ resources:
   - ./externalsecret.yaml
   - ./grafanadashboard.yaml
   - ./helmrelease.yaml
-  - ./httproute-oidc-callback.yaml
   - ./o11y.yaml
   - ./ocirepository.yaml
-  - ./securitypolicy-oidc.yaml
+  - ./securitypolicy-kandev.yaml

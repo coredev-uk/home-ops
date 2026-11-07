@@ -1,0 +1,31 @@
+---
+# Pocket ID signs in every request on envoy-kandev's https listener. Its Kandev client (1Password
+# item kandev) has the callback https://kandev.hera.ac/oauth2/callback, which Envoy answers
+# itself. The cookie stays on kandev.hera.ac. Kandev's broker route lifts this for one path
+# (kandev/kandev/app/securitypolicy-broker.yaml).
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: kandev-oidc
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-kandev
+      sectionName: https
+  oidc:
+    provider:
+      issuer: https://id.hera.ac
+    clientIDRef:
+      name: kandev-oidc-secret
+    clientSecret:
+      name: kandev-oidc-secret
+    redirectURL: https://kandev.hera.ac/oauth2/callback
+    logoutPath: /oauth2/logout
+    scopes:
+      - openid
+      - profile
+      - email
+    # Kandev stays open in a tab for hours; refresh rather than sign in again.
+    refreshToken: true

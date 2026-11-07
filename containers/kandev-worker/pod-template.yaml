@@ -58,6 +58,16 @@ template:
               secretKeyRef:
                 name: kandev-agent-secret
                 key: CLAUDE_CODE_OAUTH_TOKEN
+          # Trust the checkout: the volume's root belongs to root, so git rejects it as dubious
+          # ownership. The image's /etc/gitconfig does too, but Kandev runs some git commands
+          # with GIT_CONFIG_NOSYSTEM=1, and HOME is Kandev's. Kandev merges these entries with
+          # the ones it sets.
+          - name: GIT_CONFIG_COUNT
+            value: "1"
+          - name: GIT_CONFIG_KEY_0
+            value: safe.directory
+          - name: GIT_CONFIG_VALUE_0
+            value: /workspace
         # The Nix store is in the container's writable layer, so a repository's devenv closure
         # (sona-go: GTK, GStreamer, sway) counts against ephemeral storage, not the workspace.
         # A sona-go task (devenv, go build, the UI tests) uses several GiB: requesting 4Gi keeps

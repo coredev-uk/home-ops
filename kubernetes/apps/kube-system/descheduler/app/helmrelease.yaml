@@ -72,3 +72,7 @@ spec:
       enabled: true
     leaderElection:
       enabled: true
+    # The chart requests 500m; it peaked at 5m over 14 days.
+    resources:
+      requests:
+        cpu: 50m

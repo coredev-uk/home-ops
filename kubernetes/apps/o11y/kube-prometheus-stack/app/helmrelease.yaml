@@ -98,6 +98,9 @@ spec:
       disabled:
         # Replaced by hpa-rules below, which skips the zeroscaler HPAs.
         KubeHpaMaxedOut: true
+        # Asks whether every request fits once the largest node is gone. hyperion-0 is 60% of the
+        # cluster's CPU, so it never can; a real shortfall shows as Pending pods (KubePodNotReady).
+        KubeCPUOvercommit: true
     additionalPrometheusRulesMap:
       dockerhub-rules:
         groups:

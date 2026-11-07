@@ -33,7 +33,8 @@ spec:
           - name: pg_autoscaler
             enabled: true
       # Chart defaults request 1000m per mon and 500m per mgr; each uses under 100m (7 days of
-      # 5m peaks), and on the 6-core nodes those requests left no CPU to schedule into.
+      # 5m peaks), and on the 6-core nodes those requests left no CPU to schedule into. OSDs
+      # request 1000m by default and peaked at 470m over 14 days.
       resources:
         mon:
           requests:
@@ -42,6 +43,8 @@ spec:
           requests:
             cpu: 200m
         osd:
+          requests:
+            cpu: 500m
           limits:
             memory: 8Gi # Required for bootstrap
       security:

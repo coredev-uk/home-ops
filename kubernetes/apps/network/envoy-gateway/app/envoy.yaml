@@ -114,26 +114,17 @@ spec:
 # Kandev's own gateway, LAN only, with Pocket ID in front of every route
 # (securitypolicy-kandev.yaml). Only routes from the kandev namespace attach. Task pods reach it
 # for Kandev's GitHub credential broker, which kandev-agents' network policy allows and nothing
-# else there. kandev.hera.ac stays in public DNS behind kandev-gateway.hera.ac, which points at the
-# Cloudflare tunnel; the tunnel routes no Kandev host, so from outside it answers 404. The public
-# record is there because Kandev only registers a GitHub App whose URL resolves publicly.
-# Gatus therefore cannot guard on DNS, as envoy-internal does: it resolves through 1.1.1.1, so the
-# request goes out through the tunnel, and anything but that 404 raises GatusEndpointExposed.
+# else there. kandev.hera.ac resolves through Pi-hole only.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/gateway_v1.json
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: envoy-kandev
-  labels:
-    hera.ac/cloudflare-dns: "true"
   annotations:
     external-dns.kubernetes.io/target: &hostname kandev-gateway.hera.ac
     gatus.home-operations.com/endpoint: |-
-      client:
-        dns-resolver: tcp://1.1.1.1:53
-      conditions:
-        - "[STATUS] == 404"
       group: internal
+      guarded: true
       ui:
         hide-hostname: true
         hide-url: true

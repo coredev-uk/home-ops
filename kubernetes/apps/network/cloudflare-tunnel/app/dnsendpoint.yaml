@@ -10,9 +10,3 @@ spec:
       recordType: CNAME
       targets:
         - ${CLOUDFLARE_TUNNEL_ID}.cfargotunnel.com
-    # Public target of envoy-kandev's routes (kandev.hera.ac): the tunnel routes none of them, so
-    # they answer 404 from outside; the record only makes them resolve publicly.
-    - dnsName: kandev-gateway.hera.ac
-      recordType: CNAME
-      targets:
-        - ${CLOUDFLARE_TUNNEL_ID}.cfargotunnel.com

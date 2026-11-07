@@ -28,15 +28,6 @@ spec:
           automountServiceAccountToken: true
           imagePullSecrets:
             - name: kandev-pull
-          # Public DNS, not the cluster's: registering a GitHub App requires the public URL
-          # (kandev.hera.ac) to resolve only to public addresses, and Pi-hole answers with
-          # envoy-kandev's LAN address. Kandev reaches the Kubernetes API by IP, so it needs
-          # no cluster names.
-          dnsPolicy: None
-          dnsConfig:
-            nameservers:
-              - 1.1.1.1
-              - 1.0.0.1
         containers:
           app:
             image:

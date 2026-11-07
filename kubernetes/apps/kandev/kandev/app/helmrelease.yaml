@@ -48,6 +48,9 @@ spec:
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info
+            envFrom:
+              - secretRef:
+                  name: kandev-secret
             probes:
               liveness:
                 enabled: true

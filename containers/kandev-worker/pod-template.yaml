@@ -49,6 +49,12 @@ template:
         securityContext:
           allowPrivilegeEscalation: false
           capabilities: { drop: ["ALL"] }
+        # The Claude login for every process in the pod: Kandev 0.98.0 passes the executor
+        # profile's environment to the task's agent only, so the utility agents agentctl runs
+        # here (PR description, commit message) were not logged in.
+        envFrom:
+          - secretRef:
+              name: kandev-agent-secret
         # The Nix store is in the container's writable layer, so a repository's devenv closure
         # (sona-go: GTK, GStreamer, sway) counts against ephemeral storage, not the workspace.
         # A sona-go task (devenv, go build, the UI tests) uses several GiB: requesting 4Gi keeps

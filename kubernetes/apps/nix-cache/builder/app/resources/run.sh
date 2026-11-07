@@ -213,6 +213,10 @@ git remote set-url --push origin "$REPO_SSH"
 git config user.name "nix-cache builder"
 git config user.email "nix-cache@hera.ac"
 old_lock=$(cat flake.lock)
+# Authenticated GitHub API calls for the input lookups: anonymous ones share the home IP's 60 an
+# hour and ran out. NIX_CONFIG adds to nix.conf for this process only; builds never see it.
+NIX_CONFIG="access-tokens = github.com=$(cat /secrets/github-token)"
+export NIX_CONFIG
 run nix flake update
 
 # Input name -> lastModified, for the dashboard's input age panel.

@@ -160,9 +160,7 @@
       "o11y/alertmanager-kube-prometheus-stack-db-*",
       "o11y/grafana-pvc",
       "o11y/prometheus-kube-prometheus-stack-db-*",
-      "o11y/server-volume-victoria-logs-0",
-      "o11y/vmalertmanager-*",
-      "o11y/vmsingle-victoria-metrics-cluster"
+      "o11y/server-volume-victoria-logs-0"
     ]
   },
   "cleanup": {

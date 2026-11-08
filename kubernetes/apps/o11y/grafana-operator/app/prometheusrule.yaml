@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: grafana-operator
+spec:
+  groups:
+    - name: grafana-operator.rules
+      rules:
+        - alert: GrafanaDashboardSyncFailing
+          expr: |-
+            sum(rate(controller_runtime_reconcile_total{controller="grafanadashboard",result="error"}[15m])) > 0
+          for: 30m
+          annotations:
+            summary: >-
+              GrafanaDashboard reconciles have been failing for 30 minutes (no matching Grafana, invalid spec, or Grafana unreachable)
+          labels:
+            severity: warning

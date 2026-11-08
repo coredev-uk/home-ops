@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: grafana-postgres
+spec:
+  instances: 1
+  # One instance: a PDB would block every node drain (Talos upgrades). Drains move the primary instead.
+  enablePDB: false
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm
+  primaryUpdateStrategy: unsupervised
+  primaryUpdateMethod: restart
+  enableSuperuserAccess: false
+  storage:
+    size: 5Gi
+    storageClass: ceph-block
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  bootstrap:
+    initdb:
+      database: grafana
+      owner: grafana
+      secret:
+        name: grafana-postgres-credentials

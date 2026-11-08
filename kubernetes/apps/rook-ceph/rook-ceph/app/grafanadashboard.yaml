@@ -27,7 +27,12 @@ spec:
   datasources:
     - datasourceName: prometheus
       inputName: DS_PROMETHEUS
-  url: https://grafana.com/api/dashboards/5336/revisions/9/download
+  # grafana.com 5336 revision 9 (the latest, also Rook's own copy) hard-codes the datasource uid
+  # PBFA97CFB590B2093 in two panels, which this Grafana does not have; the vendored copy uses
+  # ${DS_PROMETHEUS} there like every other panel.
+  configMapRef:
+    name: ceph-osd-dashboard
+    key: ceph-osd.json
 ---
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1

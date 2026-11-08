@@ -8,6 +8,10 @@ spec:
   endpoints:
     - port: grafana
       honorLabels: true
+      metricRelabelings:
+        - action: drop
+          regex: "grafana_(http_response_size_bytes_bucket|feature_toggles_info|apiserver_request_(duration|sli_duration|slo_duration|body_size_bytes)_.*bucket)"
+          sourceLabels: [__name__]
   jobLabel: grafana
   namespaceSelector:
     matchNames:

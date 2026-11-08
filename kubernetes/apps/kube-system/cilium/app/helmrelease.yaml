@@ -65,6 +65,11 @@ spec:
       serviceMonitor:
         enabled: true
         trustCRDsExist: true
+        # Chart default relabelings (node label) are kept; metricRelabelings has no chart default.
+        metricRelabelings:
+          - action: drop
+            regex: "cilium_(hive_jobs_.*|k8s_client_api_latency_time_seconds_bucket|agent_api_process_time_seconds_bucket|k8s_workqueue_(queue|work)_duration_seconds_bucket|node_health_connectivity_latency_seconds_bucket|policy_selector_cache_operation_duration_seconds_bucket|datapath_conntrack_gc_duration_seconds_bucket|controllers_runs_duration_seconds_bucket)"
+            sourceLabels: [__name__]
     rollOutCiliumPods: true
     routingMode: native
     securityContext:

@@ -31,7 +31,7 @@ spec:
             # Built from coredev-uk/clarence main; the tag is the commit SHA, pinned here by hand.
             image: &image
               repository: ghcr.io/coredev-uk/clarence
-              tag: 4c6d1cf15facac8efff8de967e692a388e1f1a02@sha256:b67e7e74454f0165eaf11841bf35d6301b210161ed6573bad60dcbbdad0e6e49
+              tag: 92316fb161de8df4282af3d5cedc493a6c593d57@sha256:390a49aca0e3ba5bcf9efe350a9b0289a42a859e85cf924d33077fd149d44077
             args:
               - -policy=/etc/clarence/config/policy.json
               - -secrets=/etc/clarence/secret
@@ -58,8 +58,9 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-            # Checks keep a few repository snapshots in memory and render them with kustomize;
-            # CVE scans run the Trivy client in the same container, which unpacks image layers.
+            # Checks keep a few repository snapshots in memory and render them with kustomize
+            # and Helm (checks.helm); CVE scans run the Trivy client in the same container,
+            # which unpacks image layers.
             resources: &resources
               requests:
                 cpu: 20m
@@ -161,6 +162,10 @@ spec:
             # The daily report counts apps the zeroscaler HPA holds at zero as parked.
             - apiGroups: ["autoscaling"]
               resources: ["horizontalpodautoscalers"]
+              verbs: ["get", "list"]
+            # The daily report lists PVCs no kopiur SnapshotPolicy backs up (backups).
+            - apiGroups: ["kopiur.home-operations.com"]
+              resources: ["snapshotpolicies"]
               verbs: ["get", "list"]
       bindings:
         clarence:

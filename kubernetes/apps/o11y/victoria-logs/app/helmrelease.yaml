@@ -9,6 +9,20 @@ spec:
     kind: OCIRepository
     name: victoria-logs
   interval: 1h
+  # The chart has no per-dashboard switch. Its Vector dashboard needs metrics from the chart's
+  # Vector agent, which is not deployed, so none of its queries return data.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: GrafanaDashboard
+              name: victoria-logs-victoria-logs-single-vector-k8s-monitoring
+            patch: |
+              $patch: delete
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: victoria-logs-victoria-logs-single-vector-k8s-monitoring
   values:
     global:
       image:

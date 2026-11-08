@@ -6,6 +6,8 @@ metadata:
   name: flux-k8s-api-performance
 spec:
   allowCrossNamespaceImport: true
+  # Without this the operator caches the fetched JSON forever; main-branch URLs would never update
+  contentCacheDuration: 24h
   instanceSelector:
     matchLabels:
       dashboards: grafana
@@ -21,6 +23,8 @@ metadata:
   name: flux-performance
 spec:
   allowCrossNamespaceImport: true
+  # Without this the operator caches the fetched JSON forever; main-branch URLs would never update
+  contentCacheDuration: 24h
   instanceSelector:
     matchLabels:
       dashboards: grafana
@@ -36,6 +40,8 @@ metadata:
   name: flux-cluster
 spec:
   allowCrossNamespaceImport: true
+  # Without this the operator caches the fetched JSON forever; main-branch URLs would never update
+  contentCacheDuration: 24h
   instanceSelector:
     matchLabels:
       dashboards: grafana
@@ -51,6 +57,8 @@ metadata:
   name: flux-control-plane
 spec:
   allowCrossNamespaceImport: true
+  # Without this the operator caches the fetched JSON forever; main-branch URLs would never update
+  contentCacheDuration: 24h
   instanceSelector:
     matchLabels:
       dashboards: grafana

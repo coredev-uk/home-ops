@@ -10,6 +10,10 @@ spec:
     name: grafana-operator
   interval: 1h
   values:
+    # Watch unlabelled ConfigMaps so a configMapRef dashboard edit reconciles at once, not at the next resync
+    enforceCacheLabels: "off"
+    # Backstop for any missed event or a Grafana restart; 10m default felt like "didn't update"
+    defaultResyncPeriod: 2m
     dashboard:
       enabled: true
     serviceMonitor:

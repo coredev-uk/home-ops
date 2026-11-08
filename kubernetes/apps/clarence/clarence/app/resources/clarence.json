@@ -796,7 +796,7 @@
       "id": 43,
       "type": "table",
       "title": "Cluster health gate",
-      "description": "What holds every merge right now: nodes NotReady, unhealthy attached Longhorn volumes, tuppr upgrades not Completed, failing Kustomizations. A pull request touching the failing thing itself is exempt.",
+      "description": "What holds every merge right now: nodes NotReady, a CephCluster in a health the policy blocks on (health.cephBlockOn), tuppr upgrades not Completed, failing Kustomizations. A pull request touching the failing thing itself is exempt.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"

@@ -9,6 +9,48 @@ spec:
     kind: OCIRepository
     name: kube-prometheus-stack
   interval: 1h
+  # The chart has no switch for these dashboards short of turning off CoreDNS scraping (coreDns.enabled),
+  # so delete them after rendering: multicluster has no second cluster to show, and the CoreDNS one
+  # duplicates the kubernetes-coredns dashboard (grafana.com 15762).
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: ConfigMap
+              name: kube-prometheus-stack-k8s-resources-multicluster
+            patch: |
+              $patch: delete
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: kube-prometheus-stack-k8s-resources-multicluster
+          - target:
+              kind: GrafanaDashboard
+              name: kube-prometheus-stack-k8s-resources-multicluster
+            patch: |
+              $patch: delete
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: kube-prometheus-stack-k8s-resources-multicluster
+          - target:
+              kind: ConfigMap
+              name: kube-prometheus-stack-k8s-coredns
+            patch: |
+              $patch: delete
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: kube-prometheus-stack-k8s-coredns
+          - target:
+              kind: GrafanaDashboard
+              name: kube-prometheus-stack-k8s-coredns
+            patch: |
+              $patch: delete
+              apiVersion: grafana.integreatly.org/v1beta1
+              kind: GrafanaDashboard
+              metadata:
+                name: kube-prometheus-stack-k8s-coredns
   valuesFrom:
     - kind: ConfigMap
       name: flux-metrics-configmap
@@ -84,6 +126,13 @@ spec:
                   storage: 50Gi
     prometheus-node-exporter:
       fullnameOverride: node-exporter
+    nodeExporter:
+      # Talos nodes only: the AIX and macOS node dashboards can never have data
+      operatingSystems:
+        aix:
+          enabled: false
+        darwin:
+          enabled: false
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
     grafana:

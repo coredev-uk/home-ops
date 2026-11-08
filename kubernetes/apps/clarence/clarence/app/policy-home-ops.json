@@ -158,7 +158,6 @@
       "nix-cache/nix-cache-builder-store",
       "nix-cache/nix-cache-build-status",
       "o11y/alertmanager-kube-prometheus-stack-db-*",
-      "o11y/grafana-pvc",
       "o11y/prometheus-kube-prometheus-stack-db-*",
       "o11y/server-volume-victoria-logs-0"
     ]

@@ -118,7 +118,12 @@
       "externalGateway": "envoy-external",
       "oidcIssuer": "https://id.hera.ac"
     },
-    "talos": "talos"
+    "talos": "talos",
+    "helm": {
+      "timeoutSeconds": 180,
+      "maxReleases": 8,
+      "budgetSeconds": 300
+    }
   },
   "rightSizing": {
     "prometheusUrl": "http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090",
@@ -140,6 +145,25 @@
   },
   "vendor": {
     "everyHours": 24
+  },
+  "privatePins": {
+    "everyHours": 24,
+    "include": ["ghcr.io/coredev-uk/clarence"]
+  },
+  "backups": {
+    "ignore": [
+      "clarence/trivy-cache",
+      "default/home-assistant-cache",
+      "kandev-agents/*",
+      "nix-cache/nix-cache-builder-store",
+      "nix-cache/nix-cache-build-status",
+      "o11y/alertmanager-kube-prometheus-stack-db-*",
+      "o11y/grafana-pvc",
+      "o11y/prometheus-kube-prometheus-stack-db-*",
+      "o11y/server-volume-victoria-logs-0",
+      "o11y/vmalertmanager-*",
+      "o11y/vmsingle-victoria-metrics-cluster"
+    ]
   },
   "cleanup": {
     "renovate": ".renovaterc.json5",

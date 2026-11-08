@@ -11,6 +11,11 @@ spec:
   podMetricsEndpoints:
     - honorLabels: true
       port: http-prom
+      metricRelabelings:
+        # Dashboards read gotk_reconcile_duration_seconds_count/_sum, never the buckets.
+        - action: drop
+          regex: "gotk_reconcile_duration_seconds_bucket|workqueue_work_duration_seconds_bucket"
+          sourceLabels: [__name__]
   selector:
     matchExpressions:
       - key: app.kubernetes.io/component

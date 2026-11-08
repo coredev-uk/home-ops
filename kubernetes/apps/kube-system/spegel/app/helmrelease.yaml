@@ -12,6 +12,10 @@ spec:
   values:
     serviceMonitor:
       enabled: true
+      metricRelabelings:
+        - action: drop
+          regex: "http_(request_duration_seconds|response_size_bytes)_bucket|libp2p_.*_bucket"
+          sourceLabels: [__name__]
     spegel:
       containerdRegistryConfigPath: /etc/cri/conf.d/hosts
       mirroredRegistries:

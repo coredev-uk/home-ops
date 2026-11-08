@@ -13,6 +13,11 @@ spec:
     - port: metrics
       path: /stats/prometheus
       honorLabels: true
+      metricRelabelings:
+        # Unused envoy families (cluster update/lb internals, per-socket listener series, http1/2 detail).
+        - action: drop
+          regex: "envoy_cluster_(update_.*|lb_(local_cluster_not_ok|recalculate_zone_structures|subsets_.*|zone_.*)|external_.*|circuit_breakers_.*|http[12]_.*|assignment_.*|ssl_.*|upstream_rq_per_cx_bucket)|envoy_server_initialization_time_ms_bucket|envoy_listener_(admin_.*|connections_accepted_per_socket_event_bucket|downstream_cx_length_ms_bucket|http_downstream_rq_xx|pkts_.*|worker_downstream_cx_total)"
+          sourceLabels: [__name__]
   selector:
     matchLabels:
       app.kubernetes.io/component: proxy

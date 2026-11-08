@@ -77,10 +77,85 @@ spec:
               resources:
                 requests:
                   storage: 1Gi
+    # Metric trims below drop only families no dashboard, rule, alert, kromgo badge, adapter rule or
+    # Clarence query references. Overriding metricRelabelings replaces the chart's default list, so the
+    # defaults are restated first.
+    kubeApiServer:
+      serviceMonitor:
+        metricRelabelings:
+          # chart default, restated
+          - action: drop
+            regex: (etcd_request|apiserver_request_slo|apiserver_request_sli|apiserver_request)_duration_seconds_bucket;(0\.15|0\.2|0\.3|0\.35|0\.4|0\.45|0\.6|0\.7|0\.8|0\.9|1\.25|1\.5|1\.75|2|3|3\.5|4|4\.5|6|7|8|9|15|20|40|45|50)(\.0)?
+            sourceLabels: [__name__, le]
+          # Unused apiserver histograms/counters: ~163k of the ~200k series this job produced.
+          - action: drop
+            regex: "apiserver_(watch_events_.*|watch_list_.*|watch_cache_.*|storage_(list_.*|consistency_checks_total|events_received_total|transformation_duration_seconds_bucket)|request_body_size_bytes_.*|response_sizes_.*|flowcontrol_.*|admission_webhook_.*|admission_step_.*|init_events_total|selfrequest_total|resource_objects|resource_size_estimate_bytes|request_sli_duration_seconds_sum|request_filter_duration_seconds_bucket|watch_events_total)|etcd_(request_duration_seconds_.*|requests_total|bookmark_total)|(informer_(processing_latency_seconds_.*|queued_items|store_resource_version)|workqueue_work_duration_seconds_bucket|kubernetes_feature_enabled|apiextensions_openapi_v[23]_regeneration_count|watch_cache_capacity|rest_client_(request|response)_size_bytes_bucket|node_authorizer_graph_actions_duration_seconds_bucket|field_validation_request_duration_seconds_bucket)"
+            sourceLabels: [__name__]
+    kubelet:
+      serviceMonitor:
+        # /metrics/probes only carries prober_* series, none of which are used.
+        probes: false
+        # Chart default is 10s; every rule and dashboard reads cAdvisor through rate()[5m] or longer.
+        cAdvisorInterval: 30s
+        metricRelabelings:
+          # chart default, restated
+          - action: drop
+            regex: (csi_operations|storage_operation_duration)_seconds_bucket;(0.25|2.5|15|25|120|600)(\.0)?
+            sourceLabels: [__name__, le]
+          - action: drop
+            regex: "kubernetes_feature_enabled|kubelet_(http_requests_duration_seconds_bucket|image_pull_duration_seconds_bucket|container_log_filesystem_used_bytes|volume_metric_collection_duration_seconds_bucket|pod_start_(total|sli)_duration_seconds_bucket)|(csi_operations|volume_operation_total)_seconds_bucket|rest_client_(rate_limiter_duration_seconds|request_size_bytes|response_size_bytes)_bucket|dra_operations_duration_seconds_bucket|workqueue_work_duration_seconds_bucket"
+            sourceLabels: [__name__]
+        cAdvisorMetricRelabelings:
+          # chart defaults, restated
+          - action: drop
+            regex: "container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)"
+            sourceLabels: [__name__]
+          - action: drop
+            regex: "container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)"
+            sourceLabels: [__name__]
+          - action: drop
+            regex: "container_memory_mapped_file"
+            sourceLabels: [__name__]
+          - action: drop
+            regex: "container_(file_descriptors|tasks_state|threads_max)"
+            sourceLabels: [__name__]
+          - action: drop
+            regex: "container_memory_failures_total;hierarchy"
+            sourceLabels: [__name__, scope]
+          - action: drop
+            regex: "container_network_.*;(cali|cilium|cni|lxc|nodelocaldns|tunl).*"
+            sourceLabels: [__name__, interface]
+          - action: drop
+            regex: "container_spec.*"
+            sourceLabels: [__name__]
+          - action: drop
+            regex: ".+;"
+            sourceLabels: [id, pod]
+          # Unused cAdvisor families (blkio, PSI pressure, memory events/failcnt, process counts...).
+          - action: drop
+            regex: "container_(blkio_device_usage_total|creation_time_seconds|health_state|memory_(events_.*|failures_total|failcnt|file_dirty_bytes|file_writeback_bytes|kernel_usage|max_usage_bytes|pgscan_total|pgsteal_total|total_active_file_bytes|total_inactive_file_bytes|workingset_refault_.*)|pressure_.*|processes|sockets|start_time_seconds|threads)"
+            sourceLabels: [__name__]
+    kubeScheduler:
+      serviceMonitor:
+        metricRelabelings:
+          - action: drop
+            regex: "scheduler_(plugin_execution_duration_seconds_.*|event_handling_duration_seconds_.*|queueing_hint_execution_duration_seconds_bucket|framework_extension_point_duration_seconds_bucket|plugin_evaluation_total)|informer_processing_latency_seconds_.*|rest_client_(rate_limiter_duration|request_size_bytes|response_size_bytes)_.*bucket|workqueue_work_duration_seconds_bucket|kubernetes_feature_enabled"
+            sourceLabels: [__name__]
+    kubeControllerManager:
+      serviceMonitor:
+        metricRelabelings:
+          - action: drop
+            regex: "informer_processing_latency_seconds_bucket|rest_client_(rate_limiter_duration_seconds|request_size_bytes|response_size_bytes)_bucket|workqueue_work_duration_seconds_bucket|kubernetes_feature_enabled"
+            sourceLabels: [__name__]
     kubeEtcd:
       service:
         selector:
           component: kube-apiserver # etcd runs on control plane nodes
+      serviceMonitor:
+        metricRelabelings:
+          - action: drop
+            regex: "etcd_(server_apply_duration_seconds_bucket|server_request_duration_seconds_bucket|server_range_duration_seconds_bucket|debugging_lease_ttl_total_bucket)|grpc_server_msg_(received|sent)_total"
+            sourceLabels: [__name__]
     kubeProxy:
       enabled: false
     prometheus:
@@ -92,6 +167,12 @@ spec:
           parentRefs:
             - name: envoy-internal
               namespace: network
+      serviceMonitor:
+        metricRelabelings:
+          # Prometheus's own unused histograms and dialer metrics.
+          - action: drop
+            regex: "prometheus_target_sync_length_histogram_seconds_.*|prometheus_target_sync_length_seconds|prometheus_http_(request_duration_seconds|response_size_bytes)_bucket|net_conntrack_dialer_.*"
+            sourceLabels: [__name__]
       prometheusSpec:
         externalUrl: https://prometheus.hera.ac
         podMonitorSelectorNilUsesHelmValues: false
@@ -126,6 +207,13 @@ spec:
                   storage: 50Gi
     prometheus-node-exporter:
       fullnameOverride: node-exporter
+      prometheus:
+        monitor:
+          metricRelabelings:
+            # NIC link-state/identity and NFS request series nothing reads.
+            - action: drop
+              regex: "node_(nfs_requests_total|network_(address_assign_type|carrier_changes_total|carrier_up_changes_total|device_id|flags|iface_id|iface_link|iface_link_mode|info|net_dev_group|protocol_type|transmit_queue_length|name_assign_type|dormant)|cpu_scaling_governor)"
+              sourceLabels: [__name__]
     nodeExporter:
       # Talos nodes only: the AIX and macOS node dashboards can never have data
       operatingSystems:
@@ -135,6 +223,9 @@ spec:
           enabled: false
     kube-state-metrics:
       fullnameOverride: kube-state-metrics
+      # Denied at the source so kube-state-metrics stops rendering unused families (one anchored regex).
+      metricDenylist:
+        - "kube_replicaset_(created|status_.*|spec_replicas|metadata_generation)|kube_pod_(tolerations|created|ips|restart_policy|start_time|status_initialized_time|status_scheduled_time|status_ready_time|status_container_ready_time|service_account|scheduler|init_container_.*)|kube_pod_container_state_started|kube_secret_(type|created|metadata_resource_version|owner)|kube_persistentvolumeclaim_(status_.*|created|resource_requests_storage_bytes)|kube_persistentvolume_(claim_ref|info|capacity_bytes|created|volume_mode|access_mode)|kube_endpointslice_.*|kube_(service|configmap)_created|kube_service_spec_type|kube_configmap_metadata_resource_version|kube_deployment_(owner|created|status_replicas|status_replicas_ready|status_terminating_replicas|spec_paused|spec_strategy_.*)|kube_volumeattachment_.*|kube_lease_.*|kube_job_(complete|info|created|spec_.*|status_succeeded|status_ready|status_completion_time)|kube_horizontalpodautoscaler_(status_condition|info|metadata_generation|spec_target_metric|status_target_metric|created)"
     grafana:
       enabled: false
       forceDeployDashboards: true

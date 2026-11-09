@@ -7,6 +7,11 @@ metadata:
   labels:
     dashboards: grafana
 spec:
+  # Pinned so Renovate keeps it current: left unset, the operator wrote the version it defaulted
+  # to when this CR was created (12.4.1) into spec.version and Grafana never moved on.
+  # The grafana-image-mirror policy rewrites docker.io/grafana to mirror.gcr.io.
+  # renovate: datasource=docker depName=docker.io/grafana/grafana
+  version: 13.3.0
   config:
     analytics:
       check_for_updates: "false"

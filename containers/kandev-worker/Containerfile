@@ -61,11 +61,6 @@ COPY --chmod=0755 gh /usr/local/bin/gh
 #   on a next prompt an unattended task never gets), puts worktrees in the writable layer (the
 #   default sits beside the checkout, at /worktrees) and runs at most three children at once.
 # - AGENTS.md: what the pod is and how to work in it, for every repository.
-# - mcp.json: Kandev's MCP tools (task title, plan, questions) from the agentctl instance in this
-#   pod. Kandev only writes .pi/mcp.json when it knows a standalone agentctl port, which a
-#   Kubernetes task has none of ("skipping project MCP config: agentctl instance port
-#   unavailable"). A pod runs one instance, on AGENTCTL_INSTANCE_PORT_BASE (41001). A project
-#   .pi/mcp.json, when Kandev writes one, overrides this entry.
 # Pi writes its sessions and trust.json here too: the pod's writable layer, kept across Stop.
 COPY --chown=1000:1000 pi/ /opt/pi/agent/
 

@@ -31,11 +31,10 @@ spec:
         containers:
           app:
             image:
-              # Kandev 0.98.0 with Pi offered on remote executors (containers/kandev). 0.99.0 and
-              # 0.99.1 fail every Pi session (github.com/kdlbs/kandev/issues/5090);
-              # .renovaterc.json5 skips them. Each Kandev workflow run's summary names its build.
+              # Kandev 0.100.0 with Pi offered on remote executors (containers/kandev). Each Kandev
+              # workflow run's summary names its build.
               repository: ghcr.io/coredev-uk/kandev
-              tag: 097cb13129bd1b57a4bef173d1cc7fd4816b22a5@sha256:b4f3f3d978bfdfee62ebc6ee9cbd8f19c7d107bb7d32c53f898214aca61ac38c
+              tag: 24977ae2e3923f02d8d2b13235967b176ac4e549@sha256:6cf6050b95c68ffed117289bfa3d686b2bbfb0cfde0d2b813bd3074107af89b0
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info

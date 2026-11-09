@@ -4,7 +4,7 @@
 # profiles"). The backend runs those tasks; only the dialog filters them. Pi's task pods get
 # their credentials from the executor profile's environment instead.
 # Drop this image for upstream's once github.com/kdlbs/kandev/pull/4767 (Pi remote credentials)
-# ships in a release that also fixes github.com/kdlbs/kandev/issues/5090.
+# ships; 0.100.0 still declares none.
 FROM ghcr.io/kdlbs/kandev:v0.100.0@sha256:5803ab0017040b5d00921f995c37eb9f8513d12e600eed09551e63ccff4f2a38 AS kandev
 
 # In the minified bundle, evalAgentCompat (apps/web/lib/agent-executor-compat.ts) returns

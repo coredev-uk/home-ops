@@ -62,12 +62,24 @@ template:
           # ownership. The image's /etc/gitconfig trusts it too, but Kandev runs some git commands
           # with GIT_CONFIG_NOSYSTEM=1, and HOME is Kandev's. Kandev merges these entries with
           # the ones it sets.
+          # Commits are authored by Cliffe, the bot-cliffe GitHub App's bot user (id 353538383),
+          # whose noreply address links them to its avatar. Nothing else sets an identity: the
+          # executor profile has none and Kandev picks HOME per session, so `git commit` failed
+          # with "Author identity unknown". These entries outrank the checkout's .git/config.
           - name: GIT_CONFIG_COUNT
-            value: "1"
+            value: "3"
           - name: GIT_CONFIG_KEY_0
             value: safe.directory
           - name: GIT_CONFIG_VALUE_0
             value: /workspace
+          - name: GIT_CONFIG_KEY_1
+            value: user.name
+          - name: GIT_CONFIG_VALUE_1
+            value: bot-cliffe[bot]
+          - name: GIT_CONFIG_KEY_2
+            value: user.email
+          - name: GIT_CONFIG_VALUE_2
+            value: 353538383+bot-cliffe[bot]@users.noreply.github.com
         # The Nix store is in the container's writable layer, so a repository's devenv closure
         # (sona-go: GTK, GStreamer, sway) counts against ephemeral storage, not the workspace.
         # A sona-go task (devenv, go build, the UI tests) uses several GiB: requesting 4Gi keeps

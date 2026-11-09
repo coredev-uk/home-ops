@@ -113,9 +113,10 @@ spec:
         parentRefs:
           - name: envoy-kandev
             namespace: network
-      # Task pods redeem GitHub credential leases here and cannot sign in:
-      # securitypolicy-broker.yaml lifts Pocket ID for this path alone, and Kandev checks the
-      # lease itself.
+      # Task pods redeem and reissue GitHub credential leases here and cannot sign in:
+      # securitypolicy-broker.yaml lifts Pocket ID for these paths alone, and Kandev checks the
+      # lease itself. Kandev hands task pods the /api/v1/git broker URL; /api/v1/github serves
+      # the same handlers. Each prefix holds only resolve and reissue.
       broker:
         hostnames:
           - "{{ .Release.Name }}.hera.ac"
@@ -125,8 +126,11 @@ spec:
         rules:
           - matches:
               - path:
-                  type: Exact
-                  value: /api/v1/github/credentials/resolve
+                  type: PathPrefix
+                  value: /api/v1/git/credentials/
+              - path:
+                  type: PathPrefix
+                  value: /api/v1/github/credentials/
             backendRefs:
               - identifier: app
                 port: *port

@@ -40,6 +40,9 @@ RUN apt-get update \
  && git config --system core.excludesFile /etc/gitignore-agent \
  && git config --system --add safe.directory /workspace
 
+# Lets Kandev's Create PR use the session's GitHub credentials: see the script.
+COPY --chmod=0755 gh /usr/local/bin/gh
+
 # Pi's agent directory (PI_CODING_AGENT_DIR below), so every task starts with these settings
 # rather than an empty, memory-backed HOME:
 # - settings.json: Claude through pi-claude-bridge (claude-bridge/claude-opus-5-5), which runs

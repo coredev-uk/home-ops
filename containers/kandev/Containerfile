@@ -5,7 +5,7 @@
 # their credentials from the executor profile's environment instead.
 # Drop this image for upstream's once github.com/kdlbs/kandev/pull/4767 (Pi remote credentials)
 # ships in a release that also fixes github.com/kdlbs/kandev/issues/5090.
-FROM ghcr.io/kdlbs/kandev:0.98.0@sha256:f9aab231d3b3d3c09b0cfd247c8aa007bac2bc0788d1ae776af79c5307bbf628 AS kandev
+FROM ghcr.io/kdlbs/kandev:v0.100.0@sha256:5803ab0017040b5d00921f995c37eb9f8513d12e600eed09551e63ccff4f2a38 AS kandev
 
 # In the minified bundle, evalAgentCompat (apps/web/lib/agent-executor-compat.ts) returns
 # `{ok:!1,reason:`no-spec`}` for an agent without a remote-credentials entry; this makes it

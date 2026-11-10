@@ -62,10 +62,9 @@ spec:
             securityContext:
               privileged: true
             # Kata sizes the VM from the limits: 5 vCPUs and 10GiB, for evaluation plus two
-            # parallel builds of two cores each (resources/nix.conf). Requests stay minimal: the
-            # big builds follow the flake-update pull request, opened at 23:30 UTC, so they run
-            # overnight when the nodes are idle, and the requested CPU and memory are close to
-            # full on every node (the RuntimeClass adds 250m and 2304Mi on top).
+            # parallel builds of up to four cores each (resources/nix.conf). Requests stay minimal:
+            # the big builds follow the flake-update pull request, opened at 23:30 UTC, so they run
+            # overnight when the nodes are idle (the RuntimeClass adds 250m and 2304Mi on top).
             resources:
               requests:
                 cpu: 100m

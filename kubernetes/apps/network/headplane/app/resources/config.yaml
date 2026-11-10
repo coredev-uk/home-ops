@@ -20,7 +20,7 @@ integration:
 oidc:
   enabled: true
   issuer: https://id.hera.ac
-  client_id: headscale
+  client_id: d67e904f-d1ea-401b-9112-52731878fd70 # Pocket ID client "Headscale", shared with Headscale
   client_secret_path: /etc/headplane/secrets/oidc_client_secret
   use_pkce: true
   scope: "openid email profile"

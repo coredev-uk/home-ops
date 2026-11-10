@@ -99,6 +99,18 @@ def collect_cache(m):
           os.path.getsize(ATTIC_DB))
 
 
+def kind_of(ref, branch):
+    """kind and input labels of a branch: main; landing (flake-update, the passing flake update
+    trials merged together); trial (flake-update/<input>, one input's nightly update); pr."""
+    if ref == "main":
+        return {"kind": "main", "input": ""}
+    if branch == "flake-update":
+        return {"kind": "landing", "input": ""}
+    if branch and branch.startswith("flake-update/"):
+        return {"kind": "trial", "input": branch.removeprefix("flake-update/")}
+    return {"kind": "pr", "input": ""}
+
+
 def collect_build(m):
     if not os.path.exists(BUILD_STATUS):
         return
@@ -124,24 +136,39 @@ def collect_build(m):
     m.add("nix_cache_build_last_success_timestamp_seconds", "gauge",
           "When a builder run last built everything it set out to.", status.get("last_success"))
     for ref, result in status.get("refs", {}).items():
-        labels = {"ref": ref}
+        labels = {"ref": ref, **kind_of(ref, result.get("branch"))}
         m.add("nix_cache_ref_build_success", "gauge",
               "1 if the branch's latest built commit built every target, 0 if not.",
               1 if result.get("success") else 0, labels)
         m.add("nix_cache_ref_build_timestamp_seconds", "gauge",
               "When the branch's latest built commit finished building.", result.get("finished"),
               labels)
+        if result.get("started") is not None and result.get("finished") is not None:
+            m.add("nix_cache_ref_build_duration_seconds", "gauge",
+                  "How long the branch's latest built commit took to build.",
+                  result["finished"] - result["started"], labels)
         m.add("nix_cache_ref_failing_since_timestamp_seconds", "gauge",
               "When the branch's builds started failing; absent while its latest one succeeded.",
               result.get("failing_since"), labels)
         for target, target_result in result.get("targets", {}).items():
-            labels = {"ref": ref, "target": target}
+            target_labels = {**labels, "target": target}
             m.add("nix_cache_build_target_success", "gauge",
                   "1 if the target built at the branch's latest built commit, 0 if it failed.",
-                  1 if target_result.get("success") else 0, labels)
+                  1 if target_result.get("success") else 0, target_labels)
             m.add("nix_cache_build_closure_bytes", "gauge",
                   "Closure size of the target at the branch's latest built commit.",
-                  target_result.get("closure_bytes"), labels)
+                  target_result.get("closure_bytes"), target_labels)
+    # Every commit result since the builder's first run with totals, by kind ("trial/<input>"
+    # for a trial); kept in status.json, so they only ever grow.
+    for key, total in status.get("totals", {}).items():
+        kind, _, flake_input = key.partition("/")
+        labels = {"kind": kind, "input": flake_input}
+        for result in ("success", "failure"):
+            m.add("nix_cache_commit_builds_total", "counter",
+                  "Commits built, by kind of branch and result.", total.get(result, 0),
+                  {**labels, "result": result})
+        m.add("nix_cache_commit_build_seconds_total", "counter",
+              "Seconds spent building commits, by kind of branch.", total.get("seconds", 0), labels)
     for name, modified in status.get("inputs", {}).items():
         m.add("nix_cache_flake_input_last_modified_timestamp_seconds", "gauge",
               "Commit time of each flake input in the locked revision.", modified,

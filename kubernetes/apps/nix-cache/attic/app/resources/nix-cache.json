@@ -81,7 +81,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -157,7 +159,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -218,7 +222,9 @@
         "orientation": "auto",
         "textMode": "name",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -287,7 +293,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -355,7 +363,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -424,7 +434,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -690,7 +702,9 @@
         "namePlacement": "left",
         "sizing": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -843,6 +857,949 @@
       ]
     },
     {
+      "id": 32,
+      "type": "row",
+      "title": "Flake Updates",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "panels": []
+    },
+    {
+      "id": 33,
+      "type": "stat",
+      "title": "Open Trials",
+      "description": "Nightly flake update trials (flake-update/<input>: one input's update, a draft pull request on coredev-uk/nixos that never merges) the builder has built and that are still open.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 28
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(nix_cache_ref_build_success{kind=\"trial\"})",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "type": "stat",
+      "title": "Failing Trials",
+      "description": "Open trials whose latest commit didn't build. Each is redone nightly; the others land without them.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 28
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "count(nix_cache_ref_build_success{kind=\"trial\"} == 0)",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "type": "stat",
+      "title": "Landing",
+      "description": "The flake-update pull request: the passing trials git-merged together, checked as a whole, merging itself once its checks pass. None open between nights.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Failing",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Built",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none",
+          "noValue": "None open"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 28
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(nix_cache_ref_build_success{kind=\"landing\"})",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "type": "stat",
+      "title": "Build Success (7d)",
+      "description": "Share of the commits built in the last 7 days (main, trials, landing and other pull requests) that built every target.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 28
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (increase(nix_cache_commit_builds_total{result=\"success\"}[7d])) / sum (increase(nix_cache_commit_builds_total{}[7d]))",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "type": "stat",
+      "title": "Trial Success (30d)",
+      "description": "Share of trial commits in the last 30 days that built: how often one input's update works on its own.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 28
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (increase(nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"}[30d])) / sum (increase(nix_cache_commit_builds_total{kind=\"trial\"}[30d]))",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "type": "stat",
+      "title": "Landing Success (30d)",
+      "description": "Share of landing commits in the last 30 days that built. Below 100% means trials that passed alone broke together.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 28
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (increase(nix_cache_commit_builds_total{kind=\"landing\",result=\"success\"}[30d])) / sum (increase(nix_cache_commit_builds_total{kind=\"landing\"}[30d]))",
+          "legendFormat": "__auto",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "type": "state-timeline",
+      "title": "Updates",
+      "description": "Whether each open trial (by input) and the landing pull request built at their latest commit. A trial's row ends when it lands or closes.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "failed",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "built",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "options": {
+        "showValue": "never",
+        "mergeValues": true,
+        "alignValue": "left",
+        "rowHeight": 0.8,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (input) (label_replace(nix_cache_ref_build_success{kind=~\"trial|landing\"}, \"input\", \"landing\", \"kind\", \"landing\"))",
+          "legendFormat": "{{input}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "type": "table",
+      "title": "Failing Updates",
+      "description": "Open trials and the landing pull request whose builds fail, and for how long: kept across the nightly redos, so a long time means the input has been broken upstream since.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 259200
+              }
+            ]
+          },
+          "noValue": "None failing"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Failing for"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Failing for",
+            "desc": true
+          }
+        ],
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "fields": ""
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "time() - max by (input, ref) (label_replace(nix_cache_ref_failing_since_timestamp_seconds{kind=~\"trial|landing\"}, \"input\", \"landing\", \"kind\", \"landing\"))",
+          "legendFormat": "__auto",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "input": 0,
+              "ref": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "input": "Input",
+              "ref": "Pull request",
+              "Value": "Failing for"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "type": "bargauge",
+      "title": "Trial Success by Input (30d)",
+      "description": "Per input, the share of its trial commits in the last 30 days that built. Inputs with no trial in that time are absent.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.8
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 40
+      },
+      "options": {
+        "displayMode": "basic",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "left",
+        "sizing": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (input) (increase(nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"}[30d])) / sum by (input) (increase(nix_cache_commit_builds_total{kind=\"trial\"}[30d]))",
+          "legendFormat": "{{input}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 42,
+      "type": "timeseries",
+      "title": "Success Rate by Kind",
+      "description": "Share of commits that built over the trailing 7 days, by kind of branch: main, trial (one input), landing (the passing trials together), pr (other pull requests).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "stepAfter",
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 40
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (kind) (increase(nix_cache_commit_builds_total{result=\"success\"}[7d])) / sum by (kind) (increase(nix_cache_commit_builds_total{}[7d]))",
+          "legendFormat": "{{kind}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "type": "timeseries",
+      "title": "Build Time by Kind",
+      "description": "Builder time spent building commits each day, by kind of branch. Trials of nixpkgs or unstable that miss the public caches dominate.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "stepAfter",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 40
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (kind) (increase(nix_cache_commit_build_seconds_total[1d]))",
+          "legendFormat": "{{kind}}",
+          "refId": "A",
+          "interval": "1d"
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "type": "timeseries",
+      "title": "Commits Built per Day",
+      "description": "Commits the builder built each day, by result.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "stepAfter",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "unit": "none",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (result) (increase(nix_cache_commit_builds_total[1d]))",
+          "legendFormat": "{{result}}",
+          "refId": "A",
+          "interval": "1d"
+        }
+      ]
+    },
+    {
+      "id": 45,
+      "type": "bargauge",
+      "title": "Latest Build Time by Branch",
+      "description": "How long the latest built commit of each branch took: main, each open trial (by input), the landing pull request, other pull requests (pr-N).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${promDatasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "s",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1800
+              },
+              {
+                "color": "red",
+                "value": 3600
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "options": {
+        "displayMode": "basic",
+        "orientation": "horizontal",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "namePlacement": "left",
+        "sizing": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${promDatasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (name) (label_replace(label_replace(label_replace(nix_cache_ref_build_duration_seconds, \"name\", \"$1\", \"ref\", \"(.*)\"), \"name\", \"$1\", \"input\", \"(.+)\"), \"name\", \"landing\", \"kind\", \"landing\"))",
+          "legendFormat": "{{name}}",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
       "id": 14,
       "type": "row",
       "title": "Cache",
@@ -851,7 +1808,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 56
       },
       "panels": []
     },
@@ -887,7 +1844,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 28
+        "y": 57
       },
       "options": {
         "colorMode": "background",
@@ -896,7 +1853,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -947,7 +1906,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 28
+        "y": 57
       },
       "options": {
         "colorMode": "background",
@@ -956,7 +1915,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -1007,7 +1968,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 28
+        "y": 57
       },
       "options": {
         "colorMode": "background",
@@ -1016,7 +1977,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -1068,7 +2031,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 28
+        "y": 57
       },
       "options": {
         "colorMode": "background",
@@ -1077,7 +2040,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -1136,7 +2101,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 28
+        "y": 57
       },
       "options": {
         "colorMode": "background",
@@ -1145,7 +2110,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -1196,7 +2163,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 28
+        "y": 57
       },
       "options": {
         "colorMode": "background",
@@ -1205,7 +2172,9 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         }
@@ -1259,7 +2228,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 61
       },
       "options": {
         "legend": {
@@ -1330,7 +2299,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 61
       },
       "options": {
         "legend": {
@@ -1365,7 +2334,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 69
       },
       "panels": []
     },
@@ -1404,7 +2373,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 70
       },
       "options": {
         "legend": {
@@ -1465,7 +2434,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 70
       },
       "options": {
         "legend": {
@@ -1500,7 +2469,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 78
       },
       "panels": []
     },
@@ -1539,7 +2508,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 50
+        "y": 79
       },
       "options": {
         "legend": {
@@ -1600,7 +2569,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 50
+        "y": 79
       },
       "options": {
         "legend": {
@@ -1661,7 +2630,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 50
+        "y": 79
       },
       "options": {
         "legend": {
@@ -1722,7 +2691,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 58
+        "y": 87
       },
       "options": {
         "legend": {
@@ -1783,7 +2752,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 58
+        "y": 87
       },
       "options": {
         "legend": {
@@ -1822,7 +2791,11 @@
   ],
   "refresh": "5m",
   "schemaVersion": 40,
-  "tags": ["infrastructure", "nix", "cache"],
+  "tags": [
+    "infrastructure",
+    "nix",
+    "cache"
+  ],
   "templating": {
     "list": [
       {

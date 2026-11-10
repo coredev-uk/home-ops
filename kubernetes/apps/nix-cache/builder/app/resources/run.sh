@@ -124,7 +124,9 @@ next_phase() {
 }
 
 # Written on every exit once there is something to build, so a failed run is as visible as a
-# good one. refs keeps each branch's latest built commit: main, and the open pull requests.
+# good one. refs keeps each branch's latest built commit: main, and the open pull requests. A
+# failed one carries failing_since: when the branch's builds started failing, kept across its
+# commits (the nightly flake-update pull request is refreshed with a new one each night).
 store_mounted=false
 store_checked=false
 write_status() {
@@ -144,7 +146,11 @@ write_status() {
       last_success: (if $success then $finished else $prev.last_success end),
       commits_built: ($results | length),
       refs: ($heads | with_entries(.key as $ref | .value as $sha | .value =
-        (if $results[$sha] then $results[$sha] + {sha: $sha}
+        (if $results[$sha] then
+           $results[$sha] + {sha: $sha, failing_since:
+             (if $results[$sha].success then null
+              elif $old[$ref].success == false then ($old[$ref].failing_since // $old[$ref].finished)
+              else $results[$sha].finished end)}
          else ([$old[] | select(.sha == $sha)][0] // null) end))
         | with_entries(select(.value != null))),
       inputs: (if $inputs == {} then ($prev.inputs // {}) else $inputs end),

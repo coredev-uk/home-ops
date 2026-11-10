@@ -131,6 +131,9 @@ def collect_build(m):
         m.add("nix_cache_ref_build_timestamp_seconds", "gauge",
               "When the branch's latest built commit finished building.", result.get("finished"),
               labels)
+        m.add("nix_cache_ref_failing_since_timestamp_seconds", "gauge",
+              "When the branch's builds started failing; absent while its latest one succeeded.",
+              result.get("failing_since"), labels)
         for target, target_result in result.get("targets", {}).items():
             labels = {"ref": ref, "target": target}
             m.add("nix_cache_build_target_success", "gauge",

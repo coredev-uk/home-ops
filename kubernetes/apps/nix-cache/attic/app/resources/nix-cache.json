@@ -1138,7 +1138,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum (increase(nix_cache_commit_builds_total{result=\"success\"}[7d])) / sum (increase(nix_cache_commit_builds_total{}[7d]))",
+          "expr": "sum (nix_cache_commit_builds_total{result=\"success\"} - (nix_cache_commit_builds_total{result=\"success\"} offset 7d or nix_cache_commit_builds_total{result=\"success\"} * 0)) / sum (nix_cache_commit_builds_total - (nix_cache_commit_builds_total offset 7d or nix_cache_commit_builds_total * 0))",
           "legendFormat": "__auto",
           "refId": "A"
         }
@@ -1207,7 +1207,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum (increase(nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"}[30d])) / sum (increase(nix_cache_commit_builds_total{kind=\"trial\"}[30d]))",
+          "expr": "sum (nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"} - (nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"} offset 30d or nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"} * 0)) / sum (nix_cache_commit_builds_total{kind=\"trial\"} - (nix_cache_commit_builds_total{kind=\"trial\"} offset 30d or nix_cache_commit_builds_total{kind=\"trial\"} * 0))",
           "legendFormat": "__auto",
           "refId": "A"
         }
@@ -1245,7 +1245,8 @@
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "noValue": "No landings yet"
         },
         "overrides": []
       },
@@ -1276,7 +1277,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum (increase(nix_cache_commit_builds_total{kind=\"landing\",result=\"success\"}[30d])) / sum (increase(nix_cache_commit_builds_total{kind=\"landing\"}[30d]))",
+          "expr": "sum (nix_cache_commit_builds_total{kind=\"landing\",result=\"success\"} - (nix_cache_commit_builds_total{kind=\"landing\",result=\"success\"} offset 30d or nix_cache_commit_builds_total{kind=\"landing\",result=\"success\"} * 0)) / sum (nix_cache_commit_builds_total{kind=\"landing\"} - (nix_cache_commit_builds_total{kind=\"landing\"} offset 30d or nix_cache_commit_builds_total{kind=\"landing\"} * 0))",
           "legendFormat": "__auto",
           "refId": "A"
         }
@@ -1533,7 +1534,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (input) (increase(nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"}[30d])) / sum by (input) (increase(nix_cache_commit_builds_total{kind=\"trial\"}[30d]))",
+          "expr": "sum by (input) (nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"} - (nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"} offset 30d or nix_cache_commit_builds_total{kind=\"trial\",result=\"success\"} * 0)) / sum by (input) (nix_cache_commit_builds_total{kind=\"trial\"} - (nix_cache_commit_builds_total{kind=\"trial\"} offset 30d or nix_cache_commit_builds_total{kind=\"trial\"} * 0))",
           "legendFormat": "{{input}}",
           "refId": "A",
           "instant": true,
@@ -1597,7 +1598,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (kind) (increase(nix_cache_commit_builds_total{result=\"success\"}[7d])) / sum by (kind) (increase(nix_cache_commit_builds_total{}[7d]))",
+          "expr": "sum by (kind) (nix_cache_commit_builds_total{result=\"success\"} - (nix_cache_commit_builds_total{result=\"success\"} offset 7d or nix_cache_commit_builds_total{result=\"success\"} * 0)) / sum by (kind) (nix_cache_commit_builds_total - (nix_cache_commit_builds_total offset 7d or nix_cache_commit_builds_total * 0))",
           "legendFormat": "{{kind}}",
           "refId": "A"
         }
@@ -1658,7 +1659,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (kind) (increase(nix_cache_commit_build_seconds_total[1d]))",
+          "expr": "sum by (kind) (nix_cache_commit_build_seconds_total - (nix_cache_commit_build_seconds_total offset 1d or nix_cache_commit_build_seconds_total * 0))",
           "legendFormat": "{{kind}}",
           "refId": "A",
           "interval": "1d"
@@ -1720,7 +1721,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (result) (increase(nix_cache_commit_builds_total[1d]))",
+          "expr": "sum by (result) (nix_cache_commit_builds_total - (nix_cache_commit_builds_total offset 1d or nix_cache_commit_builds_total * 0))",
           "legendFormat": "{{result}}",
           "refId": "A",
           "interval": "1d"

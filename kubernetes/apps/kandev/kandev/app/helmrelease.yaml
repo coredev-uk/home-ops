@@ -86,9 +86,9 @@ spec:
             resources:
               requests:
                 cpu: 50m
-                memory: 256Mi
+                memory: 1344Mi
               limits:
-                memory: 2Gi
+                memory: 2880Mi
     defaultPodOptions:
       # The image's entrypoint only chowns /data as root; as UID 1000 it starts Kandev directly
       # and fsGroup makes the volume writable.

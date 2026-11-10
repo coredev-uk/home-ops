@@ -136,13 +136,14 @@ write_status() {
   fi
   "$JQ" -n \
     --argjson started "$started" --argjson finished "$(date +%s)" \
-    --argjson success "$([ "$rc" = 0 ] && echo true || echo false)" \
+    --argjson ran "$([ "$rc" = 0 ] && echo true || echo false)" \
     --arg phase "$phase" --argjson durations "$durations" --argjson inputs "$inputs" \
     --argjson prev "$prev" --argjson heads "$heads" --argjson results "$results" \
     --argjson store_size "${size:-0}" --argjson store_used "${used:-0}" \
     '($prev.refs // {}) as $old
+    | ($ran and ([$results[].success] | all)) as $success
     | {started: $started, finished: $finished, success: $success,
-      failed_phase: (if $success then null else $phase end), durations: $durations,
+      failed_phase: (if $success then null elif $ran then "build" else $phase end), durations: $durations,
       last_success: (if $success then $finished else $prev.last_success end),
       commits_built: ($results | length),
       refs: ($heads | with_entries(.key as $ref | .value as $sha | .value =
@@ -305,17 +306,28 @@ if [ ! -e /proc/sys/fs/binfmt_misc/qemu-i386 ]; then
 fi
 
 # --- build each commit ------------------------------------------------------------------
+# A commit that doesn't build is a result, reported on the commit and in status.json; the run
+# still succeeds, so KubeJobFailed means the builder itself is in trouble. Faults of the builder
+# (fetching the commit, pushing to Attic) record no result, so the next run tries the commit
+# again, and fail the run.
 attic_ready=false
-all_ok=true
+fault=""
 
 # commit_result COMMIT SUCCESS TARGETS DESCRIPTION: record it for status.json and report it on
 # the commit (GitHub cuts descriptions at 140 characters).
 commit_result() {
   results=$("$JQ" -c --arg c "$1" --argjson s "$2" --argjson t "$3" --argjson f "$(date +%s)" \
     '.[$c] = {success: $s, finished: $f, targets: $t}' <<<"$results")
-  [ "$2" = true ] || all_ok=false
   log "$1: $4"
   set_status "$1" "$([ "$2" = true ] && echo success || echo failure)" "${4:0:140}"
+}
+
+# builder_fault COMMIT PHASE DESCRIPTION: leave the commit unbuilt (and its status pending) for
+# the next run, and fail this one in PHASE.
+builder_fault() {
+  fault=$2
+  log "$1: $3"
+  set_status "$1" pending "${3:0:140}"
 }
 
 # push_outputs PATH...: whatever built goes to Attic, even when another target failed.
@@ -356,7 +368,7 @@ build_commit() {
   if ! { git init --quiet "$dir" &&
     git -C "$dir" fetch --quiet --depth 1 "$REPO_HTTPS" "$sha" &&
     git -C "$dir" checkout --quiet FETCH_HEAD; }; then
-    commit_result "$sha" false '{}' "Could not fetch the commit"
+    builder_fault "$sha" update "Couldn't fetch the commit; trying again on the next run"
     return
   fi
   if [ "$ref" = main ]; then
@@ -408,7 +420,7 @@ build_commit() {
   done
 
   if [ "${#outs[@]}" -gt 0 ] && ! push_outputs "${outs[@]}"; then
-    commit_result "$sha" false "$targets" "Built ${built[*]}, but the push to the binary cache failed"
+    builder_fault "$sha" push "Built ${built[*]}, but the push to the binary cache failed; trying again on the next run"
   elif [ "${#failed[@]}" -gt 0 ] || [ "$build_rc" != 0 ]; then
     commit_result "$sha" false "$targets" "Failed: ${failed[*]:-a dependency}; built and cached: ${built[*]:-none}"
   else
@@ -442,7 +454,7 @@ if [ $((used * 100 / size)) -ge 60 ]; then
   run nix store gc
 fi
 log "done"
-if [ "$all_ok" != true ]; then
-  next_phase build # reported as the failed phase
+if [ -n "$fault" ]; then
+  next_phase "$fault" # reported as the failed phase
   exit 1
 fi

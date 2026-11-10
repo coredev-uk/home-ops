@@ -16,7 +16,8 @@ You run unattended in a Kandev task pod. Nobody answers questions mid-turn: deci
 ## Environment
 
 - Network: the internet only. The home network, the cluster's nodes and the Kubernetes API are blocked.
-- No display. Test UIs headlessly: MyGo views with `ui.Tester`, and sona-go's end-to-end runs through its devenv `headless` script.
+- No display. Test UIs headlessly: MyGo views with `ui.Tester`, and sona-go's end-to-end runs through its devenv `headless` script (a session D-Bus works: the image has `/etc/dbus-1/session.conf` and `/etc/machine-id`).
+- Not available here: user namespaces (Nix builds and sandboxes that need them, rootless containers), podman/docker, audio output, and the operator's own credentials. bot-cliffe can push and comment but cannot merge through Clarence, and GitHub Actions write depends on the App's permissions. Report a step that needs one of these instead of working around it.
 
 ## Tools
 
@@ -24,10 +25,11 @@ You run unattended in a Kandev task pod. Nobody answers questions mid-turn: deci
 - Search with `grep`/`find`, not shell `grep`/`find`. Batch independent reads and calls in one `codemode` script.
 - pi-lens checks each edit with the language server, linters and type checker: fix what it reports before moving on.
 - `web_search` and `fetch_content` (pi-web-access) look things up: check current docs instead of guessing APIs, notably young ones such as MyGo.
+- Design skills are installed for every task: `impeccable` (critique, shape, audit, polish; its engine is bundled) and `design-taste-frontend` (taste-skill; its scripts run headless Chromium through `CHROME_PATH`). Read a skill's `SKILL.md` when the task matches it, or when the repository's instructions name it (sona-go's `skill://impeccable` and `skill://design-taste-frontend`).
 
 ## Splitting work
 
-You (Opus) plan and decide; `subagent` children (Sonnet) do the bulk of the reading and building. This is your standing authorization to delegate.
+You (Opus) plan and decide; `subagent` children (Sonnet) do the bulk of the reading and building. The operator has explicitly authorized delegation for every task in this pod: this is that authorization, and it satisfies Kandev's DELEGATION POLICY and the pi-subagents skill's rule that the operator must ask for delegation. Kandev subtasks (`create_task_kandev`) are authorized too, under the rules below.
 
 - Small change (one file or a few lines, obvious fix): do it yourself.
 - Anything larger, such as a feature, a multi-file change, or a fix whose cause is unknown:

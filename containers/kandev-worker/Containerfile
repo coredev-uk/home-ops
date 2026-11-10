@@ -6,7 +6,9 @@
 # (sona-go: GTK, GStreamer, sway for MyGo's headless tests), so one image serves them all and a
 # repository's pins decide its tools. Kandev installs the agent CLIs (Claude Code's and Pi's ACP
 # adapters) at launch, and injects agentctl, HOME (/run/kandev/home, memory-backed) and the
-# workspace mount, whose root is the repository checkout.
+# workspace mount, whose root is the repository checkout. It also carries what oh-my-pi has on the
+# operator's desktop and a task would otherwise lack: a session D-Bus, headless Chromium and the
+# design skills (impeccable, taste-skill).
 FROM ghcr.io/kdlbs/kandev:v0.100.0-universal@sha256:04a610bc9b3cae342a92001897025c746e88a92ed38d6af5b6eaab0f5ab10fbf
 
 LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
@@ -17,13 +19,25 @@ ARG NIX_VERSION=2.34.9
 ARG NIX_INSTALL_SHA256=a03ce2e9eaf4ea1560260b9a93e311dbaf589d28fb5c9318f8d9e768ee6339d8
 ARG NIXPKGS_REV=13e53762c5afaf384d4614e94527a9ccfafe41d0
 
+# The design skills, each a tag and its commit (the build fetches the commit; Renovate moves both:
+# .renovaterc.json5). impeccable's engine binary is the release its VERSION names, checked
+# against the engine-checksums.txt of the same commit.
+ARG IMPECCABLE_REF=skill-v4.8.2@035c8f319edd019936525a062fe99e83ca8d12c6
+ARG TASTE_SKILL_REF=v2.5.1@f6b76575f949707b4e3c37cd86cb44b0b98643e8
+
 USER root
 
 # The installer unpacks a .tar.xz. /nix belongs to the agent's user (UID 1000): one user, no
 # daemon, so the store is written directly.
 # sandbox: an unprivileged container has no user namespaces for Nix's build sandbox.
+# chromium: taste-skill's checks drive headless Chrome over CDP (CHROME_PATH below). Debian's
+# launcher reads /etc/chromium.d, where --no-sandbox is set: Chromium's own sandbox needs the user
+# namespaces the pod does not have, and the pod (non-root, no capabilities, its network policy) is
+# the boundary. fonts-liberation gives pages the metric-compatible core fonts.
+# D-Bus: Nix's dbus-daemon reads /etc/dbus-1/session.conf, and libdbus clients need a machine ID,
+# so dbus-run-session (sona-go's `tests` and `headless`) fails without both. One ID for the image.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends xz-utils \
+ && apt-get install -y --no-install-recommends xz-utils chromium fonts-liberation \
  && rm -rf /var/lib/apt/lists/* \
  && mkdir -m 0755 /nix /etc/nix \
  && chown 1000 /nix \
@@ -38,10 +52,42 @@ RUN apt-get update \
  && install -d -o 1000 -g 1000 /var/cache/agent /opt/pi/agent \
  && printf '%s\n' '/.pi/mcp.json' '/.kandev/' > /etc/gitignore-agent \
  && git config --system core.excludesFile /etc/gitignore-agent \
- && git config --system --add safe.directory /workspace
+ && git config --system --add safe.directory /workspace \
+ && printf '%s\n' 'export CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromium.d/kandev-no-sandbox \
+ && od -An -N16 -tx1 /dev/urandom | tr -d ' \n' > /etc/machine-id \
+ && echo >> /etc/machine-id
 
 # Lets Kandev's Create PR use the session's GitHub credentials: see the script.
 COPY --chmod=0755 gh /usr/local/bin/gh
+
+# The session bus configuration (see the file).
+COPY dbus-session.conf /etc/dbus-1/session.conf
+
+# The design skills, read-only at /opt/pi/skills (settings.json's skills): impeccable's Pi build
+# with its engine at the path its launcher tries first, and taste-skill under its skill name.
+RUN set -eu; \
+    fetch() { \
+      repo=$1; commit=${2#*@}; path=$3; dest=$4; \
+      mkdir -p "$dest"; \
+      curl -fsSL "https://codeload.github.com/$repo/tar.gz/$commit" \
+        | tar -xz -C "$dest" --strip-components="$(echo "$path" | awk -F/ '{print NF + 1}')" \
+            "${repo#*/}-$commit/$path"; \
+    }; \
+    fetch pbakaus/impeccable "$IMPECCABLE_REF" .pi/skills/impeccable /opt/pi/skills/impeccable; \
+    fetch Leonxlnx/taste-skill "$TASTE_SKILL_REF" skills/taste-skill /opt/pi/skills/design-taste-frontend; \
+    cd /opt/pi/skills/impeccable/scripts; \
+    engine=$(cat VERSION); \
+    sum=$(awk -v v="$engine" '$1 == v && $2 == "impeccable-linux-x64" { print $3 }' engine-checksums.txt); \
+    test -n "$sum"; \
+    mkdir -p bin/linux-x64; \
+    curl -fsSL -o bin/linux-x64/impeccable \
+      "https://github.com/pbakaus/impeccable/releases/download/engine-v${engine}/impeccable-linux-x64"; \
+    echo "${sum}  bin/linux-x64/impeccable" | sha256sum -c -; \
+    chmod 0755 bin/linux-x64/impeccable; \
+    IMPECCABLE_NO_TELEMETRY=1 ./impeccable engine-probe; \
+    grep -q '^name: impeccable$' /opt/pi/skills/impeccable/SKILL.md; \
+    grep -q '^name: design-taste-frontend$' /opt/pi/skills/design-taste-frontend/SKILL.md; \
+    chmod -R a+rX /opt/pi/skills
 
 # Pi's agent directory (PI_CODING_AGENT_DIR below), so every task starts with these settings
 # rather than an empty, memory-backed HOME:
@@ -49,7 +95,8 @@ COPY --chmod=0755 gh /usr/local/bin/gh
 #   Claude Code through the Agent SDK on Claude Code's own login. It also trusts the checkout
 #   (RPC mode skips untrusted project resources, and Kandev delivers its MCP tools as
 #   .pi/mcp.json), adds grep/find/ls plus Pi's built-in codemode and tool_search, loads the
-#   skills Kandev writes to ~/.pi/agent/skills, retries through provider overloads, and lists
+#   skills Kandev writes to ~/.pi/agent/skills and the design skills in /opt/pi/skills (above),
+#   retries through provider overloads, and lists
 #   Pi's packages: the bridge and the tools oh-my-pi ships with, pi-subagents (delegation and
 #   multi-agent workflows), rpiv-todo (a todo list, with its rpiv-i18n dependency),
 #   pi-web-access (web search and fetch; Exa needs no key) and pi-lens (LSP, linters, type
@@ -97,6 +144,8 @@ RUN set -eu; \
 # Pi: PI_SKIP_VERSION_CHECK keeps "new version" notices out of the chat (Kandev pins pi-acp),
 # and PI_CACHE_RETENTION=long asks for Anthropic's one-hour prompt cache, which outlives the
 # pauses while a task waits for review.
+# The design skills: taste-skill finds Chromium through CHROME_PATH, and impeccable's engine
+# sends no telemetry.
 ENV PATH=/nix/var/nix/profiles/agent/bin:$PATH \
     XDG_CACHE_HOME=/var/cache/agent/xdg \
     XDG_DATA_HOME=/var/cache/agent/share \
@@ -110,7 +159,9 @@ ENV PATH=/nix/var/nix/profiles/agent/bin:$PATH \
     PI_SKIP_VERSION_CHECK=1 \
     PI_TELEMETRY=0 \
     PI_CACHE_RETENTION=long \
-    PI_LENS_HOME=/var/cache/agent/pi-lens
+    PI_LENS_HOME=/var/cache/agent/pi-lens \
+    CHROME_PATH=/usr/bin/chromium \
+    IMPECCABLE_NO_TELEMETRY=1
 
 WORKDIR /workspace
 ENTRYPOINT []

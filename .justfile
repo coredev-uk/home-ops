@@ -27,21 +27,4 @@ log lvl msg *args:
 
 [private]
 template file *args:
-    # SECRETS_PROVIDER=proton-pass resolves the same op:// references from Proton Pass instead:
-    # vault/item/field -> pass://vault/item/field, vault/item/section/field -> .../section.field.
-    # pass-cli inject only reads references wrapped in double braces, hence the rewrite.
-    proton_inject() {
-        sed -E \
-            -e 's#op://([^/[:space:]]+)/([^/[:space:]]+)/([^/[:space:]]+)/([^/[:space:]]+)#{{{{ pass://\1/\2/\3.\4 }}#g' \
-            -e 's#op://([^/[:space:]]+)/([^/[:space:]]+)/([^/[:space:]]+)#{{{{ pass://\1/\2/\3 }}#g' |
-            pass-cli inject
-    }
-    case "${SECRETS_PROVIDER:-1password}" in
-        1password) inject=(op inject) ;;
-        proton-pass) inject=(proton_inject) ;;
-        *)
-            just log fatal "Unknown SECRETS_PROVIDER" "value" "${SECRETS_PROVIDER}" "expected" "1password or proton-pass"
-            exit 1
-            ;;
-    esac
-    minijinja-cli "{{ file }}" {{ args }} | "${inject[@]}"
+    minijinja-cli "{{ file }}" {{ args }} | op inject

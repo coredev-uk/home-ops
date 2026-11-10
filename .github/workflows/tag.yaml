@@ -15,20 +15,34 @@ jobs:
     name: Tag
     runs-on: ubuntu-26.04
     steps:
-      - name: Load Secrets
+      # SECRETS_PROVIDER: see renovate.yaml.
+      - name: Load Secrets (1Password)
         id: load-secrets
+        if: ${{ vars.SECRETS_PROVIDER != 'proton-pass' }}
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1 # zizmor: ignore[unpinned-tools]
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           GITHUB_BOT_APP_CLIENT_ID: op://kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
           GITHUB_BOT_APP_PRIVATE_KEY: op://kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
 
+      - name: Load Secrets (Proton Pass)
+        id: load-secrets-proton
+        if: ${{ vars.SECRETS_PROVIDER == 'proton-pass' }}
+        uses: protonpass/load-secret-action@e51765b8ef320ff9304a1f6523737714b67c5ddf # main, after v1.1.0
+        with:
+          version: 2.7.0
+          hash: fd933e76179a5a33b295853e9c6696e49e584fe2141b1aafc63a3d78c0791cdb
+        env:
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
+          GITHUB_BOT_APP_CLIENT_ID: pass://kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
+          GITHUB_BOT_APP_PRIVATE_KEY: pass://kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
+
       - name: Generate Token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app-token
         with:
-          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
-          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
+          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID || steps.load-secrets-proton.outputs.GITHUB_BOT_APP_CLIENT_ID }}
+          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY || steps.load-secrets-proton.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
           permission-contents: write
 
       - name: Get Previous Tag and Determine Next Tag

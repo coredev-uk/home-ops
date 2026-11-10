@@ -41,6 +41,12 @@ spec:
               # Task pods fetch per-repository GitHub leases here for git and gh; without it they
               # get no GitHub credentials and push fails.
               KANDEV_GITHUB_CREDENTIAL_BROKER_PUBLIC_BASE_URL: https://kandev.hera.ac
+              # Caches stay off the data volume (and its backups) and go with the pod: npm's
+              # (the agent CLIs' npx trees, which Kandev reinstalls on demand, as in every fresh
+              # task pod), Go's build and module caches, and the rest of XDG's.
+              XDG_CACHE_HOME: /cache
+              NPM_CONFIG_CACHE: /cache/npm
+              GOMODCACHE: /cache/go-mod
             envFrom:
               - secretRef:
                   name: kandev-secret
@@ -140,3 +146,8 @@ spec:
           - path: /data
       tmp:
         type: emptyDir
+      cache:
+        type: emptyDir
+        sizeLimit: 10Gi
+        globalMounts:
+          - path: /cache

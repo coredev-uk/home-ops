@@ -27,6 +27,8 @@ lovelace:
       type: module
     - url: /local/community/scheduler-card/scheduler-card.js
       type: module
+    - url: /local/community/Bubble-Card/bubble-card.js
+      type: module
   dashboards:
     lovelace:
       mode: yaml
@@ -38,3 +40,79 @@ lovelace:
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
+
+# Declarative automations live beside the UI-managed automations.yaml.
+automation hera:
+  - id: hera_glass_default_theme
+    alias: Apply Hera Glass as the default theme
+    triggers:
+      - trigger: homeassistant
+        event: start
+    actions:
+      - action: frontend.set_theme
+        data:
+          name: Hera Glass
+
+# Derived sensors the dashboard reads; each one replaces a template that
+# would otherwise be repeated across several cards.
+template:
+  - sensor:
+      - name: Food waste collection
+        unique_id: hera_bin_food_waste
+        icon: mdi:food-apple
+        unit_of_measurement: d
+        availability: "{{ has_value('sensor.waste_collection_schedule_food_waste') }}"
+        state: >-
+          {%- set k = states.sensor.waste_collection_schedule_food_waste.attributes.keys()
+                | select('match', '[0-9]{4}-') | sort | first | default('') -%}
+          {{ (strptime(k, '%Y-%m-%d').date() - now().date()).days if k else none }}
+        attributes:
+          label: >-
+            {%- set k = states.sensor.waste_collection_schedule_food_waste.attributes.keys()
+                  | select('match', '[0-9]{4}-') | sort | first | default('') -%}
+            {%- if k -%}
+              {%- set d = (strptime(k, '%Y-%m-%d').date() - now().date()).days -%}
+              {{ 'Today' if d == 0 else 'Tomorrow' if d == 1 else 'In ' ~ d ~ ' days' }} · {{ strptime(k, '%Y-%m-%d').strftime('%a %-d %b') }}
+            {%- else -%}No collection scheduled{%- endif -%}
+      - name: Recycling collection
+        unique_id: hera_bin_recycling
+        icon: mdi:recycle
+        unit_of_measurement: d
+        availability: "{{ has_value('sensor.waste_collection_schedule_recycling') }}"
+        state: >-
+          {%- set k = states.sensor.waste_collection_schedule_recycling.attributes.keys()
+                | select('match', '[0-9]{4}-') | sort | first | default('') -%}
+          {{ (strptime(k, '%Y-%m-%d').date() - now().date()).days if k else none }}
+        attributes:
+          label: >-
+            {%- set k = states.sensor.waste_collection_schedule_recycling.attributes.keys()
+                  | select('match', '[0-9]{4}-') | sort | first | default('') -%}
+            {%- if k -%}
+              {%- set d = (strptime(k, '%Y-%m-%d').date() - now().date()).days -%}
+              {{ 'Today' if d == 0 else 'Tomorrow' if d == 1 else 'In ' ~ d ~ ' days' }} · {{ strptime(k, '%Y-%m-%d').strftime('%a %-d %b') }}
+            {%- else -%}No collection scheduled{%- endif -%}
+      - name: Updates pending
+        unique_id: hera_updates_pending
+        icon: mdi:package-up
+        state: "{{ states.update | selectattr('state', 'eq', 'on') | list | count }}"
+        attributes:
+          titles: "{{ states.update | selectattr('state', 'eq', 'on') | map(attribute='name') | join(', ') }}"
+      - name: Energy cost today
+        unique_id: hera_energy_cost_today
+        icon: mdi:currency-gbp
+        unit_of_measurement: GBP
+        device_class: monetary
+        availability: >-
+          {{ has_value('sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_cost')
+             and has_value('sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost') }}
+        state: >-
+          {{ (states('sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_cost') | float
+              + states('sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost') | float) | round(2) }}
+      - name: Media disk used
+        unique_id: hera_media_disk_used
+        icon: mdi:harddisk
+        unit_of_measurement: "%"
+        availability: >-
+          {{ has_value('sensor.sabnzbd_free_disk_space') and states('sensor.sabnzbd_total_disk_space') | float(0) > 0 }}
+        state: >-
+          {{ ((1 - states('sensor.sabnzbd_free_disk_space') | float / states('sensor.sabnzbd_total_disk_space') | float) * 100) | round(1) }}

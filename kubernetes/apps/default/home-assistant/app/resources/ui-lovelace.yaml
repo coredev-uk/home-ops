@@ -1,323 +1,1492 @@
 ---
-# Pulled every entity_id below from the live /config/.storage/core.entity_registry
-# and core.config_entries on the running pod - these are real, not guesses.
+# Hera Glass dashboard: dark glass Sections views, styled by
+# themes/hera-glass.yaml (set as the default theme on start).
 #
-# Known gaps (see Media Stack / Household views for details):
-#   - Pi-hole: not addable while running passwordless - its integration
-#     requires an app password/API key that passwordless mode doesn't issue.
-#   - UK Bin Collection: Gloucester's council site needs a Selenium web
-#     driver (JS-rendered page) - now reachable at
-#     http://changedetection-selenium:4444/wd/hub (reusing changedetection's
-#     sidecar), use that when adding the integration.
-#   - Seerr: not added (not using it, or deferred).
-#   - No HomePod media_player exists (no Apple TV/pyatv integration set up) -
-#     UniFi just sees it as a network client (device_tracker.paulshoepodmini).
-#   - VW car has no device_tracker (GPS) entity - likely one of the commands
-#     hidden by the legacy-gateway 401 flagged earlier. Not an EV, so no
-#     battery/range sensors either.
+# Cards: built-in tile/heading/forecast/statistics cards, plus Mushroom and
+# Bubble Card from the Marketplace (resources in configuration.yaml).
+# Derived sensors (bins, updates pending, energy cost today, media disk used)
+# are template sensors in configuration.yaml.
+#
+# Every entity_id below was checked against the live entity registry.
 
 views:
-  - title: Entertainment
-    path: entertainment
-    icon: mdi:television
+  # ════════════════════════════════════════════════════════════════════════
+  # HOME
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Home
+    path: home
+    icon: mdi:home-variant
     type: sections
+    max_columns: 3
+    dense_section_placement: true
+    header:
+      layout: responsive
+      badges_position: bottom
+      badges_wrap: scroll
+      card:
+        type: markdown
+        text_only: true
+        content: >-
+          {%- set h = now().hour -%}
+          # {{ 'Good morning' if h < 12 else 'Good afternoon' if h < 18 else 'Good evening' }}, {{ user.split(' ')[0] }}
+
+          {{ now().strftime('%A %-d %B') }}
+    badges:
+      - type: entity
+        entity: weather.pirateweather
+        state_content: [state, temperature]
+        tap_action:
+          action: more-info
+      - type: entity
+        entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_demand
+        name: Using now
+        show_name: true
+        color: orange
+        icon: mdi:lightning-bolt
+        tap_action:
+          action: navigate
+          navigation_path: /lovelace/energy
+      - type: entity
+        entity: sensor.energy_cost_today
+        name: Today
+        show_name: true
+        color: amber
+        tap_action:
+          action: navigate
+          navigation_path: /lovelace/energy
+    sections:
+      # ── Needs attention: only renders when something does ──────────────
+      - type: grid
+        column_span: 3
+        visibility:
+          - condition: or
+            conditions:
+              - condition: numeric_state
+                entity: sensor.food_waste_collection
+                below: 2
+              - condition: numeric_state
+                entity: sensor.recycling_collection
+                below: 2
+              - condition: numeric_state
+                entity: sensor.updates_pending
+                above: 0
+              - condition: state
+                entity: sensor.qbittorrent_connection_status
+                state: firewalled
+              - condition: state
+                entity: binary_sensor.radarr_health
+                state: "on"
+              - condition: state
+                entity: binary_sensor.sabnzbd_warnings
+                state: "on"
+              - condition: state
+                entity: binary_sensor.octopus_energy_a_db2bd179_octoplus_scratchcard_available
+                state: "on"
+        cards:
+          - type: heading
+            heading: Needs attention
+            heading_style: title
+            icon: mdi:bell-badge-outline
+          - type: custom:mushroom-template-card
+            entity: sensor.food_waste_collection
+            primary: Put the food waste caddy out
+            secondary: "{{ state_attr('sensor.food_waste_collection', 'label') }}"
+            icon: mdi:food-apple
+            color: green
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: numeric_state
+                entity: sensor.food_waste_collection
+                below: 2
+          - type: custom:mushroom-template-card
+            entity: sensor.recycling_collection
+            primary: Put the recycling out
+            secondary: "{{ state_attr('sensor.recycling_collection', 'label') }}"
+            icon: mdi:recycle
+            color: blue
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: numeric_state
+                entity: sensor.recycling_collection
+                below: 2
+          - type: custom:mushroom-template-card
+            entity: sensor.updates_pending
+            primary: >-
+              {{ states('sensor.updates_pending') }} update{{ '' if states('sensor.updates_pending') | int == 1 else 's' }} available
+            secondary: "{{ state_attr('sensor.updates_pending', 'titles') }}"
+            icon: mdi:package-up
+            color: blue
+            multiline_secondary: true
+            tap_action:
+              action: navigate
+              navigation_path: /config/updates
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: numeric_state
+                entity: sensor.updates_pending
+                above: 0
+          - type: tile
+            entity: sensor.qbittorrent_connection_status
+            name: qBittorrent is firewalled
+            icon: mdi:wall-fire
+            color: orange
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: state
+                entity: sensor.qbittorrent_connection_status
+                state: firewalled
+          - type: tile
+            entity: binary_sensor.radarr_health
+            name: Radarr reports a problem
+            color: red
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: state
+                entity: binary_sensor.radarr_health
+                state: "on"
+          - type: tile
+            entity: binary_sensor.sabnzbd_warnings
+            name: SABnzbd has warnings
+            color: orange
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: state
+                entity: binary_sensor.sabnzbd_warnings
+                state: "on"
+          - type: tile
+            entity: binary_sensor.octopus_energy_a_db2bd179_octoplus_scratchcard_available
+            name: Octoplus scratchcard ready
+            icon: mdi:ticket-percent-outline
+            color: pink
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: state
+                entity: binary_sensor.octopus_energy_a_db2bd179_octoplus_scratchcard_available
+                state: "on"
+
+      # ── Weather ───────────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Outside
+            heading_style: title
+            icon: mdi:weather-partly-cloudy
+          - type: weather-forecast
+            entity: weather.pirateweather
+            show_current: true
+            show_forecast: true
+            forecast_type: hourly
+            forecast_slots: 6
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sun.sun
+            name: Sun
+            state_content: [state, next_setting]
+            grid_options:
+              columns: 12
+
+      # ── Family ────────────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Family
+            heading_style: title
+            icon: mdi:account-group-outline
+          - type: tile
+            entity: person.paul_thompson_2
+            name: Paul
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: person.kerry_thompson
+            name: Kerry
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: person.guy_thompson
+            name: Guy
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: person.ben_thompson
+            name: Ben
+            color: green
+            grid_options:
+              columns: 6
+
+      # ── Living room ───────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Living room
+            heading_style: title
+            icon: mdi:sofa-outline
+            badges:
+              - type: entity
+                entity: sensor.tautulli_watching
+                show_state: true
+                show_icon: true
+                icon: mdi:plex
+                color: amber
+                tap_action:
+                  action: navigate
+                  navigation_path: /lovelace/media
+          - type: custom:bubble-card
+            card_type: media-player
+            entity: media_player.bravia_k_55xr80
+            name: Bravia TV
+            icon: mdi:television
+            cover_background: true
+            button_action:
+              tap_action:
+                action: navigate
+                navigation_path: "#tv"
+            grid_options:
+              columns: 12
+          - type: custom:bubble-card
+            card_type: media-player
+            entity: media_player.plex_plex_for_android_tv_living_room_tv
+            name: Plex on the TV
+            icon: mdi:plex
+            cover_background: true
+            hide:
+              power_button: true
+            grid_options:
+              columns: 12
+            visibility:
+              - condition: state
+                entity: media_player.plex_plex_for_android_tv_living_room_tv
+                state: [playing, paused, buffering]
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#tv"
+            name: Bravia TV
+            icon: mdi:television
+            entity: media_player.bravia_k_55xr80
+            bg_opacity: "70"
+            bg_blur: "24"
+            cards:
+              - type: custom:bubble-card
+                card_type: media-player
+                entity: media_player.bravia_k_55xr80
+                name: Bravia TV
+                icon: mdi:television
+                cover_background: true
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: button
+                    name: Home
+                    icon: mdi:home-outline
+                    show_state: false
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Home
+                  - type: button
+                    show_state: false
+                    name: Up
+                    icon: mdi:chevron-up
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Up
+                  - type: button
+                    show_state: false
+                    name: Back
+                    icon: mdi:arrow-u-left-top
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Return
+                  - type: button
+                    show_state: false
+                    name: Left
+                    icon: mdi:chevron-left
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Left
+                  - type: button
+                    show_state: false
+                    name: OK
+                    icon: mdi:circle-outline
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Confirm
+                  - type: button
+                    show_state: false
+                    name: Right
+                    icon: mdi:chevron-right
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Right
+                  - type: button
+                    show_state: false
+                    name: Volume down
+                    icon: mdi:volume-minus
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: VolumeDown
+                  - type: button
+                    show_state: false
+                    name: Down
+                    icon: mdi:chevron-down
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: Down
+                  - type: button
+                    show_state: false
+                    name: Volume up
+                    icon: mdi:volume-plus
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.bravia_k_55xr80
+                      data:
+                        command: VolumeUp
+              - type: tile
+                entity: button.bravia_k_55xr80_terminate_apps
+                name: Close all apps
+                icon: mdi:close-box-multiple-outline
+                tap_action:
+                  action: perform-action
+                  perform_action: button.press
+                  target:
+                    entity_id: button.bravia_k_55xr80_terminate_apps
+
+      # ── Energy today ──────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Energy today
+            heading_style: title
+            icon: mdi:lightning-bolt-outline
+            tap_action:
+              action: navigate
+              navigation_path: /lovelace/energy
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_demand
+            name: Using now
+            icon: mdi:flash
+            color: orange
+            tap_action:
+              action: navigate
+              navigation_path: /lovelace/energy
+            features:
+              - type: trend-graph
+                hours_to_show: 12
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_cost
+            name: Electricity
+            icon: mdi:transmission-tower
+            color: orange
+            state_content: [state]
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost
+            name: Gas
+            icon: mdi:fire
+            color: deep-orange
+            grid_options:
+              columns: 6
+
+      # ── Bins ──────────────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bins
+            heading_style: title
+            icon: mdi:trash-can-outline
+          - type: custom:mushroom-template-card
+            entity: sensor.food_waste_collection
+            primary: Food waste
+            secondary: "{{ state_attr('sensor.food_waste_collection', 'label') }}"
+            icon: mdi:food-apple
+            color: >-
+              {{ 'green' if states('sensor.food_waste_collection') | int(9) <= 1 else 'grey' }}
+            grid_options:
+              columns: 12
+          - type: custom:mushroom-template-card
+            entity: sensor.recycling_collection
+            primary: Recycling
+            secondary: "{{ state_attr('sensor.recycling_collection', 'label') }}"
+            icon: mdi:recycle
+            color: >-
+              {{ 'blue' if states('sensor.recycling_collection') | int(9) <= 1 else 'grey' }}
+            grid_options:
+              columns: 12
+
+  # ════════════════════════════════════════════════════════════════════════
+  # MEDIA
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Media
+    path: media
+    icon: mdi:play-box-multiple-outline
+    type: sections
+    max_columns: 4
+    dense_section_placement: true
     sections:
       - type: grid
-        title: Living Room
         cards:
-          - type: media-control
+          - type: heading
+            heading: Living room
+            heading_style: title
+            icon: mdi:television
+          - type: custom:bubble-card
+            card_type: media-player
             entity: media_player.bravia_k_55xr80
+            name: Bravia TV
+            icon: mdi:television
+            cover_background: true
+            button_action:
+              tap_action:
+                action: navigate
+                navigation_path: "/lovelace/home#tv"
+            grid_options:
+              columns: 12
           - type: tile
-            entity: remote.bravia_k_55xr80
-            name: TV Remote
-          - type: media-control
             entity: media_player.plex_plex_for_android_tv_living_room_tv
-      - type: grid
-        title: Not Yet Set Up
-        cards:
-          - type: markdown
-            content: >-
-              No HomePod media control exists. UniFi only sees it as a
-              network client (`device_tracker.paulshoepodmini`) - control
-              requires setting up the Apple TV (pyatv) integration against
-              it, which hasn't been done yet.
+            name: Plex on the TV
+            icon: mdi:plex
+            features:
+              - type: media-player-playback
+            grid_options:
+              columns: 12
 
+      - type: grid
+        cards:
+          - type: heading
+            heading: Plex
+            heading_style: title
+            icon: mdi:plex
+            badges:
+              - type: entity
+                entity: update.hyperion_update
+                show_state: false
+                icon: mdi:package-up
+                color: blue
+                visibility:
+                  - condition: state
+                    entity: update.hyperion_update
+                    state: "on"
+          - type: tile
+            entity: sensor.tautulli_watching
+            name: Streams
+            icon: mdi:play-network-outline
+            color: amber
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.tautulli_total_bandwidth
+            name: Bandwidth
+            icon: mdi:speedometer
+            color: amber
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.paul_thompson_state
+            name: Paul
+            icon: mdi:account-outline
+            grid_options:
+              columns: 4
+          - type: tile
+            entity: sensor.mum_state
+            name: Mum
+            icon: mdi:account-outline
+            grid_options:
+              columns: 4
+          - type: tile
+            entity: sensor.b_t33_state
+            name: B_T33
+            icon: mdi:account-outline
+            grid_options:
+              columns: 4
+          - type: tile
+            entity: update.hyperion_update
+            name: Plex Media Server
+            features:
+              - type: update-actions
+            visibility:
+              - condition: state
+                entity: update.hyperion_update
+                state: "on"
+            grid_options:
+              columns: 12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Downloads
+            heading_style: title
+            icon: mdi:download-network-outline
+          - type: tile
+            entity: sensor.qbittorrent_download_speed
+            name: qBittorrent down
+            icon: mdi:arrow-down-bold-circle-outline
+            color: blue
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.qbittorrent_upload_speed
+            name: qBittorrent up
+            icon: mdi:arrow-up-bold-circle-outline
+            color: green
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.qbittorrent_active_torrents
+            name: Active torrents
+            icon: mdi:magnet
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: switch.qbittorrent_alternative_speed
+            name: Slow mode
+            icon: mdi:speedometer-slow
+            color: orange
+            features:
+              - type: toggle
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.sabnzbd_speed
+            name: SABnzbd
+            icon: mdi:download-outline
+            color: amber
+            state_content: [state]
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.sabnzbd_left_to_download
+            name: Left in queue
+            icon: mdi:tray-arrow-down
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.sabnzbd_status
+            name: SABnzbd status
+            icon: mdi:information-outline
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: button.sabnzbd_pause
+            name: Pause
+            icon: mdi:pause
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.sabnzbd_pause
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: button.sabnzbd_resume
+            name: Resume
+            icon: mdi:play
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.sabnzbd_resume
+            grid_options:
+              columns: 6
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Storage
+            heading_style: title
+            icon: mdi:harddisk
+          - type: gauge
+            entity: sensor.media_disk_used
+            name: Media disk used
+            min: 0
+            max: 100
+            needle: true
+            severity:
+              green: 0
+              yellow: 75
+              red: 90
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.sabnzbd_free_disk_space
+            name: Free
+            icon: mdi:harddisk-plus
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.sabnzbd_total_disk_space
+            name: Total
+            icon: mdi:harddisk
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.radarr_health
+            name: Radarr health
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.sabnzbd_warnings
+            name: SABnzbd warnings
+            grid_options:
+              columns: 6
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Coming up
+            heading_style: title
+            icon: mdi:calendar-star
+            badges:
+              - type: entity
+                entity: sensor.sonarr_upcoming
+                show_state: true
+                icon: mdi:television-classic
+                color: blue
+          - type: calendar
+            initial_view: listWeek
+            entities:
+              - entity: calendar.sonarr
+              - entity: calendar.radarr
+            grid_options:
+              columns: 12
+
+  # ════════════════════════════════════════════════════════════════════════
+  # ENERGY
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Energy
+    path: energy
+    icon: mdi:lightning-bolt-outline
+    type: sections
+    max_columns: 4
+    dense_section_placement: true
+    sections:
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Electricity
+            heading_style: title
+            icon: mdi:transmission-tower
+            badges:
+              - type: entity
+                entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_rate
+                color: orange
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_demand
+            name: Using now
+            icon: mdi:flash
+            color: orange
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 12
+              rows: 2
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_consumption
+            name: Today
+            icon: mdi:lightning-bolt
+            color: orange
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_cost
+            name: Cost today
+            icon: mdi:currency-gbp
+            color: orange
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_previous_accumulative_consumption
+            name: Yesterday
+            icon: mdi:history
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_previous_accumulative_cost
+            name: Cost yesterday
+            icon: mdi:currency-gbp
+            grid_options:
+              columns: 6
+          - type: statistics-graph
+            title: Daily cost, last 2 weeks
+            entities:
+              - entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_cost
+                name: Electricity
+            stat_types: [change]
+            period: day
+            days_to_show: 14
+            chart_type: bar
+            hide_legend: true
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_standing_charge
+            name: Standing charge
+            icon: mdi:calendar-today-outline
+            grid_options:
+              columns: 12
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Gas
+            heading_style: title
+            icon: mdi:fire
+            badges:
+              - type: entity
+                entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_rate
+                color: deep-orange
+          - type: tile
+            entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_consumption_kwh
+            name: Today
+            icon: mdi:fire
+            color: deep-orange
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost
+            name: Cost today
+            icon: mdi:currency-gbp
+            color: deep-orange
+            grid_options:
+              columns: 6
+          - type: statistics-graph
+            title: Daily cost, last 2 weeks
+            entities:
+              - entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost
+                name: Gas
+            stat_types: [change]
+            period: day
+            days_to_show: 14
+            chart_type: bar
+            hide_legend: true
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_standing_charge
+            name: Standing charge
+            icon: mdi:calendar-today-outline
+            grid_options:
+              columns: 12
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Water
+            heading_style: title
+            icon: mdi:water-outline
+            badges:
+              - type: entity
+                entity: sensor.severn_trent_water_a_d17e68db_smart_meter_status
+                icon: mdi:water-check-outline
+                color: cyan
+          - type: tile
+            entity: sensor.severn_trent_water_a_d17e68db_yesterday_usage
+            name: Yesterday
+            icon: mdi:water
+            color: cyan
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.severn_trent_water_a_d17e68db_daily_average
+            name: Daily average
+            icon: mdi:water-sync
+            color: cyan
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.severn_trent_water_a_d17e68db_week_to_date
+            name: This week
+            icon: mdi:calendar-week
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.severn_trent_water_a_d17e68db_previous_week
+            name: Last week
+            icon: mdi:calendar-arrow-left
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.severn_trent_water_a_d17e68db_next_payment_amount
+            name: Next payment
+            icon: mdi:cash-clock
+            state_content: [state]
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.severn_trent_water_a_d17e68db_next_payment_date
+            name: Due
+            icon: mdi:calendar-clock
+            grid_options:
+              columns: 6
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Octoplus
+            heading_style: title
+            icon: mdi:gift-outline
+          - type: tile
+            entity: sensor.octopus_energy_a_db2bd179_octoplus_points
+            name: Points
+            icon: mdi:star-circle-outline
+            color: pink
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.octopus_energy_a_db2bd179_octoplus_scratchcard_available
+            name: Scratchcard
+            icon: mdi:ticket-percent-outline
+            color: pink
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_electricity
+            name: Spins · electricity
+            icon: mdi:ferris-wheel
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_gas
+            name: Spins · gas
+            icon: mdi:ferris-wheel
+            grid_options:
+              columns: 6
+          - type: calendar
+            initial_view: listWeek
+            entities:
+              - entity: calendar.octopus_energy_a_db2bd179_octoplus_power_down
+            grid_options:
+              columns: 12
+
+  # ════════════════════════════════════════════════════════════════════════
+  # NETWORK
+  # ════════════════════════════════════════════════════════════════════════
   - title: Network
     path: network
     icon: mdi:router-network
     type: sections
+    max_columns: 4
+    dense_section_placement: true
     sections:
       - type: grid
-        title: Gateway (PTNET)
         cards:
-          - type: tile
-            entity: sensor.ptnet_state
-            name: State
-          - type: tile
-            entity: sensor.ptnet_uptime
-            name: Uptime
+          - type: heading
+            heading: Gateway
+            heading_style: title
+            icon: mdi:router-wireless
+            badges:
+              - type: entity
+                entity: sensor.ptnet_state
+                color: green
           - type: tile
             entity: sensor.ptnet_clients
             name: Clients
+            icon: mdi:devices
+            color: blue
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.ptnet_iot_clients
+            name: IoT clients
+            icon: mdi:home-automation
+            color: teal
+            grid_options:
+              columns: 6
           - type: tile
             entity: sensor.ptnet_cpu_utilisation
             name: CPU
+            icon: mdi:cpu-64-bit
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
           - type: tile
             entity: sensor.ptnet_memory_utilisation
             name: Memory
+            icon: mdi:memory
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.ptnet_uptime
+            name: Up since
+            icon: mdi:timer-outline
+            grid_options:
+              columns: 12
+
       - type: grid
-        title: VPN & Remote Access
         cards:
+          - type: heading
+            heading: Wi-Fi & VPN
+            heading_style: title
+            icon: mdi:wifi
+          - type: tile
+            entity: switch.ptnet_enabled
+            name: PTNET Wi-Fi
+            icon: mdi:wifi
+            color: blue
+            features:
+              - type: toggle
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: switch.ptnet_iot_enabled
+            name: IoT Wi-Fi
+            icon: mdi:wifi-cog
+            color: teal
+            features:
+              - type: toggle
+            grid_options:
+              columns: 6
           - type: tile
             entity: switch.unifi_network_protonvpn
             name: ProtonVPN
+            icon: mdi:shield-lock-outline
+            color: green
+            features:
+              - type: toggle
+            grid_options:
+              columns: 6
           - type: tile
             entity: switch.unifi_network_plex_remote_access
-            name: Plex Remote Access
-      - type: grid
-        title: Office Switch
-        cards:
-          - type: entities
-            title: PTNET-SW-OFFICE
-            entities:
-              - entity: sensor.ptnet_sw_office_uptime
-              - entity: sensor.ptnet_sw_office_cpu_utilisation
-              - entity: button.ptnet_sw_office_port_1_power_cycle
-              - entity: button.ptnet_sw_office_port_2_power_cycle
-              - entity: button.ptnet_sw_office_port_3_power_cycle
-              - entity: button.ptnet_sw_office_port_4_power_cycle
-      - type: grid
-        title: Network Presence
-        cards:
-          - type: entities
-            title: Devices
-            entities:
-              - entity: device_tracker.hyperion_0
-              - entity: device_tracker.hyperion_1
-              - entity: device_tracker.hyperon_2
-              - entity: device_tracker.hyperion_unas
-              - entity: device_tracker.sony_bravia_8
-      - type: grid
-        title: Not Yet Enabled
-        cards:
-          - type: markdown
-            content: >-
-              WAN latency (Cloudflare/Google/Microsoft), the office switch's
-              per-port PoE power draw, and device trackers for iPhone/
-              MacBook/HomePod mini/Watch are all disabled by default on the
-              UniFi integration. The power-cycle buttons above work as a
-              substitute for PoE toggle switches, which are also disabled.
-              Enable what you want in Settings > Devices & Services > UniFi
-              Network > Entities.
+            name: Plex remote access
+            icon: mdi:plex
+            color: amber
+            features:
+              - type: toggle
+            grid_options:
+              columns: 6
 
-  - title: Media Stack
-    path: media-stack
-    icon: mdi:server
-    type: sections
-    sections:
       - type: grid
-        title: Plex & Tautulli
         cards:
-          - type: entities
-            title: Plex Library
-            entities:
-              - entity: sensor.hyperion
-              - entity: button.hyperion_scan_clients
-              - entity: update.hyperion_update
-          - type: entities
-            title: Now Playing
-            entities:
-              - entity: sensor.tautulli_watching
-              - entity: sensor.tautulli_total_bandwidth
-              - entity: sensor.paul_thompson_state
-              - entity: sensor.mum_state
-              - entity: sensor.b_t33_state
-          - type: markdown
-            content: >-
-              A lot of Plex/Tautulli sensors (library counts, top
-              film/show/user, direct plays/streams, per-user title/progress/
-              resolution) are disabled by default by those integrations -
-              they're not missing, just never turned on. Enable the ones you
-              want in Settings > Devices & Services > [Plex|Tautulli] >
-              Entities, and I'll add them back here.
-      - type: grid
-        title: Sonarr / Radarr
-        cards:
-          - type: entities
-            title: Sonarr
-            entities:
-              - entity: sensor.sonarr_upcoming
-              - entity: calendar.sonarr
-          - type: entities
-            title: Radarr
-            entities:
-              - entity: sensor.radarr_disk_space_movies
-              - entity: binary_sensor.radarr_health
-              - entity: calendar.radarr
-          - type: markdown
-            content: >-
-              Shows/Queue/Wanted/Commands (Sonarr) and Films/Queue (Radarr)
-              are disabled by default. Enable them in Settings > Devices &
-              Services > [Sonarr|Radarr] > Entities, and I'll add them back.
-      - type: grid
-        title: Downloads
-        cards:
-          - type: entities
-            title: qBittorrent
-            entities:
-              - entity: sensor.qbittorrent_status
-              - entity: sensor.qbittorrent_download_speed
-              - entity: sensor.qbittorrent_upload_speed
-              - entity: sensor.qbittorrent_active_torrents
-              - entity: sensor.qbittorrent_paused_torrents
-              - entity: sensor.qbittorrent_errored_torrents
-              - entity: switch.qbittorrent_alternative_speed
-          - type: entities
-            title: SABnzbd
-            entities:
-              - entity: sensor.sabnzbd_status
-              - entity: sensor.sabnzbd_speed
-              - entity: sensor.sabnzbd_queue
-              - entity: sensor.sabnzbd_queue_count
-              - entity: sensor.sabnzbd_left_to_download
-              - entity: button.sabnzbd_pause
-              - entity: button.sabnzbd_resume
-      - type: grid
-        title: Not Yet Set Up
-        cards:
-          - type: markdown
-            content: >-
-              **Pi-hole**: can't add it while running passwordless - the
-              integration needs an app password/API key that mode doesn't
-              issue.
+          - type: heading
+            heading: Access points
+            heading_style: title
+            icon: mdi:access-point
+          - type: tile
+            entity: sensor.ptnet_ap_lvr_state
+            name: Living room AP
+            icon: mdi:access-point
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.u6_lite_state
+            name: Office AP
+            icon: mdi:access-point
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.ptnet_ap_lvr_cpu_utilisation
+            name: Living room CPU
+            icon: mdi:cpu-64-bit
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.u6_lite_cpu_utilisation
+            name: Office CPU
+            icon: mdi:cpu-64-bit
+            grid_options:
+              columns: 6
 
-
-              **Seerr**: not added.
-
-
-              **qBittorrent**: global ratio is disabled by default too -
-              same fix, Settings > Devices & Services > qBittorrent >
-              Entities.
-
-  - title: Energy
-    path: energy
-    icon: mdi:flash
-    type: sections
-    sections:
       - type: grid
-        title: Electricity
         cards:
+          - type: heading
+            heading: Switches
+            heading_style: title
+            icon: mdi:switch
           - type: tile
-            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_current_rate
-            name: Current Rate
+            entity: sensor.ptnet_sw_office_state
+            name: Office switch
+            icon: mdi:switch
+            color: green
+            tap_action:
+              action: navigate
+              navigation_path: "#office-switch"
+            grid_options:
+              columns: 12
           - type: tile
-            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_next_rate
-            name: Next Rate
+            entity: sensor.ptnet_sw_desk_state
+            name: Desk switch
+            icon: mdi:switch
+            color: green
+            grid_options:
+              columns: 6
           - type: tile
-            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_current_standing_charge
-            name: Standing Charge
-          - type: tile
-            entity: binary_sensor.octopus_energy_electricity_d06g503888_1460001146039_off_peak
-            name: Off Peak
-          - type: tile
-            entity: sensor.octopus_energy_electricity_d06g503888_1460001146039_previous_rate
-            name: Previous Rate
-          - type: custom:mini-graph-card
-            name: Rate Today
-            entities:
-              - sensor.octopus_energy_electricity_d06g503888_1460001146039_current_rate
-            hours_to_show: 24
-            points_per_hour: 2
-            show:
-              extrema: true
-      - type: grid
-        title: Gas
-        cards:
-          - type: tile
-            entity: sensor.octopus_energy_gas_461654_7514536408_current_rate
-            name: Current Rate
-          - type: tile
-            entity: sensor.octopus_energy_gas_461654_7514536408_next_rate
-            name: Next Rate
-          - type: tile
-            entity: sensor.octopus_energy_gas_461654_7514536408_current_standing_charge
-            name: Standing Charge
-          - type: tile
-            entity: sensor.octopus_energy_gas_461654_7514536408_previous_rate
-            name: Previous Rate
-      - type: grid
-        title: Not Yet Enabled
-        cards:
-          - type: markdown
-            content: >-
-              Yesterday's consumption and cost (electricity and gas) are the
-              most useful part of an energy dashboard, but both are
-              disabled-by-default sensors on this integration. Enable
-              `previous_accumulative_consumption`/`previous_accumulative_cost`
-              for electricity and
-              `previous_accumulative_consumption_kwh`/`previous_accumulative_cost`
-              for gas in Settings > Devices & Services > Octopus Energy >
-              Entities, and I'll wire them in.
-      - type: grid
-        title: Octoplus
-        cards:
-          - type: entities
-            title: Rewards
-            entities:
-              - entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_electricity
-              - entity: sensor.octopus_energy_a_db2bd179_wheel_of_fortune_spins_gas
-          - type: calendar
-            title: Power Down Events
-            entities:
-              - entity: calendar.octopus_energy_a_db2bd179_octoplus_power_down
+            entity: sensor.usw_flex_mini_state
+            name: Living room switch
+            icon: mdi:switch
+            color: green
+            grid_options:
+              columns: 6
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#office-switch"
+            name: Office switch
+            icon: mdi:switch
+            entity: sensor.ptnet_sw_office_state
+            bg_opacity: "70"
+            bg_blur: "24"
+            cards:
+              - type: tile
+                entity: sensor.ptnet_sw_office_cpu_utilisation
+                name: CPU
+                icon: mdi:cpu-64-bit
+                features:
+                  - type: trend-graph
+                    hours_to_show: 24
+              - type: tile
+                entity: sensor.ptnet_sw_office_uptime
+                name: Up since
+                icon: mdi:timer-outline
+              - type: heading
+                heading: Power cycle a port
+                heading_style: subtitle
+              - type: grid
+                columns: 4
+                square: false
+                cards:
+                  - type: button
+                    entity: button.ptnet_sw_office_port_1_power_cycle
+                    name: "1"
+                    icon: mdi:ethernet
+                    show_state: false
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_1_power_cycle
+                      confirmation:
+                        text: Power-cycle port 1?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_2_power_cycle
+                    name: "2"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_2_power_cycle
+                      confirmation:
+                        text: Power-cycle port 2?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_3_power_cycle
+                    name: "3"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_3_power_cycle
+                      confirmation:
+                        text: Power-cycle port 3?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_4_power_cycle
+                    name: "4"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_4_power_cycle
+                      confirmation:
+                        text: Power-cycle port 4?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_5_power_cycle
+                    name: "5"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_5_power_cycle
+                      confirmation:
+                        text: Power-cycle port 5?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_6_power_cycle
+                    name: "6"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_6_power_cycle
+                      confirmation:
+                        text: Power-cycle port 6?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_7_power_cycle
+                    name: "7"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_7_power_cycle
+                      confirmation:
+                        text: Power-cycle port 7?
+                  - type: button
+                    icon: mdi:ethernet
+                    show_state: false
+                    entity: button.ptnet_sw_office_port_8_power_cycle
+                    name: "8"
+                    tap_action:
+                      action: perform-action
+                      perform_action: button.press
+                      target:
+                        entity_id: button.ptnet_sw_office_port_8_power_cycle
+                      confirmation:
+                        text: Power-cycle port 8?
 
+      - type: grid
+        cards:
+          - type: heading
+            heading: Cluster
+            heading_style: title
+            icon: mdi:server-network
+          - type: tile
+            entity: device_tracker.hyperion_0
+            name: Hyperion-0
+            icon: mdi:server
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: device_tracker.hyperion_1
+            name: Hyperion-1
+            icon: mdi:server
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: device_tracker.hyperon_2
+            name: Hyperion-2
+            icon: mdi:server
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: device_tracker.hyperion_unas
+            name: UNAS
+            icon: mdi:nas
+            color: green
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: device_tracker.atlas
+            name: Atlas
+            icon: mdi:desktop-tower-monitor
+            color: green
+            grid_options:
+              columns: 12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Firmware
+            heading_style: title
+            icon: mdi:package-up
+          - type: tile
+            entity: update.ptnet_firmware
+            name: Gateway
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: update.ptnet_ap_lvr_firmware
+            name: Living room AP
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: update.u6_lite_firmware
+            name: Office AP
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: update.ptnet_sw_office_firmware
+            name: Office switch
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: update.ptnet_sw_desk_firmware
+            name: Desk switch
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: update.usw_flex_mini_firmware
+            name: Living room switch
+            grid_options:
+              columns: 6
+
+  # ════════════════════════════════════════════════════════════════════════
+  # HOUSEHOLD
+  # ════════════════════════════════════════════════════════════════════════
   - title: Household
     path: household
-    icon: mdi:home-city
+    icon: mdi:home-heart
     type: sections
+    max_columns: 4
+    dense_section_placement: true
     sections:
       - type: grid
-        title: Car
         cards:
-          - type: entities
-            title: Volkswagen
-            entities:
-              - entity: lock.garage_volkswagen_579126_central_locking
-              - entity: climate.garage_volkswagen_579126_climate_control
-              - entity: switch.garage_volkswagen_579126_window_heating
-              - entity: switch.garage_volkswagen_579126_active_ventilation
-              - entity: sensor.garage_volkswagen_579126_portal_feed_health
-              - entity: button.garage_volkswagen_579126_refresh_data
-          - type: markdown
-            content: >-
-              No location/GPS entity exists for this car - likely one of
-              the commands the legacy-gateway 401 hides. Not an EV, so no
-              battery/range sensors either.
+          - type: heading
+            heading: Tiguan
+            heading_style: title
+            icon: mdi:car-side
+            badges:
+              - type: entity
+                entity: sensor.garage_volkswagen_579126_last_update
+                icon: mdi:update
+          - type: tile
+            entity: lock.garage_volkswagen_579126_central_locking
+            name: Doors
+            icon: mdi:car-door-lock
+            color: green
+            features:
+              - type: lock-commands
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: climate.garage_volkswagen_579126_climate_control
+            name: Climate
+            features:
+              - type: target-temperature
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: switch.garage_volkswagen_579126_window_heating
+            name: Window heating
+            icon: mdi:car-defrost-front
+            color: deep-orange
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: switch.garage_volkswagen_579126_active_ventilation
+            name: Ventilation
+            icon: mdi:fan
+            color: cyan
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: button.garage_volkswagen_579126_refresh_data
+            name: Refresh from VW
+            icon: mdi:refresh
+            tap_action:
+              action: perform-action
+              perform_action: button.press
+              target:
+                entity_id: button.garage_volkswagen_579126_refresh_data
+            grid_options:
+              columns: 12
+
       - type: grid
-        title: Meal Planning
+        column_span: 2
         cards:
-          - type: todo-list
-            entity: todo.mealie_shopping_list
-            title: Shopping List
+          - type: heading
+            heading: Meals this week
+            heading_style: title
+            icon: mdi:silverware-fork-knife
+            badges:
+              - type: entity
+                entity: sensor.mealie_recipes
+                icon: mdi:book-open-variant
+                color: green
           - type: calendar
-            title: This Week's Meals
+            initial_view: listWeek
             entities:
               - entity: calendar.mealie_breakfast
               - entity: calendar.mealie_lunch
               - entity: calendar.mealie_dinner
-              - entity: calendar.mealie_snack
+              - entity: calendar.mealie_side
               - entity: calendar.mealie_dessert
-          - type: entities
-            title: Mealie
-            entities:
-              - entity: sensor.mealie_recipes
-              - entity: sensor.mealie_categories
-              - entity: sensor.mealie_tags
+            grid_options:
+              columns: 12
+
       - type: grid
-        title: Not Yet Set Up
         cards:
-          - type: markdown
-            content: >-
-              **Bin collection**: not added yet, but the Selenium blocker is
-              cleared - use `http://changedetection-selenium:4444/wd/hub`
-              as the web driver URL when you add UK Bin Collection Data.
+          - type: heading
+            heading: Shopping
+            heading_style: title
+            icon: mdi:cart-outline
+          - type: todo-list
+            entity: todo.mealie_shopping_list
+            hide_completed: true
+            grid_options:
+              columns: 12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bin collections
+            heading_style: title
+            icon: mdi:trash-can-outline
+          - type: custom:mushroom-template-card
+            entity: sensor.food_waste_collection
+            primary: Food waste
+            secondary: "{{ state_attr('sensor.food_waste_collection', 'label') }}"
+            icon: mdi:food-apple
+            color: green
+            grid_options:
+              columns: 12
+          - type: custom:mushroom-template-card
+            entity: sensor.recycling_collection
+            primary: Recycling
+            secondary: "{{ state_attr('sensor.recycling_collection', 'label') }}"
+            icon: mdi:recycle
+            color: blue
+            grid_options:
+              columns: 12
+          - type: calendar
+            initial_view: listWeek
+            entities:
+              - entity: calendar.waste_collection_schedule_gloucester_city_council
+            grid_options:
+              columns: 12
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Devices
+            heading_style: title
+            icon: mdi:battery-heart-variant
+          - type: tile
+            entity: sensor.pauls_iphone_battery
+            name: Paul's iPhone
+            icon: mdi:cellphone
+            grid_options:
+              columns: 6
+            visibility:
+              - condition: state
+                entity: sensor.pauls_iphone_battery
+                state_not: [unknown, unavailable]
+          - type: tile
+            grid_options:
+              columns: 6
+            entity: sensor.pauls_apple_watch_battery
+            name: Paul's Watch
+            icon: mdi:watch-variant
+            visibility:
+              - condition: state
+                entity: sensor.pauls_apple_watch_battery
+                state_not: [unknown, unavailable]
+          - type: tile
+            grid_options:
+              columns: 6
+            entity: sensor.pauls_macbook_pro_battery
+            name: Paul's MacBook
+            icon: mdi:laptop
+            visibility:
+              - condition: state
+                entity: sensor.pauls_macbook_pro_battery
+                state_not: [unknown, unavailable]
+          - type: tile
+            grid_options:
+              columns: 6
+            entity: sensor.pauls_ipad_battery
+            name: Paul's iPad
+            icon: mdi:tablet
+            visibility:
+              - condition: state
+                entity: sensor.pauls_ipad_battery
+                state_not: [unknown, unavailable]
+          - type: tile
+            grid_options:
+              columns: 6
+            entity: sensor.mums_iphone_battery
+            name: Kerry's iPhone
+            icon: mdi:cellphone
+            visibility:
+              - condition: state
+                entity: sensor.mums_iphone_battery
+                state_not: [unknown, unavailable]
+          - type: tile
+            grid_options:
+              columns: 6
+            entity: sensor.dads_iphone_battery
+            name: Guy's iPhone
+            icon: mdi:cellphone
+            visibility:
+              - condition: state
+                entity: sensor.dads_iphone_battery
+                state_not: [unknown, unavailable]
+          - type: tile
+            grid_options:
+              columns: 6
+            entity: sensor.bens_iphone_duo_battery
+            name: Ben's iPhone
+            icon: mdi:cellphone
+            visibility:
+              - condition: state
+                entity: sensor.bens_iphone_duo_battery
+                state_not: [unknown, unavailable]

@@ -1,0 +1,27 @@
+server:
+  host: 0.0.0.0
+  port: 3000
+  base_url: https://headplane.hera.ac
+  cookie_secret_path: /etc/headplane/secrets/cookie_secret
+  cookie_secure: true
+  data_path: /var/lib/headplane
+headscale:
+  url: https://hs.hera.ac
+  api_key_path: /etc/headplane/secrets/api_key
+integration:
+  agent:
+    enabled: false
+  docker:
+    enabled: false
+  kubernetes:
+    enabled: false
+  proc:
+    enabled: false
+oidc:
+  enabled: true
+  issuer: https://id.hera.ac
+  client_id: headscale
+  client_secret_path: /etc/headplane/secrets/oidc_client_secret
+  use_pkce: true
+  scope: "openid email profile"
+  profile_picture_source: oidc

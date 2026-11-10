@@ -1,0 +1,21 @@
+{
+  "groups": {
+    // Matches the Headscale user's email; its name is the Pocket ID username (pthompson)
+    "group:admins": ["paul@invictamail.com"],
+  },
+  "tagOwners": {
+    "tag:talos": ["group:admins"],
+  },
+  "autoApprovers": {
+    "routes": {
+      "192.168.110.0/24": ["tag:talos"],
+      "192.168.100.0/24": ["tag:talos"],
+    },
+  },
+  "grants": [
+    // Every Pocket ID `tailnet` member reaches the cluster VLAN and main LAN through the Talos subnet routers
+    { "src": ["autogroup:member"], "dst": ["192.168.110.0/24", "192.168.100.0/24"], "ip": ["*"] },
+    // A user's own devices reach each other (Taildrop, SSH between your own machines)
+    { "src": ["autogroup:member"], "dst": ["autogroup:self"], "ip": ["*"] },
+  ],
+}

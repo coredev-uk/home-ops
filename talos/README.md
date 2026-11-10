@@ -35,8 +35,8 @@ Two conventions keep the layers honest:
 - **Directory placement is the single source of truth for a node's role.** The role patch is chosen
   by which `nodes/<role>/` directory contains the node file, and `machine.type` is set by the role
   patch, not the node file. A node cannot claim one role by filename and another by content.
-- **Secrets never live in this repo.** All sensitive values are `op://kubernetes/talos/...`
-  references resolved at render time.
+- **Secrets never live in this repo.** All sensitive values are `op://kubernetes/...` references
+  (`talos/...`, plus `headscale/HEADSCALE_TALOS_AUTHKEY`) resolved at render time.
 
 ## Schematics
 
@@ -55,6 +55,10 @@ whose hardware diverges from the fleet. No overrides exist today.
 - Rendering a worker before `workers.yaml.j2` and `nodes/workers/` exist fails loudly. Adding the
   first worker means creating `workers.yaml.j2` (with `machine: { type: worker }` and a `ca` block
   carrying `crt` only) plus `nodes/workers/<node>.yaml.j2`.
+- The `tailscale` extension (Headscale subnet router, see `oracle/`) logs in once with
+  `HEADSCALE_TALOS_AUTHKEY`, a 24h key, and keeps its state in `/var/lib/tailscale` afterwards.
+  Before re-provisioning a wiped node, mint a fresh key with `just oracle talos-authkey`, then
+  `just talos apply-node <node>`.
 
 ## Common tasks
 

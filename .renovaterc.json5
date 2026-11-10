@@ -20,6 +20,25 @@
       matchStrings: ['"npm:(?<depName>(?:@[^/"]+/)?[^@"]+)@(?<currentValue>[^"]+)"'],
       datasourceTemplate: "npm",
     },
+    {
+      // The design skills baked into the Kandev worker image: a tag and the commit the build
+      // fetches, moved together. impeccable tags its skill releases skill-vX.Y.Z.
+      customType: "regex",
+      description: "impeccable skill in the Kandev worker image",
+      managerFilePatterns: ["/^containers/kandev-worker/Containerfile$/"],
+      matchStrings: ["ARG IMPECCABLE_REF=(?<currentValue>skill-v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})"],
+      depNameTemplate: "pbakaus/impeccable",
+      datasourceTemplate: "github-tags",
+      versioningTemplate: "regex:^skill-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
+    },
+    {
+      customType: "regex",
+      description: "taste-skill in the Kandev worker image",
+      managerFilePatterns: ["/^containers/kandev-worker/Containerfile$/"],
+      matchStrings: ["ARG TASTE_SKILL_REF=(?<currentValue>v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})"],
+      depNameTemplate: "Leonxlnx/taste-skill",
+      datasourceTemplate: "github-tags",
+    },
   ],
   // Bumps flake.lock (nixpkgs) for the dev shell's tools
   nix: {

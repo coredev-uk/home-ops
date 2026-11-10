@@ -94,7 +94,7 @@ views:
             icon: mdi:food-apple
             color: green
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: numeric_state
                 entity: sensor.food_waste_collection
@@ -106,7 +106,7 @@ views:
             icon: mdi:recycle
             color: blue
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: numeric_state
                 entity: sensor.recycling_collection
@@ -123,7 +123,7 @@ views:
               action: navigate
               navigation_path: /config/updates
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: numeric_state
                 entity: sensor.updates_pending
@@ -134,7 +134,7 @@ views:
             icon: mdi:wall-fire
             color: orange
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: state
                 entity: sensor.qbittorrent_connection_status
@@ -144,7 +144,7 @@ views:
             name: Radarr reports a problem
             color: red
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: state
                 entity: binary_sensor.radarr_health
@@ -154,7 +154,7 @@ views:
             name: SABnzbd has warnings
             color: orange
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: state
                 entity: binary_sensor.sabnzbd_warnings
@@ -165,7 +165,7 @@ views:
             icon: mdi:ticket-percent-outline
             color: pink
             grid_options:
-              columns: 6
+              columns: 12
             visibility:
               - condition: state
                 entity: binary_sensor.octopus_energy_a_db2bd179_octoplus_scratchcard_available
@@ -183,13 +183,7 @@ views:
             show_current: true
             show_forecast: true
             forecast_type: hourly
-            forecast_slots: 6
-            grid_options:
-              columns: 12
-          - type: tile
-            entity: sun.sun
-            name: Sun
-            state_content: [state, next_setting]
+            forecast_slots: 5
             grid_options:
               columns: 12
 
@@ -273,7 +267,6 @@ views:
             hash: "#tv"
             name: Bravia TV
             icon: mdi:television
-            entity: media_player.bravia_k_55xr80
             bg_opacity: "70"
             bg_blur: "24"
             cards:
@@ -291,6 +284,7 @@ views:
                     name: Home
                     icon: mdi:home-outline
                     show_state: false
+                    show_name: false
                     tap_action:
                       action: perform-action
                       perform_action: remote.send_command
@@ -300,6 +294,7 @@ views:
                         command: Home
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Up
                     icon: mdi:chevron-up
                     tap_action:
@@ -311,6 +306,7 @@ views:
                         command: Up
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Back
                     icon: mdi:arrow-u-left-top
                     tap_action:
@@ -322,6 +318,7 @@ views:
                         command: Return
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Left
                     icon: mdi:chevron-left
                     tap_action:
@@ -333,6 +330,7 @@ views:
                         command: Left
                   - type: button
                     show_state: false
+                    show_name: false
                     name: OK
                     icon: mdi:circle-outline
                     tap_action:
@@ -344,6 +342,7 @@ views:
                         command: Confirm
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Right
                     icon: mdi:chevron-right
                     tap_action:
@@ -355,6 +354,7 @@ views:
                         command: Right
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Volume down
                     icon: mdi:volume-minus
                     tap_action:
@@ -366,6 +366,7 @@ views:
                         command: VolumeDown
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Down
                     icon: mdi:chevron-down
                     tap_action:
@@ -377,6 +378,7 @@ views:
                         command: Down
                   - type: button
                     show_state: false
+                    show_name: false
                     name: Volume up
                     icon: mdi:volume-plus
                     tap_action:
@@ -390,6 +392,7 @@ views:
                 entity: button.bravia_k_55xr80_terminate_apps
                 name: Close all apps
                 icon: mdi:close-box-multiple-outline
+                hide_state: true
                 tap_action:
                   action: perform-action
                   perform_action: button.press
@@ -702,10 +705,10 @@ views:
           - type: calendar
             initial_view: listWeek
             entities:
-              - entity: calendar.sonarr
-              - entity: calendar.radarr
+              - calendar.sonarr
+              - calendar.radarr
             grid_options:
-              columns: 12
+              columns: 24
 
   # ════════════════════════════════════════════════════════════════════════
   # ENERGY
@@ -728,6 +731,9 @@ views:
               - type: entity
                 entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_rate
                 color: orange
+              - type: entity
+                entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_standing_charge
+                icon: mdi:calendar-today-outline
           - type: tile
             entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_demand
             name: Using now
@@ -770,19 +776,14 @@ views:
             entities:
               - entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_accumulative_cost
                 name: Electricity
+                color: orange
             stat_types: [change]
             period: day
             days_to_show: 14
             chart_type: bar
             hide_legend: true
             grid_options:
-              columns: 12
-          - type: tile
-            entity: sensor.octopus_energy_electricity_26p4107928_1460001146039_current_standing_charge
-            name: Standing charge
-            icon: mdi:calendar-today-outline
-            grid_options:
-              columns: 12
+              columns: 24
 
       - type: grid
         column_span: 2
@@ -795,38 +796,36 @@ views:
               - type: entity
                 entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_rate
                 color: deep-orange
+              - type: entity
+                entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_standing_charge
+                icon: mdi:calendar-today-outline
           - type: tile
             entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_consumption_kwh
             name: Today
             icon: mdi:fire
             color: deep-orange
             grid_options:
-              columns: 6
+              columns: 12
           - type: tile
             entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost
             name: Cost today
             icon: mdi:currency-gbp
             color: deep-orange
             grid_options:
-              columns: 6
+              columns: 12
           - type: statistics-graph
             title: Daily cost, last 2 weeks
             entities:
               - entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_accumulative_cost
                 name: Gas
+                color: deep-orange
             stat_types: [change]
             period: day
             days_to_show: 14
             chart_type: bar
             hide_legend: true
             grid_options:
-              columns: 12
-          - type: tile
-            entity: sensor.octopus_energy_gas_e6e24156452643_7514536408_current_standing_charge
-            name: Standing charge
-            icon: mdi:calendar-today-outline
-            grid_options:
-              columns: 12
+              columns: 24
 
       - type: grid
         column_span: 2
@@ -872,13 +871,13 @@ views:
             icon: mdi:cash-clock
             state_content: [state]
             grid_options:
-              columns: 6
+              columns: 12
           - type: tile
             entity: sensor.severn_trent_water_a_d17e68db_next_payment_date
             name: Due
             icon: mdi:calendar-clock
             grid_options:
-              columns: 6
+              columns: 12
 
       - type: grid
         column_span: 2
@@ -916,9 +915,9 @@ views:
           - type: calendar
             initial_view: listWeek
             entities:
-              - entity: calendar.octopus_energy_a_db2bd179_octoplus_power_down
+              - calendar.octopus_energy_a_db2bd179_octoplus_power_down
             grid_options:
-              columns: 12
+              columns: 24
 
   # ════════════════════════════════════════════════════════════════════════
   # NETWORK
@@ -1365,13 +1364,13 @@ views:
           - type: calendar
             initial_view: listWeek
             entities:
-              - entity: calendar.mealie_breakfast
-              - entity: calendar.mealie_lunch
-              - entity: calendar.mealie_dinner
-              - entity: calendar.mealie_side
-              - entity: calendar.mealie_dessert
+              - calendar.mealie_breakfast
+              - calendar.mealie_lunch
+              - calendar.mealie_dinner
+              - calendar.mealie_side
+              - calendar.mealie_dessert
             grid_options:
-              columns: 12
+              columns: 24
 
       - type: grid
         cards:
@@ -1410,7 +1409,7 @@ views:
           - type: calendar
             initial_view: listWeek
             entities:
-              - entity: calendar.waste_collection_schedule_gloucester_city_council
+              - calendar.waste_collection_schedule_gloucester_city_council
             grid_options:
               columns: 12
 

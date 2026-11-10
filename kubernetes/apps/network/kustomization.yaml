@@ -14,5 +14,6 @@ resources:
   - ./cloudflare-dns/ks.yaml
   - ./echo/ks.yaml
   - ./envoy-gateway/ks.yaml
+  - ./headplane/ks.yaml
   - ./pihole/ks.yaml
   - ./unifi-vpn-restarter/ks.yaml

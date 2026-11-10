@@ -1,0 +1,109 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: headplane
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: headplane
+  interval: 1h
+  values:
+    controllers:
+      headplane:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/tale/headplane
+              tag: 0.8.2@sha256:b053a0a6699d0a67be3f0d9bae8e7dbe35ed67ae8448412adcbad7ea49866faa
+            env:
+              TZ: Europe/London
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            probes:
+              liveness:
+                enabled: true
+              # Readiness only: /admin/healthz returns 500 while Headscale on the VPS is unreachable
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /admin/healthz
+                    port: &port 3000
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+            resources:
+              requests:
+                memory: 128Mi
+                cpu: 10m
+              limits:
+                memory: 512Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        hostnames:
+          - "{{ .Release.Name }}.hera.ac"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - name: root
+            matches:
+              - path:
+                  type: Exact
+                  value: /
+            filters:
+              - type: RequestRedirect
+                requestRedirect:
+                  path:
+                    type: ReplaceFullPath
+                    replaceFullPath: /admin
+                  statusCode: 302
+          - name: app
+            backendRefs:
+              - port: *port
+    persistence:
+      data:
+        existingClaim: "{{ .Release.Name }}"
+        globalMounts:
+          - path: /var/lib/headplane
+      config:
+        type: configMap
+        name: headplane-configmap
+        globalMounts:
+          - path: /etc/headplane/config.yaml
+            subPath: config.yaml
+            readOnly: true
+      secrets:
+        type: secret
+        name: headplane-secret
+        globalMounts:
+          - path: /etc/headplane/secrets
+            readOnly: true
+      # The image writes its listen address to HEADPLANE_LISTEN_FILE=/tmp/headplane-listen
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

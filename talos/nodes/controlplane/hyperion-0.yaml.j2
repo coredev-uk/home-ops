@@ -50,3 +50,18 @@ kind: SysctlConfig
 params:
   # net0's real kernel name on this node - see talos/cluster.yaml.j2 for the net0.3 half of this.
   net/ipv6/conf/enp171s0/disable_ipv6: "1"
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: tailscale
+environment:
+  - TS_AUTHKEY=op://kubernetes/headscale/HEADSCALE_TALOS_AUTHKEY
+  - TS_AUTH_ONCE=true
+  - TS_HOSTNAME=hyperion-0
+  - TS_ROUTES=192.168.110.0/24,192.168.100.0/24
+  # No --advertise-tags: Headscale rejects requested tags on pre-auth key logins; the key itself carries tag:talos
+  - TS_EXTRA_ARGS=--login-server=https://hs.hera.ac
+  - TS_ACCEPT_DNS=false
+  # Userspace: tailnet connections are re-originated as host sockets, so Cilium's socket LB serves the
+  # L2-announced LoadBalancer IPs even when this node is their announcer (kernel mode can't hairpin)
+  - TS_USERSPACE=true

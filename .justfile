@@ -21,6 +21,10 @@ mod kube "kubernetes"
 [group('Talos')]
 mod talos "talos"
 
+# Oracle VPS Recipes
+[group('Oracle')]
+mod oracle "oracle"
+
 [private]
 log lvl msg *args:
     gum log -t rfc3339 -s -l "{{ lvl }}" "{{ msg }}" {{ args }}

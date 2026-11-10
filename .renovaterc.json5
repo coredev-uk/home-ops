@@ -26,7 +26,9 @@
       customType: "regex",
       description: "impeccable skill in the Kandev worker image",
       managerFilePatterns: ["/^containers/kandev-worker/Containerfile$/"],
-      matchStrings: ["ARG IMPECCABLE_REF=(?<currentValue>skill-v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})"],
+      matchStrings: [
+        "ARG IMPECCABLE_REF=(?<currentValue>skill-v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})",
+      ],
       depNameTemplate: "pbakaus/impeccable",
       datasourceTemplate: "github-tags",
       versioningTemplate: "regex:^skill-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
@@ -35,9 +37,20 @@
       customType: "regex",
       description: "taste-skill in the Kandev worker image",
       managerFilePatterns: ["/^containers/kandev-worker/Containerfile$/"],
-      matchStrings: ["ARG TASTE_SKILL_REF=(?<currentValue>v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})"],
+      matchStrings: [
+        "ARG TASTE_SKILL_REF=(?<currentValue>v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})",
+      ],
       depNameTemplate: "Leonxlnx/taste-skill",
       datasourceTemplate: "github-tags",
+    },
+    {
+      customType: "regex",
+      description: "Headscale on the Oracle VPS (deployed by `just oracle deploy`)",
+      managerFilePatterns: ["/^oracle/mod\\.just$/"],
+      matchStrings: ['headscale_version := "(?<currentValue>[^"]+)"'],
+      depNameTemplate: "juanfont/headscale",
+      datasourceTemplate: "github-releases",
+      extractVersionTemplate: "^v(?<version>.+)$",
     },
   ],
   // Bumps flake.lock (nixpkgs) for the dev shell's tools

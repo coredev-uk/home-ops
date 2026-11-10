@@ -1,0 +1,74 @@
+server_url: https://hs.hera.ac
+listen_addr: 127.0.0.1:8080
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+trusted_proxies:
+  - 127.0.0.1/32
+  - ::1/128
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+derp:
+  server:
+    enabled: true
+    region_id: 999
+    region_code: lhr
+    region_name: Oracle London
+    verify_clients: true
+    stun_listen_addr: 0.0.0.0:3478
+    private_key_path: /var/lib/headscale/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+    ipv4: 130.162.183.212
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 3h
+disable_check_updates: true
+node:
+  # Personal devices re-login through Pocket ID every 180 days, as on Tailscale SaaS; tagged Talos nodes never expire.
+  expiry: 180d
+database:
+  type: sqlite
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+log:
+  level: info
+  format: text
+policy:
+  mode: file
+  path: /etc/headscale/policy.hujson
+dns:
+  magic_dns: true
+  base_domain: tail.hera.ac
+  override_local_dns: false
+  nameservers:
+    split:
+      hera.ac:
+        - 192.168.110.245
+      # *.internal are UniFi local DNS records: the gateway answers them, Pi-hole returns NXDOMAIN
+      internal:
+        - 192.168.110.1
+  search_domains: []
+  extra_records: []
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+oidc:
+  only_start_if_oidc_is_available: true
+  issuer: https://id.hera.ac
+  client_id: d67e904f-d1ea-401b-9112-52731878fd70 # Pocket ID client "Headscale", shared with Headplane
+  client_secret: op://kubernetes/headscale/HEADSCALE_OIDC_CLIENT_SECRET
+  scope: ["openid", "profile", "email"]
+  email_verified_required: false
+  pkce:
+    enabled: true
+    method: S256
+logtail:
+  enabled: false
+taildrop:
+  enabled: true

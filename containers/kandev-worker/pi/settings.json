@@ -12,7 +12,7 @@
     "npm:@juicesharp/rpiv-i18n@2.15.0",
     "npm:@juicesharp/rpiv-todo@2.15.0",
     "npm:pi-web-access@0.47.0",
-    "npm:pi-lens@4.4.9"
+    "npm:pi-lens@4.4.10"
   ],
   "quietStartup": true,
   "collapseChangelog": true,

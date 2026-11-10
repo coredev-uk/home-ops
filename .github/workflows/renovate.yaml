@@ -45,39 +45,20 @@ jobs:
     permissions:
       packages: read
     steps:
-      # SECRETS_PROVIDER (repository variable, Settings > Secrets and variables > Actions >
-      # Variables) picks where BOT Cecil's credentials come from: unset or `1password` is the
-      # 1Password item kubernetes/bot-cecil, `proton-pass` the Proton Pass item of the same name.
-      - name: Load Secrets (1Password)
+      - name: Load Secrets
         id: load-secrets
-        if: ${{ vars.SECRETS_PROVIDER != 'proton-pass' }}
         uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1 # zizmor: ignore[unpinned-tools]
         env:
           OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
           GITHUB_BOT_APP_CLIENT_ID: op://kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
           GITHUB_BOT_APP_PRIVATE_KEY: op://kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
 
-      # Pinned to main's bundled build: the action's v1 and v1.1.0 tags point at a commit before
-      # dist/ was committed, so they can't run. pass-cli is pinned with its release hash
-      # (pass-cli-linux-x86_64 of https://github.com/protonpass/pass-cli/releases/tag/2.7.0).
-      - name: Load Secrets (Proton Pass)
-        id: load-secrets-proton
-        if: ${{ vars.SECRETS_PROVIDER == 'proton-pass' }}
-        uses: protonpass/load-secret-action@e51765b8ef320ff9304a1f6523737714b67c5ddf # main, after v1.1.0
-        with:
-          version: 2.7.0
-          hash: fd933e76179a5a33b295853e9c6696e49e584fe2141b1aafc63a3d78c0791cdb
-        env:
-          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
-          GITHUB_BOT_APP_CLIENT_ID: pass://kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
-          GITHUB_BOT_APP_PRIVATE_KEY: pass://kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
-
       - name: Generate Token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app-token
         with:
-          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID || steps.load-secrets-proton.outputs.GITHUB_BOT_APP_CLIENT_ID }}
-          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY || steps.load-secrets-proton.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
+          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
+          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
           permission-checks: write
           permission-contents: write
           permission-issues: write

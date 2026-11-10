@@ -93,6 +93,9 @@ spec:
           - path: /config/ui-lovelace.yaml
             subPath: ui-lovelace.yaml
             readOnly: true
+          - path: /config/themes/hera-glass.yaml
+            subPath: hera-glass.yaml
+            readOnly: true
       config-cache:
         existingClaim: "{{ .Release.Name }}-cache"
         globalMounts:

@@ -12,5 +12,6 @@ configMapGenerator:
     files:
       - configuration.yaml=./resources/configuration.yaml
       - ui-lovelace.yaml=./resources/ui-lovelace.yaml
+      - hera-glass.yaml=./resources/themes/hera-glass.yaml
 generatorOptions:
   disableNameSuffixHash: true

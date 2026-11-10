@@ -1,0 +1,112 @@
+---
+# Dark-only glass theme. Declaring only `modes.dark` makes the frontend force
+# dark mode whenever this theme is active, so more-info dialogs, charts and
+# pickers stay dark even on a light-mode phone.
+Hera Glass:
+  modes:
+    dark:
+      # ── Typography: SF on Apple devices, Segoe/Roboto elsewhere ──────────
+      ha-font-family-body: >-
+        -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text",
+        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
+      ha-font-family-heading: >-
+        -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display",
+        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
+
+      # ── Palette: iOS dark system colours ─────────────────────────────────
+      primary-color: "#0A84FF"
+      rgb-primary-color: "10, 132, 255"
+      accent-color: "#FF9F0A"
+      rgb-accent-color: "255, 159, 10"
+      blue-color: "#0A84FF"
+      light-blue-color: "#64D2FF"
+      cyan-color: "#64D2FF"
+      teal-color: "#40C8E0"
+      green-color: "#30D158"
+      light-green-color: "#66D47E"
+      lime-color: "#B4E051"
+      yellow-color: "#FFD60A"
+      amber-color: "#FFC20A"
+      orange-color: "#FF9F0A"
+      deep-orange-color: "#FF7A45"
+      red-color: "#FF453A"
+      pink-color: "#FF375F"
+      purple-color: "#BF5AF2"
+      indigo-color: "#5E5CE6"
+      grey-color: "#8E8E93"
+      success-color: "#30D158"
+      warning-color: "#FF9F0A"
+      error-color: "#FF453A"
+      info-color: "#64D2FF"
+      energy-grid-consumption-color: "#FF9F0A"
+      energy-gas-color: "#FF7A45"
+      energy-water-color: "#64D2FF"
+
+      # ── Text ─────────────────────────────────────────────────────────────
+      primary-text-color: "#F5F5F7"
+      text-primary-color: "#FFFFFF"
+      secondary-text-color: "rgba(235, 235, 245, 0.66)"
+      disabled-text-color: "rgba(235, 235, 245, 0.34)"
+      divider-color: "rgba(255, 255, 255, 0.08)"
+      state-icon-color: "rgba(235, 235, 245, 0.72)"
+
+      # ── Backdrop: deep night with low, soft light sources for the glass ──
+      primary-background-color: "#07090F"
+      secondary-background-color: "#0E121B"
+      lovelace-background: >-
+        radial-gradient(1100px 760px at 8% -12%, rgba(10, 132, 255, 0.26), transparent 62%),
+        radial-gradient(900px 700px at 104% 18%, rgba(64, 200, 224, 0.12), transparent 60%),
+        radial-gradient(1000px 820px at 46% 118%, rgba(255, 159, 10, 0.11), transparent 62%),
+        #07090F fixed
+
+      # ── Glass cards ──────────────────────────────────────────────────────
+      card-background-color: "rgba(24, 28, 40, 0.94)"
+      ha-card-background: "rgba(30, 35, 50, 0.42)"
+      ha-card-backdrop-filter: "blur(28px) saturate(170%)"
+      ha-card-border-width: "1px"
+      ha-card-border-color: "rgba(255, 255, 255, 0.09)"
+      ha-card-border-radius: "22px"
+      ha-card-box-shadow: "0 18px 40px -18px rgba(0, 0, 0, 0.65)"
+      ha-card-header-font-family: >-
+        -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif
+
+      # ── Dialogs & menus: near-opaque glass so text stays legible ─────────
+      ha-dialog-surface-background: "rgba(22, 25, 36, 0.96)"
+      mdc-theme-surface: "#161924"
+      input-fill-color: "rgba(255, 255, 255, 0.06)"
+      input-disabled-fill-color: "rgba(255, 255, 255, 0.03)"
+
+      # ── Header & sidebar ─────────────────────────────────────────────────
+      app-header-background-color: "rgba(7, 9, 15, 0.62)"
+      app-header-backdrop-filter: "blur(22px) saturate(180%)"
+      app-header-border-bottom: "1px solid rgba(255, 255, 255, 0.06)"
+      app-header-text-color: "#F5F5F7"
+      app-header-selection-bar-color: "#0A84FF"
+      sidebar-background-color: "#090C13"
+      sidebar-text-color: "rgba(235, 235, 245, 0.78)"
+      sidebar-icon-color: "rgba(235, 235, 245, 0.62)"
+      sidebar-selected-text-color: "#F5F5F7"
+      sidebar-selected-icon-color: "#0A84FF"
+
+      # ── Sections view rhythm ─────────────────────────────────────────────
+      ha-view-sections-column-gap: "20px"
+      ha-view-sections-row-gap: "10px"
+
+      # ── Bubble Card ──────────────────────────────────────────────────────
+      bubble-border-radius: "22px"
+      bubble-main-background-color: "rgba(255, 255, 255, 0.06)"
+      bubble-secondary-background-color: "rgba(255, 255, 255, 0.04)"
+      bubble-icon-background-color: "rgba(255, 255, 255, 0.08)"
+      bubble-sub-button-background-color: "rgba(255, 255, 255, 0.08)"
+      bubble-accent-color: "#0A84FF"
+      bubble-border: "1px solid rgba(255, 255, 255, 0.09)"
+      bubble-box-shadow: "none"
+      bubble-pop-up-background-color: "rgba(14, 17, 26, 0.74)"
+      bubble-backdrop-background-color: "rgba(0, 0, 0, 0.38)"
+
+      # ── Mushroom ─────────────────────────────────────────────────────────
+      mush-icon-border-radius: "14px"
+      mush-chip-background: "rgba(255, 255, 255, 0.07)"
+      mush-chip-border-radius: "14px"
+      mush-card-primary-font-weight: "600"
+      mush-card-secondary-font-weight: "400"

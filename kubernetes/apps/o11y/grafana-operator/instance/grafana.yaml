@@ -11,7 +11,7 @@ spec:
   # to when this CR was created (12.4.1) into spec.version and Grafana never moved on.
   # The grafana-image-mirror policy rewrites docker.io/grafana to mirror.gcr.io.
   # renovate: datasource=docker depName=docker.io/grafana/grafana
-  version: 13.3.0
+  version: 13.3.1
   config:
     analytics:
       check_for_updates: "false"

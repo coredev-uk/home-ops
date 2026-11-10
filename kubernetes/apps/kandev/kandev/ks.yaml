@@ -17,9 +17,11 @@ spec:
   postBuild:
     substitute:
       APP: kandev
-      # The database, its master.key (which decrypts Kandev's stored secrets) and the
-      # repositories it clones. Task workspaces are PVCs of their own in kandev-agents.
-      KOPIUR_CAPACITY: 10Gi
+      # The database, its master.key (which decrypts Kandev's stored secrets), the repositories
+      # it clones and the agent CLIs it installs (.npm-global). Task workspaces are PVCs of their
+      # own in kandev-agents; caches go to an emptyDir (helmrelease.yaml): npm's and Go's filled
+      # the old 10Gi.
+      KOPIUR_CAPACITY: 30Gi
   prune: true
   sourceRef:
     kind: GitRepository

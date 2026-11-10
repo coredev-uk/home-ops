@@ -508,7 +508,7 @@
       "id": 9,
       "type": "state-timeline",
       "title": "Targets",
-      "description": "Whether each nixosConfiguration and homeConfiguration built at the latest built commit of each branch: main, and open pull requests such as the nightly flake-update one (pr-N). A failed pull request does not merge.",
+      "description": "Whether each nixosConfiguration and homeConfiguration built at the latest built commit of each branch: main, and open pull requests such as the nightly flake-update/<input> ones (pr-N). A failed pull request does not merge.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -644,7 +644,7 @@
       "id": 11,
       "type": "bargauge",
       "title": "Flake Input Age",
-      "description": "How old each input's commit is in the flake.lock of main's latest built commit: how far behind upstream main is. It falls when the nightly flake-update pull request merges; NixFlakeLockStale fires when nixos-unstable is a week old.",
+      "description": "How old each input's commit is in the flake.lock of main's latest built commit: how far behind upstream main is. It falls when that input's nightly flake-update/<input> pull request merges; NixFlakeLockStale fires when nixos-unstable is a week old.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"

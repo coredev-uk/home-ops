@@ -2,7 +2,7 @@
 # NixOS cache builder (helmrelease.yaml), every 30 minutes: build every x86_64-linux
 # nixosConfiguration and homeConfiguration of coredev-uk/nixos at each commit it has not built
 # yet, on main and on every open pull request from a branch of that repository (BOT Cecil's
-# nightly flake-update one among them), push whatever built to Attic, and report the result on
+# nightly flake-update/<input> ones among them), push whatever built to Attic, and report the result on
 # the commit as the `nix-cache` status, which main's ruleset requires before a pull request
 # merges. The next switch on atlas then finds every path either here or on a public cache.
 # darwinConfigurations (poseidon) need macOS: not here. It never writes to the repository.
@@ -126,7 +126,7 @@ next_phase() {
 # Written on every exit once there is something to build, so a failed run is as visible as a
 # good one. refs keeps each branch's latest built commit: main, and the open pull requests. A
 # failed one carries failing_since: when the branch's builds started failing, kept across its
-# commits (the nightly flake-update pull request is refreshed with a new one each night).
+# commits (the flake-update/<input> pull requests get a new one whenever they are redone).
 store_mounted=false
 store_checked=false
 write_status() {

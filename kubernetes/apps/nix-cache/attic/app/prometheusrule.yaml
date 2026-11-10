@@ -33,13 +33,13 @@ spec:
               No nix-cache-builder run has succeeded for {{ $value | humanizeDuration }}; the Nix Cache dashboard shows the failed phase
           labels:
             severity: warning
-        # The nightly flake-update pull request has not merged for a week: its builds or
+        # The nightly unstable update (flake-update/unstable) has not merged for a week: its builds or
         # checks keep failing.
         - alert: NixFlakeLockStale
           expr: time() - max(nix_cache_flake_input_last_modified_timestamp_seconds{input="unstable"}) > 7 * 86400
           for: 1h
           annotations:
             summary: >-
-              main's nixos-unstable is {{ $value | humanizeDuration }} old; the flake-update pull request on coredev-uk/nixos has not merged
+              main's nixos-unstable is {{ $value | humanizeDuration }} old; the flake-update/unstable pull request on coredev-uk/nixos has not merged
           labels:
             severity: warning

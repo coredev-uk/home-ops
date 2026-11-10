@@ -1,0 +1,17 @@
+---
+# Kandev exports no Prometheus metrics (only expvar, behind its debug mode) and grafana.com has no
+# dashboard for it, so this one is built from what the cluster already scrapes: the kubelet,
+# kube-state-metrics, envoy-kandev and kopiur.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: kandev
+spec:
+  allowCrossNamespaceImport: true
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  configMapRef:
+    name: kandev-dashboard
+    key: kandev.json

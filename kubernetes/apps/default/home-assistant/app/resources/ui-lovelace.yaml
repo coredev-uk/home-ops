@@ -267,6 +267,7 @@ views:
             hash: "#tv"
             name: Bravia TV
             icon: mdi:television
+            bg_color: "#0E121B"
             bg_opacity: "70"
             bg_blur: "24"
             cards:
@@ -1089,7 +1090,7 @@ views:
             hash: "#office-switch"
             name: Office switch
             icon: mdi:switch
-            entity: sensor.ptnet_sw_office_state
+            bg_color: "#0E121B"
             bg_opacity: "70"
             bg_blur: "24"
             cards:

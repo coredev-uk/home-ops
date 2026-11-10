@@ -8,17 +8,38 @@ spec:
   groups:
     - name: nix-cache.rules
       rules:
-        # Falls back to the CronJob's creation time, so a builder that has never succeeded
-        # still alerts.
-        - alert: NixCacheBuildStale
+        # main's newest built commit did not fully build, so a switch on atlas would build
+        # what failed itself. A failed pull request shows on the pull request instead.
+        - alert: NixCacheMainBuildFailed
+          expr: max(nix_cache_ref_build_success{ref="main"}) == 0
+          for: 15m
+          annotations:
+            summary: >-
+              coredev-uk/nixos main's latest commit did not build into the cache; the Nix Cache dashboard shows which target failed
+          labels:
+            severity: warning
+        # The builder polls every 30 minutes, and a run with nothing to build succeeds, so this
+        # only fires when runs themselves keep failing (store, GitHub, Attic). Falls back to the
+        # CronJob's creation time, so a builder that has never succeeded still alerts.
+        - alert: NixCacheBuilderStale
           expr: |-
             time() - max(
               kube_cronjob_status_last_successful_time{namespace="nix-cache", cronjob="nix-cache-builder"}
               or kube_cronjob_created{namespace="nix-cache", cronjob="nix-cache-builder"}
-            ) > 108000
+            ) > 10800
           for: 10m
           annotations:
             summary: >-
-              The nightly NixOS build has not succeeded for {{ $value | humanizeDuration }}; coredev-uk/nixos keeps its last pushed flake.lock. The Nix Cache dashboard shows the failed phase
+              No nix-cache-builder run has succeeded for {{ $value | humanizeDuration }}; the Nix Cache dashboard shows the failed phase
+          labels:
+            severity: warning
+        # The nightly flake-update pull request has not merged for a week: its builds or
+        # checks keep failing.
+        - alert: NixFlakeLockStale
+          expr: time() - max(nix_cache_flake_input_last_modified_timestamp_seconds{input="unstable"}) > 7 * 86400
+          for: 1h
+          annotations:
+            summary: >-
+              main's nixos-unstable is {{ $value | humanizeDuration }} old; the flake-update pull request on coredev-uk/nixos has not merged
           labels:
             severity: warning

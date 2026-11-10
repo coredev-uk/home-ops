@@ -22,7 +22,7 @@
     {
       "id": 1,
       "type": "row",
-      "title": "Nightly build",
+      "title": "Builds",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -36,7 +36,7 @@
       "id": 2,
       "type": "stat",
       "title": "Last Successful Build",
-      "description": "Time since the nix-cache-builder CronJob last succeeded: built every target, pushed to the cache and pushed flake.lock. It runs at 01:00; NixCacheBuildStale fires after 30h.",
+      "description": "Time since a builder run last built every target of every commit it took on and pushed them to the cache. The builder polls every 30 minutes and only runs a build for new commits on main or an open pull request; NixCacheMainBuildFailed fires when main's latest commit failed.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -93,7 +93,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "time() - max(kube_cronjob_status_last_successful_time{namespace=\"nix-cache\", cronjob=\"nix-cache-builder\"})",
+          "expr": "time() - max(nix_cache_build_last_success_timestamp_seconds)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -508,7 +508,7 @@
       "id": 9,
       "type": "state-timeline",
       "title": "Targets",
-      "description": "Whether each nixosConfiguration and homeConfiguration built in the latest run. One failure keeps the old flake.lock on main.",
+      "description": "Whether each nixosConfiguration and homeConfiguration built at the latest built commit of each branch: main, and open pull requests such as the nightly flake-update one (pr-N). A failed pull request does not merge.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -574,9 +574,9 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max by (target) (nix_cache_build_target_success)",
+          "expr": "max by (ref, target) (nix_cache_build_target_success)",
           "refId": "A",
-          "legendFormat": "{{target}}"
+          "legendFormat": "{{ref}} {{target}}"
         }
       ]
     },
@@ -584,7 +584,7 @@
       "id": 10,
       "type": "timeseries",
       "title": "Closure Size",
-      "description": "Total size of each target's closure: what a fresh machine downloads.",
+      "description": "Total size of each target's closure at main's latest built commit: what a fresh machine downloads.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -634,7 +634,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max by (target) (nix_cache_build_closure_bytes)",
+          "expr": "max by (target) (nix_cache_build_closure_bytes{ref=\"main\"})",
           "refId": "A",
           "legendFormat": "{{target}}"
         }
@@ -644,7 +644,7 @@
       "id": 11,
       "type": "bargauge",
       "title": "Flake Input Age",
-      "description": "How old each locked flake input's commit is. After a successful run this is how far behind upstream coredev-uk/nixos main is.",
+      "description": "How old each input's commit is in the flake.lock of main's latest built commit: how far behind upstream main is. It falls when the nightly flake-update pull request merges; NixFlakeLockStale fires when nixos-unstable is a week old.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -713,8 +713,8 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Inputs Updated per Run",
-      "description": "Flake inputs each run moved to a new revision (0: lock unchanged).",
+      "title": "Commits Built per Run",
+      "description": "Commits each builder run built (main and pull request heads it had not built before). Runs with nothing new stop early and leave this unchanged.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -765,9 +765,9 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_build_inputs_updated)",
+          "expr": "max(nix_cache_build_commits)",
           "refId": "A",
-          "legendFormat": "inputs updated"
+          "legendFormat": "commits"
         }
       ]
     },

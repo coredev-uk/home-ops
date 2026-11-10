@@ -47,7 +47,8 @@
     "UI tests (goldens)",
     "E2E (headless sway)",
     "Conventional Commits title",
-    "gitleaks"
+    "gitleaks",
+    "Nix vendorHash"
   ],
   "requiredContexts": [],
   "stabilityContext": "",

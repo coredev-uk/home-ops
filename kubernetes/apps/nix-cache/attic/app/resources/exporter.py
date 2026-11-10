@@ -1,9 +1,9 @@
 """Prometheus exporter for the Nix cache (sidecar in the attic HelmRelease).
 
 Attic has no metrics endpoint. Every REFRESH_SECONDS this reads Attic's SQLite database
-(read-only) for what the cache holds, and the status file the nightly builder writes
-(nix-cache-builder's run.sh) for how the last build went. A scrape only returns the last
-snapshot.
+(read-only) for what the cache holds, and the status file the builder writes (nix-cache-builder's
+run.sh) for how its last run went and the latest built commit of each branch (main and the open
+pull requests). A scrape only returns the last snapshot.
 """
 
 import json
@@ -119,18 +119,26 @@ def collect_build(m):
               "How long each phase of the last builder run took.", seconds, {"phase": phase})
     m.add("nix_cache_build_duration_seconds", "gauge", "Wall time of the last builder run.",
           status["finished"] - status["started"])
-    m.add("nix_cache_build_lock_changed", "gauge",
-          "1 if the last run updated flake.lock.", 1 if status.get("lock_changed") else 0)
-    m.add("nix_cache_build_inputs_updated", "gauge",
-          "Flake inputs the last run moved to a new revision.", status.get("inputs_updated", 0))
-    for target, result in status.get("targets", {}).items():
-        labels = {"target": target}
-        m.add("nix_cache_build_target_success", "gauge",
-              "1 if the target built in the last run, 0 if it failed.",
+    m.add("nix_cache_build_commits", "gauge", "Commits the last builder run built.",
+          status.get("commits_built"))
+    m.add("nix_cache_build_last_success_timestamp_seconds", "gauge",
+          "When a builder run last built everything it set out to.", status.get("last_success"))
+    for ref, result in status.get("refs", {}).items():
+        labels = {"ref": ref}
+        m.add("nix_cache_ref_build_success", "gauge",
+              "1 if the branch's latest built commit built every target, 0 if not.",
               1 if result.get("success") else 0, labels)
-        m.add("nix_cache_build_closure_bytes", "gauge",
-              "Closure size of the target's last successful build.", result.get("closure_bytes"),
+        m.add("nix_cache_ref_build_timestamp_seconds", "gauge",
+              "When the branch's latest built commit finished building.", result.get("finished"),
               labels)
+        for target, target_result in result.get("targets", {}).items():
+            labels = {"ref": ref, "target": target}
+            m.add("nix_cache_build_target_success", "gauge",
+                  "1 if the target built at the branch's latest built commit, 0 if it failed.",
+                  1 if target_result.get("success") else 0, labels)
+            m.add("nix_cache_build_closure_bytes", "gauge",
+                  "Closure size of the target at the branch's latest built commit.",
+                  target_result.get("closure_bytes"), labels)
     for name, modified in status.get("inputs", {}).items():
         m.add("nix_cache_flake_input_last_modified_timestamp_seconds", "gauge",
               "Commit time of each flake input in the locked revision.", modified,

@@ -42,6 +42,29 @@ libraries:
       - default: genre
       - default: content_rating_uk
 
+    # Poster badges. Filenames follow TRaSH naming ([EAC3 Atmos 5.1], {edition-...}),
+    # which audio_codec and edition-aware resolution read.
+    overlay_files:
+      - default: resolution
+      - default: audio_codec
+      - default: streaming
+        template_variables:
+          region: GB
+      - default: ratings
+        template_variables:
+          rating1: critic
+          rating1_image: imdb
+          rating2: audience
+          rating2_image: rt_popcorn
+          rating3: user
+          rating3_image: tmdb
+          horizontal_position: right
+      - default: ribbon
+        template_variables:
+          weight_bafta: 195
+          use_common: false
+          use_razzie: false
+
     operations:
       mass_critic_rating_update: imdb
       mass_audience_rating_update: mdb_tomatoesaudience
@@ -70,6 +93,28 @@ libraries:
       - default: decade
       - default: genre
       - default: content_rating_uk
+
+    overlay_files:
+      - default: resolution
+      - default: audio_codec
+      - default: streaming
+        template_variables:
+          region: GB
+      - default: status
+      - default: ratings
+        template_variables:
+          rating1: critic
+          rating1_image: imdb
+          rating2: audience
+          rating2_image: rt_popcorn
+          rating3: user
+          rating3_image: tmdb
+          horizontal_position: right
+      - default: ribbon
+        template_variables:
+          weight_bafta: 195
+          use_common: false
+          use_razzie: false
 
     operations:
       mass_critic_rating_update: imdb
@@ -101,7 +146,8 @@ settings:
   minimum_items: 1
   default_collection_order: custom
   delete_below_minimum: true
-  delete_not_scheduled: false
+  # Seasonal collections leave the home screen once their window closes.
+  delete_not_scheduled: true
   run_again_delay: 2
   missing_only_released: true
   only_filter_missing: false

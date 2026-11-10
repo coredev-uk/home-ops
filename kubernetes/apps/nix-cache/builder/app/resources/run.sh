@@ -51,8 +51,10 @@ phase=setup
 phase_started=$started
 durations='{}'
 inputs='{}'
-# Commit -> {success, finished, targets} for what this run built.
+# Commit -> {success, started, finished, targets} for what this run built.
 results='{}'
+commit_started=null
+branches='{}'
 
 # --- GitHub, as the bot-cecil App ------------------------------------------------------
 b64url() { "$OPENSSL" base64 -A | tr '+/' '-_' | tr -d '='; }
@@ -124,9 +126,12 @@ next_phase() {
 }
 
 # Written on every exit once there is something to build, so a failed run is as visible as a
-# good one. refs keeps each branch's latest built commit: main, and the open pull requests. A
-# failed one carries failing_since: when the branch's builds started failing, kept across its
-# commits (the flake-update/<input> pull requests get a new one whenever they are redone).
+# good one. refs keeps each branch's latest built commit: main, and the open pull requests, with
+# the pull request's branch. A failed one carries failing_since: when the branch's builds started
+# failing, kept across its commits (the flake-update/<input> trials get a new one whenever they are
+# redone). totals counts every commit result since the first run, by kind of branch: main,
+# landing (flake-update, the trials that passed, together), trial/<input> (flake-update/<input>)
+# or pr, with the seconds spent building them, for the dashboard's success rates.
 store_mounted=false
 store_checked=false
 write_status() {
@@ -138,10 +143,15 @@ write_status() {
     --argjson started "$started" --argjson finished "$(date +%s)" \
     --argjson ran "$([ "$rc" = 0 ] && echo true || echo false)" \
     --arg phase "$phase" --argjson durations "$durations" --argjson inputs "$inputs" \
-    --argjson prev "$prev" --argjson heads "$heads" --argjson results "$results" \
+    --argjson prev "$prev" --argjson heads "$heads" --argjson branches "$branches" --argjson results "$results" \
     --argjson store_size "${size:-0}" --argjson store_used "${used:-0}" \
     '($prev.refs // {}) as $old
-    | ($ran and ([$results[].success] | all)) as $success
+    | def kind($ref): ($branches[$ref] // "") as $b
+        | if $ref == "main" then "main"
+          elif $b == "flake-update" then "landing"
+          elif ($b | startswith("flake-update/")) then "trial/\($b | ltrimstr("flake-update/"))"
+          else "pr" end;
+    ($ran and ([$results[].success] | all)) as $success
     | {started: $started, finished: $finished, success: $success,
       failed_phase: (if $success then null elif $ran then "build" else $phase end), durations: $durations,
       last_success: (if $success then $finished else $prev.last_success end),
@@ -152,8 +162,14 @@ write_status() {
              (if $results[$sha].success then null
               elif $old[$ref].success == false then ($old[$ref].failing_since // $old[$ref].finished)
               else $results[$sha].finished end)}
-         else ([$old[] | select(.sha == $sha)][0] // null) end))
+         else ([$old[] | select(.sha == $sha)][0] // null) end)
+        | if .value == null then . else .value.branch = ($branches[$ref] // null) end)
         | with_entries(select(.value != null))),
+      totals: (reduce ($results | to_entries[]) as $r (($prev.totals // {});
+        ([$heads | to_entries[] | select(.value == $r.key) | .key][0]) as $ref
+        | .[kind($ref)] |= ((. // {success: 0, failure: 0, seconds: 0})
+          | .[if $r.value.success then "success" else "failure" end] += 1
+          | .seconds += (($r.value.finished // 0) - ($r.value.started // $r.value.finished // 0))))),
       inputs: (if $inputs == {} then ($prev.inputs // {}) else $inputs end),
       store: {size_bytes: $store_size, used_bytes: $store_used}}' \
     >"$STATUS.tmp" && mv "$STATUS.tmp" "$STATUS"
@@ -184,13 +200,14 @@ nix build --no-link "$UTIL_LINUX" "$E2FSPROGS" "${JQ%/bin/jq}" "${OPENSSL%/bin/o
 prev=$(cat "$STATUS" 2>/dev/null || echo '{}')
 token=$(github_token)
 # Branch -> commit: main, and every open pull request into main from a branch of this repository
-# (a fork's code never runs here).
+# (a fork's code never runs here); branches names each pull request's branch, for the dashboard.
+pulls=$(github "$token" GET "/repos/$REPO/pulls?state=open&base=main&per_page=100" |
+  "$JQ" -c --arg repo "$REPO" 'map(select(.head.repo.full_name == $repo))')
 heads=$({
   github "$token" GET "/repos/$REPO/commits/main" | "$JQ" -c '{main: .sha}'
-  github "$token" GET "/repos/$REPO/pulls?state=open&base=main&per_page=100" |
-    "$JQ" -c --arg repo "$REPO" \
-      'map(select(.head.repo.full_name == $repo) | {key: "pr-\(.number)", value: .head.sha}) | from_entries'
+  "$JQ" -c 'map({key: "pr-\(.number)", value: .head.sha}) | from_entries' <<<"$pulls"
 } | "$JQ" -sc add)
+branches=$("$JQ" -c 'map({key: "pr-\(.number)", value: .head.ref}) | from_entries + {main: "main"}' <<<"$pulls")
 # Each commit once (a branch and main can point at the same one), skipping those built before
 # under any branch, unless that failed RETRY_AFTER ago.
 mapfile -t todo < <("$JQ" -r --argjson prev "$prev" --argjson now "$(date +%s)" --argjson retry "$RETRY_AFTER" '
@@ -316,8 +333,8 @@ fault=""
 # commit_result COMMIT SUCCESS TARGETS DESCRIPTION: record it for status.json and report it on
 # the commit (GitHub cuts descriptions at 140 characters).
 commit_result() {
-  results=$("$JQ" -c --arg c "$1" --argjson s "$2" --argjson t "$3" --argjson f "$(date +%s)" \
-    '.[$c] = {success: $s, finished: $f, targets: $t}' <<<"$results")
+  results=$("$JQ" -c --arg c "$1" --argjson s "$2" --argjson t "$3" --argjson st "$commit_started" --argjson f "$(date +%s)" \
+    '.[$c] = {success: $s, started: $st, finished: $f, targets: $t}' <<<"$results")
   log "$1: $4"
   set_status "$1" "$([ "$2" = true ] && echo success || echo failure)" "${4:0:140}"
 }
@@ -359,6 +376,7 @@ build_commit() {
   local ref=$1 sha=$2 dir="$WORK/$2" build_rc=0 targets='{}' target_json i name out size
   local hosts=() homes=() names=() installables=() outs=() built=() failed=()
   next_phase build
+  commit_started=$(date +%s)
   # Authenticated GitHub API calls for the flake's GitHub inputs: anonymous ones share the home
   # IP's 60 an hour. A fresh token, as the store check or an earlier commit can outlast one.
   # NIX_CONFIG adds to nix.conf for this process only; builds never see it.

@@ -15,7 +15,7 @@ kind: PodTemplate
 template:
   spec:
     automountServiceAccountToken: false
-    # hyperion-0 first (14 cores, and Attic and Prometheus prefer other nodes to leave it room);
+    # hyperion-0 first (18 cores, and Attic and Prometheus prefer other nodes to leave it room);
     # hyperion-2 once it is full, so a task runs slower rather than failing to schedule. Never
     # hyperion-1: its 128G system disk could not hold a task's Nix store in ephemeral storage.
     affinity:
@@ -80,6 +80,12 @@ template:
             value: user.email
           - name: GIT_CONFIG_VALUE_2
             value: 353538383+bot-cliffe[bot]@users.noreply.github.com
+          # Without a CPU limit cargo runs one job per node core (6 on hyperion-2, 18 on
+          # hyperion-0), and each job's GNU ld links a test binary in about 1GiB. Six at once
+          # with the agents' own ~1.5GiB OOM-killed a task pod at the 8Gi limit; the kill takes
+          # agentctl with it, so the task fails. Three jobs keep a Rust build near 5GiB.
+          - name: CARGO_BUILD_JOBS
+            value: "3"
         # The Nix store is in the container's writable layer, so a repository's devenv closure
         # (sona-go: GTK, GStreamer, sway) counts against ephemeral storage, not the workspace.
         # A sona-go task (devenv, go build, the UI tests) uses several GiB: requesting 4Gi keeps

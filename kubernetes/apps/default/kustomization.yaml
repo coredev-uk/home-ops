@@ -13,6 +13,7 @@ resources:
   - ./atuin/ks.yaml
   - ./autobrr/ks.yaml
   - ./bazarr/ks.yaml
+  - ./browserless/ks.yaml
   - ./brrpolice/ks.yaml
   - ./changedetection/ks.yaml
   - ./chaski/ks.yaml

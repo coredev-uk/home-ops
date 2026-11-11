@@ -25,7 +25,7 @@ spec:
               BASE_URL: https://changes.hera.ac
               HIDE_REFERER: "true"
               ALLOW_IANA_RESTRICTED_ADDRESSES: "true"
-              WEBDRIVER_URL: http://localhost:4444/wd/hub
+              PLAYWRIGHT_DRIVER_URL: ws://browserless.default.svc.cluster.local:3000
             probes:
               liveness:
                 enabled: true
@@ -65,47 +65,6 @@ spec:
                 memory: 128Mi
               limits:
                 memory: 512Mi
-          selenium:
-            image:
-              repository: selenium/standalone-chrome
-              tag: 147.0-20260404
-            env:
-              VNC_NO_PASSWORD: "1"
-              SCREEN_WIDTH: "1920"
-              SCREEN_HEIGHT: "1080"
-              SCREEN_DEPTH: "24"
-            probes:
-              liveness: &seleniumProbes
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /status
-                    port: &seleniumPort 4444
-                  periodSeconds: 30
-                  timeoutSeconds: 5
-                  failureThreshold: 5
-              readiness: *seleniumProbes
-              startup:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /status
-                    port: *seleniumPort
-                  timeoutSeconds: 5
-                  failureThreshold: 30
-            securityContext:
-              allowPrivilegeEscalation: false
-              runAsUser: 1200
-              runAsGroup: 1201
-              capabilities: { drop: ["ALL"] }
-            resources:
-              requests:
-                cpu: 100m
-                memory: 832Mi
-              limits:
-                memory: 2Gi
     defaultPodOptions:
       hostname: hyperion
       securityContext:
@@ -119,11 +78,6 @@ spec:
         ports:
           http:
             port: *port
-      selenium:
-        controller: changedetection
-        ports:
-          webdriver:
-            port: *seleniumPort
     route:
       app:
         hostnames:
@@ -144,11 +98,3 @@ spec:
               - path: /datastore
       tmp:
         type: emptyDir
-      shm:
-        type: emptyDir
-        medium: Memory
-        sizeLimit: 2Gi
-        advancedMounts:
-          changedetection:
-            selenium:
-              - path: /dev/shm

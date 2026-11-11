@@ -60,13 +60,13 @@ spec:
         memory: 64Mi
       limits:
         memory: 512Mi
-    # Every closure CI pushes is the whole closure, upstream paths included, so the bucket holds
-    # what atlas needs even when cache.nixos.org does not answer. Two weeks keeps it near R2's
-    # 10 GB free tier; main's latest atlas system and home are pinned (atlas.yml in
-    # coredev-uk/nixos) and survive any age.
+    # Every closure CI pushes is the whole closure, upstream paths included (about 13.6 GB in R2
+    # for one system and home), so the bucket holds what atlas needs even when cache.nixos.org
+    # does not answer. A week keeps it near R2's 10 GB free tier; main's latest atlas system and
+    # home are pinned (atlas.yml in coredev-uk/nixos) and survive any age.
     gc:
       schedule: "0 4 * * *"
-      olderThan: 336h
+      olderThan: 168h
       failedUploadsOlderThan: 6h
       resources:
         requests:

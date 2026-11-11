@@ -1,0 +1,15 @@
+---
+# The chart's own dashboard (grafanaDashboard in helmrelease.yaml renders the ConfigMap).
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: niks3
+spec:
+  allowCrossNamespaceImport: true
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  configMapRef:
+    name: niks3-dashboard
+    key: niks3.json

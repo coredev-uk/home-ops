@@ -18,3 +18,4 @@ resources:
   - ./namespace.yaml
   - ./attic/ks.yaml
   - ./builder/ks.yaml
+  - ./niks3/ks.yaml

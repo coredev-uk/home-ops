@@ -1,0 +1,86 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: browserless
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: browserless
+  interval: 1h
+  values:
+    controllers:
+      browserless:
+        containers:
+          app:
+            image:
+              repository: ghcr.io/browserless/chromium
+              tag: v2.62.0@sha256:0f28bbde20e890463e8d0f253dc2b66860de8ad3aef6cc17bcdbfe8a02ffccf0
+            env:
+              TZ: Europe/London
+              # Browsers running at once; beyond this, up to QUEUED connections wait.
+              CONCURRENT: "4"
+              QUEUED: "10"
+              # The default (browserless*,-**:verbose) logs every launch and every request each
+              # page makes; keep info, warnings and errors.
+              DEBUG: browserless*,-**:debug,-**:trace,-**:verbose
+              DEBUG_COLORS: "false"
+              # Session lifetime in ms. The 30s default would cut off slow pages and
+              # changedetection's Browser Steps.
+              TIMEOUT: "120000"
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    # 204 while the server is up. No TOKEN is set, so it needs no auth.
+                    path: /active
+                    port: &port 3000
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /active
+                    port: *port
+                  timeoutSeconds: 5
+                  failureThreshold: 30
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 100m
+                memory: 832Mi
+              limits:
+                memory: 3Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    persistence:
+      # Per-session profiles, downloads and scratch dirs; RAM keeps them off the disk.
+      tmp:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /dev/shm

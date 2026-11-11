@@ -34,6 +34,9 @@ spec:
               OIDC_SCOPES_OVERRIDE: openid profile email groups
               OIDC_CONFIGURATION_URL: https://id.hera.ac/.well-known/openid-configuration
               OIDC_PROVIDER_NAME: HyperionID
+              # Last resort for recipe pages still blocked after Mealie's own fetch: Byparr
+              # (FlareSolverr-compatible) runs beside Prowlarr.
+              SCRAPER_FLARESOLVERR_URL: http://prowlarr.default.svc.cluster.local:8191
             envFrom:
               - secretRef:
                   name: mealie-secret

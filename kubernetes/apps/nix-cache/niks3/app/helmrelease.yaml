@@ -66,6 +66,12 @@ spec:
       schedule: "0 4 * * *"
       olderThan: 336h
       failedUploadsOlderThan: 6h
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
     metrics:
       serviceMonitor:
         enabled: true

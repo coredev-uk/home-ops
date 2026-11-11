@@ -1,8 +1,9 @@
 ---
-# Nix binary cache for the NixOS desktop (github.com/coredev-uk/nixos). GitHub Actions builds atlas
-# there and pushes through niks3, which signs the paths and hands out presigned uploads into the
-# R2 bucket nix-cache; atlas reads the bucket at https://nix-cache.hera.ac, so the cache does not
-# depend on this cluster being up. niks3's Postgres only tracks references for its GC.
+# Nix binary cache for coredev-uk/nixos's hosts (atlas, NixOS; poseidon, nix-darwin). GitHub
+# Actions builds them there and pushes through niks3, which signs the paths and hands out presigned
+# uploads into the R2 bucket nix-cache; the hosts read the bucket at https://nix-cache.hera.ac, so
+# the cache does not depend on this cluster being up. niks3's Postgres only tracks references for
+# its GC.
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

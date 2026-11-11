@@ -1,0 +1,73 @@
+---
+# niks3: the write side of the Nix binary cache for coredev-uk/nixos. The cache itself is the R2
+# bucket nix-cache, read straight from https://nix-cache.hera.ac (the bucket's custom domain), so
+# atlas can substitute from it whether or not this cluster is up. CI on GitHub's runners builds
+# atlas and pushes through niks3: it signs each narinfo, hands out presigned R2 URLs for the
+# uploads, and records what references what so its GC never deletes a path a kept closure needs.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Mic92/niks3/main/deploy/helm/niks3/values.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: niks3
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: niks3
+  interval: 1h
+  values:
+    image:
+      repository: ghcr.io/mic92/niks3
+      tag: v1.16.2@sha256:e75f8a97bdee9be6e1a2e35dce279f057265e3c141669b58981bbf1d6a2e6b21
+    deploymentAnnotations:
+      reloader.stakater.com/auto: "true"
+    database:
+      existingSecret: &secret niks3-secret
+      secretKey: uri
+    s3:
+      # Overridden by --s3-endpoint below: the account id comes from 1Password.
+      endpoint: r2.cloudflarestorage.com
+      bucket: nix-cache
+      region: auto
+      bucketLookup: path
+      existingSecret: *secret
+    auth:
+      existingSecret: *secret
+      # GitHub Actions pushes with its OIDC token: any workflow of coredev-uk/nixos (pushes to main
+      # and its own pull requests; a fork's pull request gets no id-token). Write only.
+      oidcProviders:
+        github:
+          issuer: https://token.actions.githubusercontent.com
+          audience: https://niks3.hera.ac
+          bound_subject: ["repo:coredev-uk/nixos:*"]
+          scopes: [write]
+    signing:
+      existingSecret: *secret
+      keys: [nix-cache.hera.ac-1]
+    cacheURL: https://nix-cache.hera.ac
+    extraEnv:
+      - name: R2_ENDPOINT
+        valueFrom:
+          secretKeyRef:
+            name: *secret
+            key: r2-endpoint
+    extraArgs:
+      - --s3-endpoint=$(R2_ENDPOINT)
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 512Mi
+    # Every closure CI pushes is the whole closure, upstream paths included, so the bucket holds
+    # what atlas needs even when cache.nixos.org does not answer. Two weeks keeps it near R2's
+    # 10 GB free tier; main's latest atlas system and home are pinned (atlas.yml in
+    # coredev-uk/nixos) and survive any age.
+    gc:
+      schedule: "0 4 * * *"
+      olderThan: 336h
+      failedUploadsOlderThan: 6h
+    metrics:
+      serviceMonitor:
+        enabled: true
+    grafanaDashboard:
+      enabled: true

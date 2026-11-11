@@ -103,14 +103,14 @@ After an unhealthy deploy, fix it, `@bot-clarence merge` or close the revert, th
 
 ## Nix Cache
 
-`kubernetes/apps/nix-cache` serves an [Attic](https://github.com/zhaofengli/attic) binary cache at `https://nix-cache.hera.ac/coredev` (public, envoy-internal only) for [coredev-uk/nixos](https://github.com/coredev-uk/nixos). Every 30 minutes the `nix-cache-builder` CronJob looks for commits it has not built on that repository's `main` and on its open pull requests from its own branches. For each, it builds every `x86_64-linux` nixosConfiguration and homeConfiguration (`atlas`, `paul@atlas`), pushes whatever built and cache.nixos.org, nix-community and nix-citizen do not already sign, and sets the commit's `nix-cache` status as BOT Cecil. A run with nothing new stops before mounting the store. It never writes to the repository: its nightly `update-flake-lock` workflow opens the `flake-update` pull request as BOT Cecil, and the pull request merges itself once its checks and `nix-cache` pass, so `main` only gets a lock whose builds are already in the cache. The builder needs a privileged pod for the Nix sandbox, so it runs under RuntimeClass `kata` (`siderolabs/kata-containers` in the Talos schematic). Its Nix store is an ext4 image on a Ceph volume. The Grafana dashboard is _Nix Cache_, and the alerts are `NixCacheMainBuildFailed`, `NixCacheBuilderStale` and `NixFlakeLockStale`.
+`kubernetes/apps/nix-cache` runs [niks3](https://github.com/Mic92/niks3), the write side of the binary cache for [coredev-uk/nixos](https://github.com/coredev-uk/nixos). The cache itself is the Cloudflare R2 bucket `nix-cache`, which Nix reads directly at `https://nix-cache.hera.ac` (the bucket's custom domain), so atlas can substitute from it while the cluster is down. That repository's `Atlas` workflow builds `atlas` and `paul@atlas` on GitHub's runners for every pull request and every push to `main`, and pushes each derivation as it finishes through [niks3-action](https://github.com/Mic92/niks3-action). The workflow authenticates with its GitHub OIDC token, and niks3 hands out presigned URLs, so the NARs go straight to R2. On `main` it pins the results (`https://nix-cache.hera.ac/pins/atlas`, `pins/paul-at-atlas`), which keeps them through garbage collection. niks3 tracks references in a CNPG Postgres, and its GC CronJob drops closures older than two weeks. Only `/api/` is public, at `niks3.hera.ac`. The Grafana dashboard is _niks3_.
 
-One-time setup, in 1Password item `nix-cache` (the builder also reads BOT Cecil's `GITHUB_BOT_APP_CLIENT_ID` and `GITHUB_BOT_APP_PRIVATE_KEY` from item `bot-cecil`; the app needs Commit statuses, Contents and Pull requests on coredev-uk/nixos):
+One-time setup, in 1Password item `nix-cache` (the R2 account id comes from `CLOUDFLARE_ACCOUNT_TAG` in item `cloudflare`):
 
-- `ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64`: `openssl genrsa -traditional 4096 | base64 -w0` (Attic needs a PKCS#1 key)
-- `ATTIC_TOKEN`: `atticadm -f kubernetes/apps/nix-cache/attic/app/resources/server.toml make-token --sub nix-cache-builder --validity 10y --pull coredev --push coredev --create-cache coredev --configure-cache coredev --configure-cache-retention coredev`, with the key above in the environment
-
-The first run creates the cache and logs its public key (`[nix-cache] cache coredev: Public Key: ...`). Add that key and `https://nix-cache.hera.ac/coredev` to `hosts/default.nix` in coredev-uk/nixos. Run a build now with `kubectl -n nix-cache create job --from=cronjob/nix-cache-builder nix-cache-builder-manual`.
+- `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`: an R2 Account API token with Object Read & Write on the `nix-cache` bucket only. The bucket's custom domain is `nix-cache.hera.ac`.
+- `NIKS3_SIGNING_KEY`: `nix key generate-secret --key-name nix-cache.hera.ac-1`, and `NIKS3_PUBLIC_KEY` its public half (`nix key convert-secret-to-public`), which `hosts/default.nix` in coredev-uk/nixos trusts
+- `NIKS3_API_TOKEN`: at least 36 random characters, for the GC CronJob
+- `POSTGRES_PASSWORD`: the niks3 database owner's
 
 ## Credits
 

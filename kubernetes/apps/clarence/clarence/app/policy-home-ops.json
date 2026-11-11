@@ -255,7 +255,7 @@
         "true": "A database schema migration, a changed on-disk or state format, or a statement that downgrading is unsupported.",
         "false": "No change to stored data or its format is mentioned."
       },
-      "reviewAbove": 0.3,
+      "reviewAbove": 0.51,
       "instructions": "Do the release notes in `release_notes` say this version changes stored data in a way the previous version may not be able to read?"
     },
     {

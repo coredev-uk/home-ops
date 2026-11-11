@@ -8,15 +8,6 @@ server:
 headscale:
   url: https://hs.hera.ac
   api_key_path: /etc/headplane/secrets/api_key
-integration:
-  agent:
-    enabled: false
-  docker:
-    enabled: false
-  kubernetes:
-    enabled: false
-  proc:
-    enabled: false
 oidc:
   enabled: true
   issuer: https://id.hera.ac

@@ -64,7 +64,7 @@ spec:
     # Every closure CI pushes is the whole closure, upstream paths included (about 13.6 GB in R2
     # for atlas's system and home), so the bucket holds what the hosts need even when
     # cache.nixos.org does not answer. A week keeps it within reach of R2's 10 GB free tier; main's
-    # latest builds (atlas, paul-at-atlas, poseidon) are pinned (hosts.yml in coredev-uk/nixos) and
+    # latest builds (atlas, atlas-home, poseidon) are pinned (hosts.yml in coredev-uk/nixos) and
     # survive any age.
     gc:
       schedule: "0 4 * * *"

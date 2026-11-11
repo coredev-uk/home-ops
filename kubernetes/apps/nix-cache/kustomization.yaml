@@ -1,10 +1,8 @@
 ---
-# Nix binary cache for the NixOS desktop (github.com/coredev-uk/nixos): Attic serves what
-# cache.nixos.org and the other public caches do not have, and a CronJob builds every Linux host
-# and Home Manager configuration at each new commit on main and the open pull requests, pushes the
-# result and reports it on the commit as the nix-cache status. The builder is privileged for the
-# Nix sandbox and its loop mount, under RuntimeClass kata, so that privilege stops at the pod's
-# own VM.
+# Nix binary cache for the NixOS desktop (github.com/coredev-uk/nixos). GitHub Actions builds atlas
+# there and pushes through niks3, which signs the paths and hands out presigned uploads into the
+# R2 bucket nix-cache; atlas reads the bucket at https://nix-cache.hera.ac, so the cache does not
+# depend on this cluster being up. niks3's Postgres only tracks references for its GC.
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -12,10 +10,7 @@ namespace: nix-cache
 
 components:
   - ../../components/alerts
-  - ../../components/kopiur/secret
 
 resources:
   - ./namespace.yaml
-  - ./attic/ks.yaml
-  - ./builder/ks.yaml
   - ./niks3/ks.yaml

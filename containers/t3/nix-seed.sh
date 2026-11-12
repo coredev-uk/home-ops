@@ -27,4 +27,12 @@ ln -sfn agent-image-link "$profiles/agent"
 # Both links are written as they resolve from the server container, where the volume is /nix.
 ln -sfn /nix/var/nix/profiles "$gcroots/profiles"
 
+# Nix builds in /nix/var/nix/builds, and the pod's fsGroup makes the volume's directories setgid,
+# so a build directory inherits the bit. Nix's builders refuse to create setgid files, and
+# coreutils keeps a directory's setgid bit when it copies one, so every build that unpacks a
+# source tree failed ("cp: setting permissions for 'source': Operation not permitted").
+builds=$root/nix/var/nix/builds
+mkdir -p "$builds"
+chmod g-s "$builds"
+
 echo "Nix volume holds $(basename "$profile")"

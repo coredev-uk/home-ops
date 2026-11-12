@@ -10,6 +10,15 @@ configMapGenerator:
   - name: t3-dashboard
     files:
       - t3.json=./resources/t3.json
+  # T3's managed policy, mounted read-only at /etc/t3code in both environments
+  # (environment/app/helmrelease.yaml); T3 reads it once at start, and Reloader restarts the
+  # environments when it changes. It locks the omp provider (a Local ACP command), makes omp the
+  # default for new threads and Claude Code the text generator (ACP agents never write titles,
+  # commit messages or PR text), allows only those two drivers, and turns T3 Connect, telemetry
+  # and self-updates off. Check a change with `t3 policy check` before merging.
+  - name: t3-policy
+    files:
+      - policy.json=./resources/policy.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

@@ -180,12 +180,6 @@ RUN PATH=/nix/var/nix/profiles/agent/bin:$PATH \
 RUN printf '%s\n' 'export PATH="/usr/local/bin:/opt/claude-code/bin:/nix/var/nix/profiles/agent/bin:$PATH"' \
       > /etc/profile.d/agent-path.sh
 
-# T3's managed policy (see the file), root-owned so a thread cannot change what its server enforces.
-# The directory is created first: COPY --chmod applies its mode to the directories it creates too,
-# and a 0644 /etc/t3code cannot be traversed, so T3 refused to start (EACCES on the policy).
-RUN install -d -m 0755 /etc/t3code
-COPY --chmod=0644 policy.json /etc/t3code/policy.json
-
 # omp's defaults (see the files): config.yml is loaded through PI_CONFIG_FILES below, AGENTS.md
 # and skills/ are synced into the agent directory by the entrypoint.
 COPY --chmod=0644 omp/config.yml omp/AGENTS.md /opt/omp/

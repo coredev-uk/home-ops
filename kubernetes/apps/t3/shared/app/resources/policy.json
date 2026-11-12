@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "organization": "home-ops",
+  "settings": {
+    "providerInstances.omp": {
+      "value": {
+        "driver": "acpRegistry",
+        "displayName": "oh-my-pi",
+        "enabled": true,
+        "config": { "source": "local", "commandPath": "omp", "commandArgs": ["acp"] }
+      },
+      "locked": true
+    },
+    "defaultModelSelection": {
+      "value": { "instanceId": "omp", "model": "anthropic/claude-opus-5-5" },
+      "locked": false
+    },
+    "textGenerationModelSelection": {
+      "value": { "instanceId": "claudeAgent", "model": "claude-haiku-5-5" },
+      "locked": false
+    }
+  },
+  "limits": {
+    "connect": false,
+    "telemetry": false,
+    "updates": { "mode": "off" },
+    "providers": { "allowedDrivers": ["acpRegistry", "claudeAgent"] }
+  }
+}

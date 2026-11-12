@@ -1,9 +1,0 @@
-{
-  "schemaVersion": 1,
-  "organization": "home-ops",
-  "limits": {
-    "telemetry": false,
-    "connect": false,
-    "updates": { "mode": "off" }
-  }
-}

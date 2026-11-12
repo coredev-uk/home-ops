@@ -6,10 +6,11 @@
 #   platform: linux/amd64, main container: kandev-agent
 #   workspace: managed_pvc, 20Gi, ceph-block, ReadWriteOnce
 #   remote credentials: Pi's "Copy auth files". Kandev 0.101.0 offers and admits Pi on this executor
-#   only with one of Pi's credential methods selected. The control plane has no Pi auth.json, so
-#   nothing is copied (Kandev logs and skips a missing file), and Pi reads /opt/pi/agent anyway;
-#   the pods log in through CLAUDE_CODE_OAUTH_TOKEN below. Pi's API-key methods would put
-#   ANTHROPIC_API_KEY in the pod, which Claude Code would use instead of that login.
+#   only with one of Pi's credential methods selected. It copies the control plane's
+#   ~/.pi/agent/auth.json into the pod's $HOME/.pi/agent, which Pi here never reads
+#   (PI_CODING_AGENT_DIR is /opt/pi/agent); the pods log in through CLAUDE_CODE_OAUTH_TOKEN below.
+#   Pi's API-key methods would put ANTHROPIC_API_KEY in the pod, which Claude Code would use
+#   instead of that login.
 #
 # No gVisor: Kandev reaches agentctl in the pod through `kubectl port-forward`, which fails under
 # runsc (the kubelet dials localhost in the pod's network namespace, which gVisor's netstack

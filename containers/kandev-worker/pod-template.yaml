@@ -5,6 +5,11 @@
 #   connection: in-cluster (the control plane's kandev ServiceAccount), namespace kandev-agents
 #   platform: linux/amd64, main container: kandev-agent
 #   workspace: managed_pvc, 20Gi, ceph-block, ReadWriteOnce
+#   remote credentials: Pi's "Copy auth files". Kandev 0.101.0 offers and admits Pi on this executor
+#   only with one of Pi's credential methods selected. The control plane has no Pi auth.json, so
+#   nothing is copied (Kandev logs and skips a missing file), and Pi reads /opt/pi/agent anyway;
+#   the pods log in through CLAUDE_CODE_OAUTH_TOKEN below. Pi's API-key methods would put
+#   ANTHROPIC_API_KEY in the pod, which Claude Code would use instead of that login.
 #
 # No gVisor: Kandev reaches agentctl in the pod through `kubectl port-forward`, which fails under
 # runsc (the kubelet dials localhost in the pod's network namespace, which gVisor's netstack
@@ -15,9 +20,12 @@ kind: PodTemplate
 template:
   spec:
     automountServiceAccountToken: false
-    # hyperion-0 first (18 cores, and Attic and Prometheus prefer other nodes to leave it room);
-    # hyperion-2 once it is full, so a task runs slower rather than failing to schedule. Never
-    # hyperion-1: its 128G system disk could not hold a task's Nix store in ephemeral storage.
+    # hyperion-0 and hyperion-2, never hyperion-1: its 128G system disk could not hold a task's Nix
+    # store in ephemeral storage. The spread is strict: neither node holds more than one task pod
+    # beyond the other. Preferring hyperion-0 was not enough: other apps had requested 91% of its
+    # memory, so no 4Gi task pod fit and five went to hyperion-2, whose 6 cores they saturated.
+    # A task whose pod has no room on the node it must use fails to start (Unschedulable, after
+    # Kandev's 30s pod wait) rather than piling onto the other node or preempting other apps.
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -26,13 +34,16 @@ template:
                 - key: kubernetes.io/hostname
                   operator: In
                   values: [hyperion-0, hyperion-2]
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            preference:
-              matchExpressions:
-                - key: kubernetes.io/hostname
-                  operator: In
-                  values: [hyperion-0]
+    # The node affinity above limits the spread to those two nodes. Kandev labels every task pod
+    # app.kubernetes.io/name=kandev-agent. The descheduler leaves task pods alone (they have no
+    # owner), so it never evicts a running task to restore the spread.
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: kandev-agent
     imagePullSecrets:
       - name: kandev-worker-pull
     securityContext:

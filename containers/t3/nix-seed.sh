@@ -14,7 +14,10 @@ set -euo pipefail
 root=${SEED_ROOT:?}
 profile=$(readlink -f /nix/var/nix/profiles/agent)
 
-nix copy --no-check-sigs --to "local?root=$root" "$profile"
+# The image's store is opened read-only: the init container's root filesystem is, and a normal
+# open takes a write lock on /nix/var/nix/db.
+nix copy --extra-experimental-features read-only-local-store --no-check-sigs \
+  --from "local?read-only=true" --to "local?root=$root" "$profile"
 
 profiles=$root/nix/var/nix/profiles
 gcroots=$root/nix/var/nix/gcroots

@@ -97,9 +97,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -164,9 +162,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -231,9 +227,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -294,9 +288,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -361,9 +353,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -424,9 +414,7 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -500,10 +488,7 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
+                  "dash": [10, 10],
                   "fill": "dash"
                 }
               },
@@ -605,10 +590,7 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
+                  "dash": [10, 10],
                   "fill": "dash"
                 }
               },
@@ -719,10 +701,7 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
+                  "dash": [10, 10],
                   "fill": "dash"
                 }
               },
@@ -837,10 +816,7 @@
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
+                  "dash": [10, 10],
                   "fill": "dash"
                 }
               },
@@ -940,8 +916,8 @@
     {
       "id": 14,
       "type": "timeseries",
-      "title": "Ephemeral storage",
-      "description": "Ephemeral storage each server container uses (the Nix store, the writable layer and the emptyDir caches) against its limit. Exceeding the limit evicts the pod.",
+      "title": "Nix volume",
+      "description": "Used space on each environment's Nix volume (the Nix store: the image's tools plus every devenv and flake shell built since) against its capacity. Not backed up; Nix collects garbage itself when less than 5 GiB is free.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -959,8 +935,8 @@
             "type": "prometheus",
             "uid": "${promDatasource}"
           },
-          "expr": "sum by (pod) (container_fs_usage_bytes{namespace=\"t3\", pod=~\"($environment)-.*\", container=\"app\"})",
-          "legendFormat": "{{pod}} used"
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"t3\", persistentvolumeclaim=~\"($environment)-nix\"})",
+          "legendFormat": "{{persistentvolumeclaim}} used"
         },
         {
           "refId": "B",
@@ -968,8 +944,8 @@
             "type": "prometheus",
             "uid": "${promDatasource}"
           },
-          "expr": "sum by (pod) (kube_pod_container_resource_limits{namespace=\"t3\", pod=~\"($environment)-.*\", container=\"app\", resource=\"ephemeral_storage\"})",
-          "legendFormat": "{{pod}} limit"
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"t3\", persistentvolumeclaim=~\"($environment)-nix\"})",
+          "legendFormat": "{{persistentvolumeclaim}} capacity"
         }
       ],
       "fieldConfig": {
@@ -995,16 +971,13 @@
           {
             "matcher": {
               "id": "byRegexp",
-              "options": ".* limit"
+              "options": ".* capacity"
             },
             "properties": [
               {
                 "id": "custom.lineStyle",
                 "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
+                  "dash": [10, 10],
                   "fill": "dash"
                 }
               },
@@ -1506,9 +1479,7 @@
   ],
   "refresh": "1m",
   "schemaVersion": 40,
-  "tags": [
-    "t3"
-  ],
+  "tags": ["t3"],
   "templating": {
     "list": [
       {

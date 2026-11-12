@@ -1,0 +1,53 @@
+---
+# Alerts for the T3 Code environments (environment/app). Each environment is one pod that runs
+# every thread's agent, terminals and builds, so its failures take all of its threads down at once.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: t3
+spec:
+  groups:
+    - name: t3.rules
+      rules:
+        # Migrations can hold the startup probe for up to 10 minutes, hence 15.
+        - alert: T3EnvironmentDown
+          expr: |-
+            max by (deployment) (kube_deployment_status_condition{namespace="t3", condition="Available", status="true"}) == 0
+          for: 15m
+          annotations:
+            summary: >-
+              T3 environment {{ $labels.deployment }} has had no ready server for 15 minutes
+          labels:
+            severity: critical
+        - alert: T3EnvironmentOOMKilled
+          expr: |-
+            max by (pod) (kube_pod_container_status_last_terminated_reason{namespace="t3", container="app", reason="OOMKilled"}) == 1
+            and on (pod)
+            max by (pod) (increase(kube_pod_container_status_restarts_total{namespace="t3", container="app"}[30m])) > 0
+          annotations:
+            summary: >-
+              {{ $labels.pod }} was OOM-killed, which ended every thread running in it
+          labels:
+            severity: warning
+        - alert: T3EnvironmentMemoryHigh
+          expr: |-
+            max by (pod) (container_memory_working_set_bytes{namespace="t3", container="app"})
+            / max by (pod) (kube_pod_container_resource_limits{namespace="t3", container="app", resource="memory"}) > 0.9
+          for: 10m
+          annotations:
+            summary: >-
+              {{ $labels.pod }} is at {{ $value | humanizePercentage }} of its memory limit; the next build may OOM-kill every thread
+          labels:
+            severity: warning
+        # Clarence grows a ceph-block claim that stays above 85% for three days; this catches a
+        # volume filling faster than that.
+        - alert: T3VolumeFilling
+          expr: |-
+            max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace="t3"} / kubelet_volume_stats_capacity_bytes{namespace="t3"}) > 0.9
+          for: 30m
+          annotations:
+            summary: >-
+              {{ $labels.persistentvolumeclaim }} is {{ $value | humanizePercentage }} full
+          labels:
+            severity: warning

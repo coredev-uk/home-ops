@@ -1,9 +1,7 @@
 ---
-# Nix binary cache for coredev-uk/nixos's hosts (atlas, NixOS; poseidon, nix-darwin). GitHub
-# Actions builds them there and pushes through niks3, which signs the paths and hands out presigned
-# uploads into the R2 bucket nix-cache; the hosts read the bucket at https://nix-cache.hera.ac, so
-# the cache does not depend on this cluster being up. niks3's Postgres only tracks references for
-# its GC.
+# Nix binary cache for coredev-uk/nixos: Attic at https://attic.hera.ac/coredev. GitHub Actions
+# builds atlas and poseidon there and pushes what it built; Attic keeps only the paths that
+# cache.nixos.org, nix-community and nix-citizen don't already sign, with its chunks on the NAS.
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -11,7 +9,8 @@ namespace: nix-cache
 
 components:
   - ../../components/alerts
+  - ../../components/kopiur/secret
 
 resources:
   - ./namespace.yaml
-  - ./niks3/ks.yaml
+  - ./attic/ks.yaml

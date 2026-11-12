@@ -73,9 +73,7 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         }
@@ -135,9 +133,7 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         }
@@ -197,9 +193,7 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         }
@@ -260,9 +254,7 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         }
@@ -330,9 +322,7 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         }
@@ -392,9 +382,7 @@
         "orientation": "auto",
         "textMode": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         }
@@ -828,11 +816,7 @@
   ],
   "refresh": "5m",
   "schemaVersion": 40,
-  "tags": [
-    "infrastructure",
-    "nix",
-    "cache"
-  ],
+  "tags": ["infrastructure", "nix", "cache"],
   "templating": {
     "list": [
       {

@@ -33,3 +33,9 @@ headplane-apikey:
     key="$(ssh {{ host }} "sudo headscale apikeys create --expiration 365d")"
     op item edit headscale --vault kubernetes "HEADPLANE_API_KEY[password]=${key}" >/dev/null
     just log info "Stored Headplane API key" expires 365d
+
+[doc('Mint a 365d reusable, ephemeral tag:ci pre-auth key as coredev-uk/nixos Actions secret TS_AUTHKEY')]
+ci-authkey:
+    key="$(ssh {{ host }} "sudo headscale preauthkeys create --tags tag:ci --reusable --ephemeral --expiration 365d")"
+    gh secret set TS_AUTHKEY --repo coredev-uk/nixos --body "${key}"
+    just log info "Stored CI auth key" expires 365d

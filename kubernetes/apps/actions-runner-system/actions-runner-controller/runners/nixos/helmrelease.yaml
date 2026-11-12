@@ -1,0 +1,88 @@
+---
+# GitHub Actions runners for coredev-uk/nixos (`runs-on: nixos-runner`): its Hosts workflow builds
+# atlas here and pushes to Attic (nix-cache), with no Cloudflare in between. One at a time: the
+# Nix store (resources/start.sh) is one volume, and two VMs mounting it would corrupt it, so
+# jobs queue on GitHub. Each job gets a fresh pod in its own Kata VM; the store carries over.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &name nixos-runner
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: nixos-runner
+  interval: 1h
+  values:
+    githubConfigUrl: https://github.com/coredev-uk/nixos
+    githubConfigSecret: nixos-runner-secret
+    runnerScaleSetName: *name
+    minRunners: 0
+    maxRunners: 1
+    controllerServiceAccount:
+      name: actions-runner-controller
+      namespace: actions-runner-system
+    template:
+      metadata:
+        labels:
+          runner: *name
+      spec:
+        # The Nix sandbox, the loop mount and qemu-i386's binfmt_misc entry need privilege; under
+        # kata it stops at the pod's own VM, with no host device or node filesystem in reach.
+        runtimeClassName: kata
+        automountServiceAccountToken: false
+        enableServiceLinks: false
+        # envoy-external directly, not through Cloudflare, whose 100 MB request limit Attic's
+        # uploads exceed.
+        hostAliases:
+          - ip: 192.168.110.246
+            hostnames:
+              - attic.hera.ac
+        # start.sh passes SIGTERM to the runner and marks the store as cleanly stopped once it
+        # has wound down; past this the VM is killed and the next job checks the whole store.
+        terminationGracePeriodSeconds: 300
+        containers:
+          - name: runner
+            image: docker.io/nixos/nix:2.35.5@sha256:9305de534abed691d0f569502a4962a3a072ea8e888502c453ecfe35ae182867
+            command: ["bash", "/config/start.sh"]
+            # resources/nix.conf. Not mounted at /etc/nix/nix.conf: the image's /etc/nix is a link
+            # into its base-system store path, which the mount would modify.
+            env:
+              - name: NIX_CONF_DIR
+                value: /config
+            securityContext:
+              privileged: true
+            # Kata sizes the VM from the limits: evaluation plus two parallel builds of up to four
+            # cores each (resources/nix.conf). The RuntimeClass adds 250m and 2304Mi on top.
+            resources:
+              requests:
+                cpu: 100m
+                memory: 1Gi
+                ephemeral-storage: 1Gi
+              limits:
+                cpu: "4"
+                memory: 8Gi
+                ephemeral-storage: 5Gi
+            volumeMounts:
+              - name: config
+                mountPath: /config
+                readOnly: true
+              - name: store
+                mountPath: /store
+              - name: runner
+                mountPath: /runner
+              - name: tmp
+                mountPath: /tmp
+        volumes:
+          - name: config
+            configMap:
+              name: *name
+          - name: store
+            persistentVolumeClaim:
+              claimName: nixos-runner-store
+          - name: runner
+            emptyDir:
+              sizeLimit: 2Gi
+          - name: tmp
+            emptyDir:
+              sizeLimit: 1Gi

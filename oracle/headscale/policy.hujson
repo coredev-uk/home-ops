@@ -5,6 +5,8 @@
   },
   "tagOwners": {
     "tag:talos": ["group:admins"],
+    // GitHub's macOS runners for coredev-uk/nixos (`just oracle ci-authkey`), joining to push to Attic
+    "tag:ci": ["group:admins"],
   },
   "autoApprovers": {
     "routes": {
@@ -17,5 +19,7 @@
     { "src": ["autogroup:member"], "dst": ["192.168.110.0/24", "192.168.100.0/24"], "ip": ["*"] },
     // A user's own devices reach each other (Taildrop, SSH between your own machines)
     { "src": ["autogroup:member"], "dst": ["autogroup:self"], "ip": ["*"] },
+    // CI reaches envoy-external's HTTPS only (attic.hera.ac), through the Talos subnet routers
+    { "src": ["tag:ci"], "dst": ["192.168.110.246/32"], "ip": ["tcp:443"] },
   ],
 }

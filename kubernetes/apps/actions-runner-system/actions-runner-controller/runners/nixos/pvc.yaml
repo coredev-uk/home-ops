@@ -1,0 +1,16 @@
+---
+# The nixos runner's Nix store, as a sparse ext4 image (store.img) that resources/start.sh
+# loop-mounts in the VM. A file rather than the volume itself: Kata shares volumes into the VM over
+# virtiofs, where Nix's SQLite database and the store's ownership need a real filesystem.
+# Rebuildable, so no backup: a lost store costs one slow build of downloads.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nixos-runner-store
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 120Gi
+  storageClassName: ceph-block

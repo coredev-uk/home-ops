@@ -99,6 +99,8 @@ trap on_exit EXIT
 image_profile=$(readlink -f /nix/var/nix/profiles/default)
 nix copy --no-check-sigs --to 'local?root=/mnt/store' --all
 mount --bind /mnt/store/nix /nix
+# The image's PATH runs through profiles the persistent store doesn't have yet.
+export PATH="$image_profile/bin:${mount_tools[0]}/bin:${mount_tools[1]}/bin"
 if [ "$(readlink -f /nix/var/nix/profiles/default)" != "$image_profile" ]; then
   nix-env --profile /nix/var/nix/profiles/default --set "$image_profile" >/dev/null
 fi
@@ -110,7 +112,7 @@ nix build --out-link "$GCROOTS/tool" \
   nixpkgs#github-runner nixpkgs#attic-client nixpkgs#jq nixpkgs#gh nixpkgs#pkgsStatic.qemu-user \
   "${mount_tools[@]}"
 for t in "$GCROOTS"/tool*; do PATH="$(readlink -f "$t")/bin:$PATH"; done
-export PATH="$image_profile/bin:$PATH"
+export PATH
 log "store: $(df -h --output=used,size /nix | tail -1 | xargs)"
 
 # 32-bit x86 ELF executables go to the static qemu-i386; Nix already counts i686-linux among

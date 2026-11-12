@@ -26,13 +26,34 @@ spec:
         pod:
           # Nothing here talks to the Kubernetes API, and an agent with the token could.
           automountServiceAccountToken: false
+        # Fills the Nix volume from this image's store before the server starts
+        # (containers/t3/nix-seed.sh): seconds when the volume already holds it, about ten on a
+        # new volume or after an image bump.
+        initContainers:
+          nix-seed:
+            image:
+              repository: ghcr.io/coredev-uk/t3
+              tag: 9bf9ef1c6c1bd45f1a250a8887515369e3879db8@sha256:3b5334865e8e68d3c6c8f46b9263bc2abe4e99af48e20b265f4fb67388ae70b3
+            command: ["t3-nix-seed"]
+            env:
+              SEED_ROOT: /mnt/seed
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 2Gi
         containers:
           app:
             image:
-              # Built from containers/t3 by .github/workflows/t3.yaml; the tag is the commit SHA,
-              # pinned here by hand.
+              # Built from containers/t3 by .github/workflows/t3.yaml and tagged with the commit
+              # SHA; Clarence proposes each new main build (its privatePins job), in both places.
               repository: ghcr.io/coredev-uk/t3
-              tag: 91a79e5e0e728adf70a6d44f79ae30d25a44cf42@sha256:eade883f8f14f4df6d1826325256f2a1132c37fe59a68d2ba1d67cebe6dc21e6
+              tag: 9bf9ef1c6c1bd45f1a250a8887515369e3879db8@sha256:3b5334865e8e68d3c6c8f46b9263bc2abe4e99af48e20b265f4fb67388ae70b3
             env:
               HOME: /data/home
               T3CODE_HOME: /data/t3
@@ -95,19 +116,19 @@ spec:
                   failureThreshold: 120
             securityContext:
               allowPrivilegeEscalation: false
-              # The Nix store lives in the container's writable layer (nix and devenv install
-              # packages at run time), so the root filesystem cannot be read-only.
+              # The Nix store is on its own volume now, but the agents and the tools they run have
+              # not been audited for writes outside the mounted volumes, so the root stays writable.
               readOnlyRootFilesystem: false
               capabilities: { drop: ["ALL"] }
             resources:
               requests:
                 cpu: "1"
                 memory: 4Gi
-                # Keeps an environment off a node whose disk cannot hold a Nix store.
-                ephemeral-storage: 20Gi
+                # The emptyDir caches and /tmp; the Nix store is on its volume.
+                ephemeral-storage: 5Gi
               limits:
                 memory: 20Gi
-                ephemeral-storage: 40Gi
+                ephemeral-storage: 30Gi
     defaultPodOptions:
       # T3 labels the environment with the host name, which clients show: the release name
       # instead of the pod's generated one, so it stays the same across restarts.
@@ -152,14 +173,11 @@ spec:
           http:
             port: *port
     # envoy-t3 is LAN only and has no OIDC: T3's own pairing and session auth stand in, so the
-    # mobile and desktop apps can connect.
+    # mobile and desktop apps can connect. The routes inherit envoy-t3's Gatus template, a guarded
+    # DNS probe that fails if the names ever resolve publicly; availability is the T3EnvironmentDown
+    # alert's job (shared/app/prometheusrule.yaml). An HTTP condition here would replace that probe.
     route:
       app:
-        # The public environment descriptor: answers once the server has started.
-        annotations:
-          gatus.home-operations.com/endpoint: |-
-            conditions: ["[STATUS] == 200"]
-            path: /.well-known/t3/environment
         forceRename: ${APP}
         hostnames:
           - ${APP}.hera.ac
@@ -180,6 +198,16 @@ spec:
         existingClaim: ${APP}-work
         globalMounts:
           - path: /work
+      # The Nix store (pvc-nix.yaml): /nix for the server, and /mnt/seed/nix (SEED_ROOT) for the
+      # init container, which still sees the image's own /nix to copy from.
+      nix:
+        existingClaim: ${APP}-nix
+        advancedMounts:
+          ${APP}:
+            nix-seed:
+              - path: /mnt/seed/nix
+            app:
+              - path: /nix
       tmp:
         type: emptyDir
       # Package-manager and build caches, and T3's own caches and on-demand tools (linked from

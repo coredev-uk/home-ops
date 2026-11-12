@@ -1,0 +1,18 @@
+---
+# The environment's Nix store, mounted at /nix (helmrelease.yaml). The init container fills it from
+# the image's store on every start (containers/t3/nix-seed.sh), so the tools devenv and flake
+# shells fetch or build survive restarts and image bumps instead of being refetched (sona-go's
+# devenv took over eight minutes from cold). Nix collects garbage on it by itself (nix.conf's
+# min-free/max-free in the image). Not backed up: everything on it can be refetched, and Clarence's
+# backup policy lists each Nix claim in backups.ignore.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP}-nix
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 80Gi
+  storageClassName: ceph-block

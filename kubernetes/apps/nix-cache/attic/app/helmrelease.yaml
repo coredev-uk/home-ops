@@ -122,9 +122,8 @@ spec:
             port: *port
           metrics:
             port: *metricsPort
-    # Public: GitHub's runners push here, and poseidon substitutes from anywhere. No auth in
-    # front (Nix substituters cannot follow a login): reads need no token, pushes need one.
     # Uploads are streamed (chunked), which Cloudflare passes beyond its 100 MB body limit.
+    # clarence:public GitHub's runners push and poseidon substitutes from anywhere; Nix can't follow a login, so reads are open and pushes need an Attic token
     route:
       app:
         annotations:

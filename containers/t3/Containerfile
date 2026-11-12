@@ -64,9 +64,9 @@ RUN apt-get update \
 
 # nix.conf:
 # sandbox: an unprivileged container has no user namespaces for Nix's build sandbox.
-# min-free/max-free: the pod lives for weeks, and every devenv shell adds store paths to its
-# writable layer, so Nix collects garbage by itself when less than 5 GiB is free on the volume
-# holding /nix, until 15 GiB is free (values in bytes).
+# min-free/max-free: in a pod the store lives on the environment's Nix volume (nix-seed.sh), which
+# every devenv shell adds to for weeks, so Nix collects garbage by itself when less than 5 GiB is
+# free on it, until 15 GiB is free (values in bytes).
 # git: bot-cliffe's credentials come from git-credential-cliffe, which mints a GitHub App
 # installation token per use; the identity itself is set by the HelmRelease (GIT_CONFIG_*).
 RUN printf '%s\n' \
@@ -185,8 +185,10 @@ RUN printf '%s\n' 'export PATH="/usr/local/bin:/opt/claude-code/bin:/nix/var/nix
 COPY --chmod=0644 omp/config.yml omp/AGENTS.md /opt/omp/
 
 # gh is ahead of the profile's on PATH. git-credential-cliffe is git's credential helper for
-# github.com and the wrapper's token source: see the scripts.
+# github.com and the wrapper's token source; t3-nix-seed fills the environment's Nix volume from
+# this image's store: see the scripts.
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/t3-entrypoint
+COPY --chmod=0755 nix-seed.sh /usr/local/bin/t3-nix-seed
 COPY --chmod=0755 git-credential-cliffe gh /usr/local/bin/
 
 # Caches go to the pod's writable layer (ephemeral storage), not the state volume and not a

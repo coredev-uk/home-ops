@@ -18,6 +18,10 @@
     "textGenerationModelSelection": {
       "value": { "instanceId": "claudeAgent", "model": "claude-haiku-5-5" },
       "locked": false
+    },
+    "enableProviderUpdateChecks": {
+      "value": false,
+      "locked": true
     }
   },
   "limits": {

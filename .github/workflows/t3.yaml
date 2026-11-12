@@ -62,6 +62,10 @@ jobs:
           tags: |
             ghcr.io/coredev-uk/t3:${{ github.sha }}
             ${{ github.ref == 'refs/heads/main' && 'ghcr.io/coredev-uk/t3:main' || '' }}
+          # Clarence's private-pin job reads the build's commit from this label and opens the pull
+          # request that pins a new main build in kubernetes/apps/t3/environment/app/helmrelease.yaml.
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

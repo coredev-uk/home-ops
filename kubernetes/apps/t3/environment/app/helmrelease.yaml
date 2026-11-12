@@ -155,6 +155,11 @@ spec:
     # mobile and desktop apps can connect.
     route:
       app:
+        # The public environment descriptor: answers once the server has started.
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 200"]
+            path: /.well-known/t3/environment
         forceRename: ${APP}
         hostnames:
           - ${APP}.hera.ac

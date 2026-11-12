@@ -39,13 +39,14 @@ args=(serve --no-browser)
 # pairing links with `t3 auth pairing create` instead.
 #
 # The filter runs as a process substitution so that t3 stays the exec'd process and receives
-# tini's signals; awk's fflush keeps the logs line-buffered.
+# tini's signals. It is Debian's mawk, which reads a pipe in whole blocks and sat on the logs
+# until 4 KiB had arrived: -W interactive makes it read and write line by line.
 filter() {
-  awk '
+  mawk -W interactive '
     /^Connection string: / { skip = 1; next }
     skip && (/^Token: / || /^Pairing URL: / || /^App link: /) { next }
     skip && ($0 == "" || /^[ ▀▄█]+$/) { next }
-    { skip = 0; print; fflush() }
+    { skip = 0; print }
   '
 }
 

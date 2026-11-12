@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# The gh on PATH ahead of the Nix profile's (Containerfile). T3 takes GitHub credentials from a
+# logged-in gh, and a bot-cliffe installation token lasts an hour, so this wrapper asks
+# git-credential-cliffe for a current one on every call instead of leaving a stale login behind:
+# `gh auth token` answers with it, and everything else runs the real gh with GH_TOKEN set.
+set -euo pipefail
+
+real_gh=/nix/var/nix/profiles/agent/bin/gh
+
+# A caller that brought its own token keeps it.
+if [[ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}" && -n "${GITHUB_APP_PRIVATE_KEY:-}" ]]; then
+  GH_TOKEN=$(git-credential-cliffe token)
+  export GH_TOKEN
+fi
+
+if [[ "${1:-}" == auth && "${2:-}" == token && -n "${GH_TOKEN:-}" ]]; then
+  printf '%s\n' "$GH_TOKEN"
+  exit 0
+fi
+
+exec "$real_gh" "$@"

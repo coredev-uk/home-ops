@@ -1,0 +1,22 @@
+# omp's defaults for every T3 environment, loaded as an overlay through PI_CONFIG_FILES
+# (containers/t3/Containerfile) so they follow the image instead of living in the state volume's
+# own config.yml, which omp and the user may still write to.
+modelRoles:
+  default: anthropic/claude-opus-5-5
+  plan: anthropic/claude-opus-5-5:high
+  slow: anthropic/claude-opus-5-5:max
+  task: anthropic/claude-sonnet-5-5
+  smol: anthropic/claude-haiku-5-5
+  commit: anthropic/claude-haiku-5-5
+task:
+  # The parent plans and decides; children do the bulk of the reading and building. Scouts only
+  # map code, so they run on Haiku. At most three children run at once because each one runs its
+  # own builds and language servers inside the environment's memory, which every thread of the
+  # environment shares.
+  maxConcurrency: 3
+  agentModelOverrides:
+    scout: anthropic/claude-haiku-5-5
+# Ride out provider overloads in an unattended thread rather than failing the turn.
+retry:
+  maxRetries: 8
+  maxDelayMs: 120000

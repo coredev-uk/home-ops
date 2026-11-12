@@ -1,0 +1,18 @@
+---
+# Objects both environments use (their secrets, network policy and dashboard) are applied once
+# from here: two Flux Kustomizations over the same files would each try to own the same
+# objects, so the environments (environment/ks.yaml) wait for this one instead.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: t3-shared
+spec:
+  interval: 1h
+  path: ./kubernetes/apps/t3/shared/app
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: t3

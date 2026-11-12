@@ -5,14 +5,11 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./grafanadashboard.yaml
-  - ./helmrelease.yaml
   - ./networkpolicy.yaml
-  - ./ocirepository.yaml
-  - ./securitypolicy-broker.yaml
 configMapGenerator:
-  - name: kandev-dashboard
+  - name: t3-dashboard
     files:
-      - kandev.json=./resources/kandev.json
+      - t3.json=./resources/t3.json
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

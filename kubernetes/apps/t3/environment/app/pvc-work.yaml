@@ -1,0 +1,19 @@
+---
+# Clones and worktrees (with their node_modules and target directories), mounted at /work and
+# linked from /data/t3/worktrees and /data/t3/projects (helmrelease.yaml,
+# containers/t3/entrypoint.sh). This claim is deliberately not backed up: it is large and
+# churns constantly, so hourly snapshots would mostly copy build output, and everything on it is
+# a checkout of a remote (unpushed work is the one loss, as on any developer machine). The state
+# claim ${APP} (the kopiur component) carries what cannot be refetched: T3's database and the
+# agent's sessions. Clarence's backup policy lists each work claim in backups.ignore.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP}-work
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 60Gi
+  storageClassName: ceph-block

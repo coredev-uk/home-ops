@@ -2,11 +2,13 @@
 # yaml-language-server: $schema=https://json.schemastore.org/kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: kandev-agents
+namespace: t3
 
 components:
   - ../../components/alerts
+  - ../../components/kopiur/secret
 
 resources:
   - ./namespace.yaml
-  - ./executor/ks.yaml
+  - ./shared/ks.yaml
+  - ./environment/ks.yaml

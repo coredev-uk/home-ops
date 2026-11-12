@@ -148,16 +148,17 @@
   },
   "privatePins": {
     "everyHours": 24,
-    "include": ["ghcr.io/coredev-uk/clarence"]
+    "include": ["ghcr.io/coredev-uk/clarence", "ghcr.io/coredev-uk/t3"]
   },
   "backups": {
     "ignore": [
       "clarence/trivy-cache",
       "default/home-assistant-cache",
-      "kandev-agents/*",
       "o11y/alertmanager-kube-prometheus-stack-db-*",
       "o11y/prometheus-kube-prometheus-stack-db-*",
-      "o11y/server-volume-victoria-logs-0"
+      "o11y/server-volume-victoria-logs-0",
+      "t3/t3-a-work",
+      "t3/t3-b-work"
     ]
   },
   "cleanup": {

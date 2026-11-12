@@ -1,0 +1,62 @@
+---
+# T3 has its own pairing and session auth, but nothing else should reach an environment either:
+# only envoy-t3 (LAN only) may connect, and the host entity keeps the kubelet's probes. Agents
+# run inside these pods with their permission prompts off in Full access mode, so egress is an
+# allowlist: the internet (GitHub, npm, cache.nixos.org, api.anthropic.com) and cluster DNS.
+# Nothing else in the cluster, the home network or the nodes.
+# The selector is the environments' pod label, not every pod: kopiur's mover pods run in this
+# namespace and need egress of their own (to the backup repository and the Kubernetes API).
+# A LoadBalancer address such as t3-a.hera.ac's 192.168.110.247 reaches a gateway pod, because
+# Cilium translates it before policy applies, and the deny below keeps these pods from reaching
+# it: envoy-internal's apps and every other pod and Service stay out of reach.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/cilium.io/ciliumnetworkpolicy_v2.json
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: t3
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: t3
+  enableDefaultDeny:
+    ingress: true
+    egress: true
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: network
+            gateway.envoyproxy.io/owning-gateway-name: envoy-t3
+      toPorts:
+        - ports:
+            - port: "3773"
+              protocol: TCP
+    - fromEntities:
+        - host
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+    - toEntities:
+        - world
+  # world also covers addresses outside the cluster on the home network. The pod and Service
+  # ranges are left to the allowlist above, so a deny cannot override the DNS rule.
+  egressDeny:
+    - toCIDRSet:
+        - cidr: 10.0.0.0/8
+          except:
+            - 10.42.0.0/16
+            - 10.43.0.0/16
+    - toCIDR:
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+    # Cilium gives the nodes' addresses identities of their own, which the CIDRs above do not
+    # match: without these a pod reached the kube-apiserver on 192.168.110.11:6443.
+    - toEntities:
+        - host
+        - remote-node
+        - kube-apiserver

@@ -12,20 +12,40 @@
   rebaseWhen: "conflicted",
   customManagers: [
     {
-      // Pi's packages for Kandev's task pods. settings.json is their only list: the worker image
-      // installs from it (containers/kandev-worker/pi-packages.mjs).
+      // The versions the T3 image (containers/t3/Containerfile) installs from release assets.
+      // The build checks each download against the sums its release publishes, so Renovate only
+      // bumps the version.
       customType: "regex",
-      description: "Pi packages in the Kandev worker's Pi settings",
-      managerFilePatterns: ["/^containers/kandev-worker/pi/settings\\.json$/"],
-      matchStrings: ['"npm:(?<depName>(?:@[^/"]+/)?[^@"]+)@(?<currentValue>[^"]+)"'],
+      description: "T3 Code in the T3 image",
+      managerFilePatterns: ["/^containers/t3/Containerfile$/"],
+      matchStrings: ["ARG T3_VERSION=(?<currentValue>\\S+)"],
+      depNameTemplate: "pingdotgg/t3code",
+      datasourceTemplate: "github-releases",
+      extractVersionTemplate: "^v(?<version>.+)$",
+    },
+    {
+      customType: "regex",
+      description: "oh-my-pi (omp) in the T3 image",
+      managerFilePatterns: ["/^containers/t3/Containerfile$/"],
+      matchStrings: ["ARG OMP_VERSION=(?<currentValue>\\S+)"],
+      depNameTemplate: "can1357/oh-my-pi",
+      datasourceTemplate: "github-releases",
+      extractVersionTemplate: "^v(?<version>.+)$",
+    },
+    {
+      customType: "regex",
+      description: "Claude Code in the T3 image",
+      managerFilePatterns: ["/^containers/t3/Containerfile$/"],
+      matchStrings: ["ARG CLAUDE_CODE_VERSION=(?<currentValue>\\S+)"],
+      depNameTemplate: "@anthropic-ai/claude-code",
       datasourceTemplate: "npm",
     },
     {
-      // The design skills baked into the Kandev worker image: a tag and the commit the build
+      // The design skills baked into the T3 image: a tag and the commit the build
       // fetches, moved together. impeccable tags its skill releases skill-vX.Y.Z.
       customType: "regex",
-      description: "impeccable skill in the Kandev worker image",
-      managerFilePatterns: ["/^containers/kandev-worker/Containerfile$/"],
+      description: "impeccable skill in the T3 image",
+      managerFilePatterns: ["/^containers/t3/Containerfile$/"],
       matchStrings: [
         "ARG IMPECCABLE_REF=(?<currentValue>skill-v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})",
       ],
@@ -35,8 +55,8 @@
     },
     {
       customType: "regex",
-      description: "taste-skill in the Kandev worker image",
-      managerFilePatterns: ["/^containers/kandev-worker/Containerfile$/"],
+      description: "taste-skill in the T3 image",
+      managerFilePatterns: ["/^containers/t3/Containerfile$/"],
       matchStrings: [
         "ARG TASTE_SKILL_REF=(?<currentValue>v[^@\\s]+)@(?<currentDigest>[0-9a-f]{40})",
       ],

@@ -1,0 +1,32 @@
+# atticd configuration. The JWT signing key comes from ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64
+# (attic-secret); changing it invalidates every token, GitHub Actions' ATTIC_TOKEN among them.
+listen = "[::]:8080"
+
+# Clients (the hosts, and GitHub Actions pushing) come through envoy-external.
+allowed-hosts = ["attic.hera.ac"]
+api-endpoint = "https://attic.hera.ac/"
+
+[database]
+url = "sqlite:///db/server.db?mode=rwc"
+
+# The NAS share NixCache (expanse.internal), mounted at /storage.
+[storage]
+type = "local"
+path = "/storage"
+
+# Attic's default chunking (64 KiB average). Changing it later stops new uploads from
+# deduplicating against the chunks already stored.
+[chunking]
+nar-size-threshold = 65536
+min-size = 16384
+avg-size = 65536
+max-size = 262144
+
+[compression]
+type = "zstd"
+
+# A path nobody has fetched for 30 days is dropped. CI pushes whatever it builds, so a dropped
+# path that a host still needs comes back the next time CI builds it.
+[garbage-collection]
+interval = "12 hours"
+default-retention-period = "30 days"

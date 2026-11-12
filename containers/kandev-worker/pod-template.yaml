@@ -15,7 +15,7 @@ kind: PodTemplate
 template:
   spec:
     automountServiceAccountToken: false
-    # hyperion-0 first (18 cores, and Prometheus prefers other nodes to leave it room);
+    # hyperion-0 first (18 cores, and Attic and Prometheus prefer other nodes to leave it room);
     # hyperion-2 once it is full, so a task runs slower rather than failing to schedule. Never
     # hyperion-1: its 128G system disk could not hold a task's Nix store in ephemeral storage.
     affinity:

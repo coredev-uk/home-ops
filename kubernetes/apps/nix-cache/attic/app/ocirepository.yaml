@@ -3,12 +3,12 @@
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: niks3
+  name: attic
 spec:
   interval: 15m
   layerSelector:
     mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
     operation: copy
   ref:
-    tag: 1.16.2
-  url: oci://ghcr.io/mic92/charts/niks3
+    tag: 5.3.0
+  url: oci://ghcr.io/bjw-s-labs/helm/app-template

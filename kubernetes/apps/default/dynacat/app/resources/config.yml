@@ -154,7 +154,7 @@ pages:
                     url: https://rook.hera.ac
                     icon: di:rook
                   - title: Nix Cache
-                    url: https://nix-cache.hera.ac/nix-cache-info
+                    url: https://attic.hera.ac/coredev/nix-cache-info
                     icon: si:nixos
 
               - title: Identity & Monitoring

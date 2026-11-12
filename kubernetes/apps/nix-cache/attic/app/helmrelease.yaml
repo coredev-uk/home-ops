@@ -123,8 +123,8 @@ spec:
           metrics:
             port: *metricsPort
     # Uploads are streamed (chunked), which Cloudflare passes beyond its 100 MB body limit.
-    # clarence:public GitHub's runners push and poseidon substitutes from anywhere; Nix can't follow a login, so reads are open and pushes need an Attic token
     route:
+      # clarence:public GitHub's runners push and poseidon substitutes from anywhere; Nix can't follow a login, so reads are open and pushes need an Attic token
       app:
         annotations:
           gatus.home-operations.com/endpoint: |-

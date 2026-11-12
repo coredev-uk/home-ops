@@ -32,7 +32,7 @@ spec:
               # Built from containers/t3 by .github/workflows/t3.yaml; the tag is the commit SHA,
               # pinned here by hand.
               repository: ghcr.io/coredev-uk/t3
-              tag: edd8c028e6f4f9056811f5371ceca9afd14c79e8@sha256:79ab0a211f70500a7a031079b992c8a3d9bd2f255d1b1109aadc5a0c3caa2a35
+              tag: 9e665d46e7cc870d5a5da6c7c64a786cee249ca6@sha256:524e48e2799fb1cf7b16beb8038ffd362cf5eca22eb43703af3c875a461d729f
             env:
               HOME: /data/home
               T3CODE_HOME: /data/t3

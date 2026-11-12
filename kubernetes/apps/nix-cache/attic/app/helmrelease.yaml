@@ -56,12 +56,14 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
+            # A full push (5 GB of NARs from a cold cache) took it to 851Mi and it kept 842Mi
+            # afterwards: room above that, so the next one isn't OOM-killed mid-upload.
             resources:
               requests:
                 cpu: 20m
-                memory: 560Mi
+                memory: 896Mi
               limits:
-                memory: 1Gi
+                memory: 2Gi
           # Prometheus metrics for the Nix Cache dashboard and atlas's Nix view
           # (resources/exporter.py): what the cache holds, from Attic's database.
           exporter:

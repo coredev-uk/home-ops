@@ -19,6 +19,15 @@ spec:
           pluginConfig:
             - name: DefaultEvictor
               args:
+                # PodsWithLocalStorage protection is disabled below, so a T3 environment pod would
+                # otherwise be an eviction candidate, and evicting one kills every thread running
+                # in it (kubernetes/apps/t3). NotIn also matches pods that lack the label, so
+                # everything else stays evictable.
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/part-of
+                      operator: NotIn
+                      values: [t3]
                 podProtections:
                   defaultDisabled:
                     - FailedBarePods

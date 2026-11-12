@@ -183,9 +183,12 @@ pages:
                   - title: Flux Operator
                     url: https://flux-operator.hera.ac
                     icon: di:flux-cd
-                  - title: Kandev
-                    url: https://kandev.hera.ac
-                    icon: mdi:view-column
+                  - title: T3 Code (a)
+                    url: https://t3-a.hera.ac
+                    icon: mdi:robot-outline
+                  - title: T3 Code (b)
+                    url: https://t3-b.hera.ac
+                    icon: mdi:robot-outline
 
               - title: Media Discovery & Servers
                 links:

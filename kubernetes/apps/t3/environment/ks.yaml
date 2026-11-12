@@ -1,0 +1,66 @@
+---
+# One Flux Kustomization per T3 environment over the same manifests (environment/app): the
+# environment is the unit of scale, because one T3 server owns its home exclusively and runs
+# every agent, terminal and git process of its threads (see environment/app/helmrelease.yaml).
+# Adding an environment is another document here with a new APP; a required anti-affinity in
+# the HelmRelease allows one environment per node.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: t3-a
+spec:
+  components:
+    - ../../../../components/kopiur/backup
+  dependsOn:
+    - name: kopiur
+      namespace: kopiur-system
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: t3-shared
+  interval: 1h
+  path: ./kubernetes/apps/t3/environment/app
+  postBuild:
+    substitute:
+      APP: t3-a
+      # The main environment prefers hyperion-0, which has 18 cores against the other nodes' 6.
+      NODE_OPERATOR: In
+      # T3's database, its secrets and settings, and the home directory (omp's sessions and
+      # agent.db, Claude Code's and gh's state). Clones and worktrees live on the unbacked
+      # ${APP}-work volume (pvc-work.yaml); caches go to emptyDirs (helmrelease.yaml).
+      KOPIUR_CAPACITY: 20Gi
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: t3
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: t3-b
+spec:
+  components:
+    - ../../../../components/kopiur/backup
+  dependsOn:
+    - name: kopiur
+      namespace: kopiur-system
+    - name: rook-ceph-cluster
+      namespace: rook-ceph
+    - name: t3-shared
+  interval: 1h
+  path: ./kubernetes/apps/t3/environment/app
+  postBuild:
+    substitute:
+      APP: t3-b
+      # Any node but hyperion-0, so the two environments do not compete for the same cores.
+      NODE_OPERATOR: NotIn
+      KOPIUR_CAPACITY: 20Gi
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  targetNamespace: t3

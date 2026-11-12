@@ -118,6 +118,26 @@ One-time setup:
 - The `hyperion-actions-runner` GitHub App installed on coredev-uk/nixos as well as this repository, and `just oracle ci-authkey` for the macOS runners' tailnet key (Actions secret `TS_AUTHKEY`).
 - On coredev-uk/nixos, workflows from outside contributors need approval (Settings > Actions > General): a fork's pull request would otherwise run on `nixos-runner`.
 
+## T3 Code
+
+`kubernetes/apps/t3` runs [T3 Code](https://github.com/pingdotgg/t3code), a web, desktop and mobile front end for coding agents. A T3 server runs its agents, terminals, git and a headless browser as children of one process, so the unit of scale is an _environment_: one Deployment (one replica, `Recreate`) with its own state volume, work volume and hostname. There are two, `t3-a` (`https://t3-a.hera.ac`) and `t3-b` (`https://t3-b.hera.ac`), from the same manifests with different substitutions (`kubernetes/apps/t3/environment/ks.yaml`). `t3-a` prefers `hyperion-0`, which has 18 cores against the other nodes' 6, and `t3-b` prefers any other node; a required pod anti-affinity on `app.kubernetes.io/part-of: t3` keeps them on different nodes, and neither is pinned, so a full or failed node never strands an environment. The descheduler skips these pods, because evicting one kills every thread running in it.
+
+The image is `ghcr.io/coredev-uk/t3`, built from `containers/t3` by the `T3` workflow. It carries the T3 server, [oh-my-pi](https://github.com/can1357/oh-my-pi) (`omp`) as the coding agent, which T3 talks to over ACP, Claude Code for T3's text generation (titles, commit messages, branch names, pull request text), and Nix with devenv, so a repository's `flake.nix` or `devenv.nix` brings its own toolchain. Git and `gh` act as the `bot-cliffe` GitHub App: the pod mints a fresh installation token from the App's private key whenever one is needed, since installation tokens last an hour.
+
+Each environment has two volumes. The state volume `t3-a` or `t3-b` holds `/data`: T3's database and settings (`/data/t3`), and omp's sessions and login, `~/.claude` and `gh`'s config (`/data/home`). Kopiur backs it up. The work volume `t3-a-work` or `t3-b-work` is mounted at `/work`, and the entrypoint links `/data/t3/worktrees` and `/data/t3/projects` to it, so clones and worktrees with `node_modules` or `target` stay out of the hourly snapshots; Clarence's `backups.ignore` lists it. Egress from the pods is an allowlist: cluster DNS and the internet, nothing on the home network or the nodes (`kubernetes/apps/t3/shared/app`).
+
+T3 has its own pairing and session auth and no trusted-proxy mode, and an OIDC login in front of the host breaks its phone and desktop apps, so there is no Pocket ID in front of it. The `envoy-t3` gateway (`192.168.110.247`) is reachable from the LAN only, and every client pairs with a link or token that `t3 auth pairing create` mints.
+
+One-time setup:
+
+- In 1Password item `t3`: `T3_CLAUDE_CODE_OAUTH_TOKEN` (a Claude Code OAuth token, which omp reads as `ANTHROPIC_OAUTH_TOKEN` and Claude Code as `CLAUDE_CODE_OAUTH_TOKEN`). The bot-cliffe App's `GITHUB_BOT_APP_ID`, `GITHUB_BOT_APP_INSTALLATION_ID` and `GITHUB_BOT_APP_PRIVATE_KEY` live in the App's own item, `bot-cliffe`. The pull token is `GHCR_PULL_TOKEN` in `bot-clarence`.
+- Pair a browser with each environment: `kubectl -n t3 exec deploy/t3-a -- t3 auth pairing create --ttl 1h --base-url https://t3-a.hera.ac`, and the same for `t3-b`. Then add the second environment from the first (Settings, Environments). The entrypoint strips the startup pairing token from the pods' log so it does not reach VictoriaLogs.
+- In each environment's Settings, providers: add a Local ACP command with command `omp` and argument `acp`, enable Claude (binary `claude`) and set it as the text-generation provider, and disable the rest. T3 keeps these settings in its database on the state volume, not in git, so they are backed up and survive restarts but must be redone for a new environment.
+- In a client's Settings, Environments, enable Load balancing and mark `t3-a` as Prefer, so new threads go to the bigger node first and spill to `t3-b` by CPU and memory.
+- Pair the phone and the desktop app the same way.
+
+To add an environment, add another document to `kubernetes/apps/t3/environment/ks.yaml` (`APP: t3-c`, `NODE_OPERATOR: NotIn`), add its work volume to the Clarence `backups.ignore` list, pair it, and add it to each client. The required anti-affinity allows one environment per node.
+
 ## Credits
 
 Many patterns and parts of this setup were sourced from [onedr0p/home-ops](https://github.com/onedr0p/home-ops). Credit to that project for the structure and inspiration.

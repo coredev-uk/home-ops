@@ -51,7 +51,7 @@ spec:
       # upstream and get Cloudflare's IPv6 and ECH config. Browsers then send ECH to the LAN
       # gateway, which cannot accept it, and check its *.hera.ac certificate against
       # cloudflare-ech.com: a certificate error. The LAN-only names never go upstream either.
-      FTLCONF_misc_dnsmasq_lines: local=/external.hera.ac/;local=/internal.hera.ac/;local=/kandev-gateway.hera.ac/
+      FTLCONF_misc_dnsmasq_lines: local=/external.hera.ac/;local=/internal.hera.ac/;local=/t3-gateway.hera.ac/
     serviceDns:
       type: LoadBalancer
       mixedService: true

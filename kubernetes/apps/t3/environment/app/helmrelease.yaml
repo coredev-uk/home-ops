@@ -1,0 +1,190 @@
+---
+# One T3 Code environment (github.com/pingdotgg/t3code). The server, its agents (omp over ACP,
+# Claude Code for titles, commit messages and PR text), terminals, git and the headless browser
+# are all children of this one process, and one server owns its home exclusively: one replica,
+# Recreate, and more capacity means another environment (environment/ks.yaml), not more
+# replicas. The image is built from containers/t3; the policy it ships (/etc/t3code/policy.json)
+# turns updates and telemetry off.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: ${APP}
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: ${APP}
+  interval: 1h
+  values:
+    controllers:
+      # T3 takes an exclusive lock on its home (a second server exits), so the old pod must be
+      # gone before the new one starts.
+      ${APP}:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          # Nothing here talks to the Kubernetes API, and an agent with the token could.
+          automountServiceAccountToken: false
+        containers:
+          app:
+            image:
+              # Built from containers/t3 by .github/workflows/t3.yaml; the tag is the commit SHA,
+              # pinned here by hand.
+              repository: ghcr.io/coredev-uk/t3
+              tag: edd8c028e6f4f9056811f5371ceca9afd14c79e8@sha256:79ab0a211f70500a7a031079b992c8a3d9bd2f255d1b1109aadc5a0c3caa2a35
+            env:
+              HOME: /data/home
+              T3CODE_HOME: /data/t3
+              T3CODE_HOST: 0.0.0.0
+              T3CODE_PORT: "3773"
+              T3CODE_TELEMETRY_ENABLED: "false"
+              # One environment per pod, reached through the Service: nothing to discover.
+              T3CODE_PORT_DISCOVERY: "0"
+              # Chromium's sandbox needs user namespaces, which the pod does not have; the pod
+              # is the boundary.
+              T3CODE_SERVER_BROWSER_SANDBOX: "0"
+              PI_CODING_AGENT_DIR: /data/home/.omp/agent
+              TZ: Europe/London
+              # Half the 6-core nodes: cargo's default (every core) starves the other threads.
+              CARGO_BUILD_JOBS: "3"
+              # bot-cliffe's identity for every commit. Git reads these ahead of any file the
+              # agent could edit. Worktrees come and go under paths git has not seen, so trust
+              # them all rather than keep a list (the pod holds only agent checkouts).
+              GIT_CONFIG_COUNT: "3"
+              GIT_CONFIG_KEY_0: user.name
+              GIT_CONFIG_VALUE_0: bot-cliffe[bot]
+              GIT_CONFIG_KEY_1: user.email
+              GIT_CONFIG_VALUE_1: 353538383+bot-cliffe[bot]@users.noreply.github.com
+              GIT_CONFIG_KEY_2: safe.directory
+              GIT_CONFIG_VALUE_2: "*"
+            envFrom:
+              - secretRef:
+                  name: t3-secret
+            probes:
+              # The environment descriptor is public; T3 has no health endpoint.
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /.well-known/t3/environment
+                    port: &port 3773
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /.well-known/t3/environment
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 3
+              # Migrations run before the server listens and grow with the database: up to 10
+              # minutes.
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /.well-known/t3/environment
+                    port: *port
+                  periodSeconds: 5
+                  failureThreshold: 120
+            securityContext:
+              allowPrivilegeEscalation: false
+              # The Nix store lives in the container's writable layer (nix and devenv install
+              # packages at run time), so the root filesystem cannot be read-only.
+              readOnlyRootFilesystem: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: "1"
+                memory: 4Gi
+                # Keeps an environment off a node whose disk cannot hold a Nix store.
+                ephemeral-storage: 20Gi
+              limits:
+                memory: 20Gi
+                ephemeral-storage: 40Gi
+    defaultPodOptions:
+      labels:
+        # Selects the environments in the network policy (shared/app/networkpolicy.yaml), the
+        # anti-affinity below and the descheduler's exclusion.
+        app.kubernetes.io/part-of: t3
+      imagePullSecrets:
+        - name: t3-pull
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+      affinity:
+        # One environment per node, so two never compete for the same cores or disk. No node
+        # is required: an outage or a full node must not strand an environment.
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: t3
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  # hyperion-0 has 18 cores against the other nodes' 6: t3-a prefers it (In),
+                  # t3-b avoids it (NotIn).
+                  - key: kubernetes.io/hostname
+                    operator: ${NODE_OPERATOR}
+                    values:
+                      - hyperion-0
+    service:
+      app:
+        forceRename: ${APP}
+        ports:
+          http:
+            port: *port
+    # envoy-t3 is LAN only and has no OIDC: T3's own pairing and session auth stand in, so the
+    # mobile and desktop apps can connect.
+    route:
+      app:
+        forceRename: ${APP}
+        hostnames:
+          - ${APP}.hera.ac
+        parentRefs:
+          - name: envoy-t3
+            namespace: network
+    persistence:
+      # T3's home and the agent's home (HOME): backed up by kopiur.
+      data:
+        existingClaim: ${APP}
+        globalMounts:
+          - path: /data
+      # Clones and worktrees, on a volume of their own that is not backed up (pvc-work.yaml). It
+      # is mounted beside /data, not inside it: the runtime would create nested mount points such as
+      # /data/t3/worktrees as root, leaving /data/t3 unwritable for UID 1000. The entrypoint links
+      # T3's worktrees and projects directories here instead (containers/t3/entrypoint.sh).
+      work:
+        existingClaim: ${APP}-work
+        globalMounts:
+          - path: /work
+      tmp:
+        type: emptyDir
+      # Package-manager and build caches, and T3's own caches and on-demand tools (linked from
+      # T3CODE_HOME by the entrypoint), go with the pod and stay out of the backups.
+      cache:
+        type: emptyDir
+        sizeLimit: 20Gi
+        globalMounts:
+          - path: /var/cache/agent
+      # Chromium needs more than the default 64Mi of shared memory.
+      shm:
+        type: emptyDir
+        medium: Memory
+        sizeLimit: 1Gi
+        globalMounts:
+          - path: /dev/shm

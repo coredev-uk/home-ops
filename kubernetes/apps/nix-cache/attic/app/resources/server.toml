@@ -14,13 +14,15 @@ url = "sqlite:///db/server.db?mode=rwc"
 type = "local"
 path = "/storage"
 
-# Attic's default chunking (64 KiB average). Changing it later stops new uploads from
-# deduplicating against the chunks already stored.
+# 1 MiB chunks, not Attic's default 64 KiB: every chunk is a file on the NAS and a few SQLite
+# writes, and with 64 KiB a cold push of discord or zen (hundreds of MB each) queued enough of
+# them that uploads timed out waiting for a database connection. Changing this again stops new
+# uploads from deduplicating against the chunks already stored.
 [chunking]
-nar-size-threshold = 65536
-min-size = 16384
-avg-size = 65536
-max-size = 262144
+nar-size-threshold = 1048576
+min-size = 262144
+avg-size = 1048576
+max-size = 4194304
 
 [compression]
 type = "zstd"

@@ -9,7 +9,7 @@
 # workspace mount, whose root is the repository checkout. It also carries what oh-my-pi has on the
 # operator's desktop and a task would otherwise lack: a session D-Bus, headless Chromium and the
 # design skills (impeccable, taste-skill).
-FROM ghcr.io/kdlbs/kandev:v0.100.0-universal@sha256:04a610bc9b3cae342a92001897025c746e88a92ed38d6af5b6eaab0f5ab10fbf
+FROM ghcr.io/kdlbs/kandev:v0.101.0-universal@sha256:6d9b953529bf98bb233380e67957a9f11e357abc6bede1bdac162e08d5340f1e
 
 LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
 

@@ -26,15 +26,11 @@ spec:
         pod:
           # The Kubernetes executor's in-cluster connection (kandev-agents' executor Role).
           automountServiceAccountToken: true
-          imagePullSecrets:
-            - name: kandev-pull
         containers:
           app:
             image:
-              # Kandev 0.100.0 with Pi offered on remote executors (containers/kandev). Each Kandev
-              # workflow run's summary names its build.
-              repository: ghcr.io/coredev-uk/kandev
-              tag: 24977ae2e3923f02d8d2b13235967b176ac4e549@sha256:6cf6050b95c68ffed117289bfa3d686b2bbfb0cfde0d2b813bd3074107af89b0
+              repository: ghcr.io/kdlbs/kandev
+              tag: v0.101.0@sha256:845bb59be2e2b09cdb938df5eec54c836ace5594243a1e42a639a307d63ca864
             env:
               TZ: Europe/London
               KANDEV_LOG_LEVEL: info

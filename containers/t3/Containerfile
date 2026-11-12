@@ -1,0 +1,219 @@
+# The image every T3 Code environment runs (kubernetes/apps/t3/environment/app/helmrelease.yaml),
+# published by .github/workflows/t3.yaml as ghcr.io/coredev-uk/t3:<commit>.
+#
+# T3 Code's server (`t3 serve`) runs the agents, terminals, git and the headless browser as its own
+# children, so this image is the whole workstation: T3, oh-my-pi (omp, which T3 starts as a Local
+# ACP agent) and Claude Code (T3's text-generation provider, for titles, commit messages and PR
+# text), plus single-user Nix and devenv. The repositories in ~/code bring their toolchains through
+# flake.nix or devenv.nix (sona-go: GTK, GStreamer, sway for MyGo's headless tests), so one image
+# serves them all and a repository's pins decide its tools. The baseline tools a repository without
+# either would expect (Node, pnpm, Go, Rust, gh) come from the same Nix profile as devenv. It also
+# carries what oh-my-pi has on the operator's desktop and a thread would otherwise lack: a session
+# D-Bus, headless Chromium and the design skills (impeccable, taste-skill).
+FROM docker.io/library/debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+
+LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
+
+# Nix's release, its installer's hash (releases.nixos.org/nix/nix-<version>/install.sha256) and
+# the nixpkgs commit devenv and the baseline tools come from (nixpkgs-unstable); sona-go needs
+# devenv 2.4 or later.
+ARG NIX_VERSION=2.34.9
+ARG NIX_INSTALL_SHA256=a03ce2e9eaf4ea1560260b9a93e311dbaf589d28fb5c9318f8d9e768ee6339d8
+ARG NIXPKGS_REV=13e53762c5afaf384d4614e94527a9ccfafe41d0
+
+# T3 Code, oh-my-pi and Claude Code: release versions that Renovate moves (.renovaterc.json5).
+# The build checks T3's and omp's downloads against the SHA-256 sums their releases publish.
+ARG T3_VERSION=0.1.9
+ARG OMP_VERSION=18.19.0
+ARG CLAUDE_CODE_VERSION=2.1.322
+
+# The design skills, each a tag and its commit (the build fetches the commit; Renovate moves both:
+# .renovaterc.json5). impeccable's engine binary is the release its VERSION names, checked
+# against the engine-checksums.txt of the same commit.
+ARG IMPECCABLE_REF=skill-v4.8.2@035c8f319edd019936525a062fe99e83ca8d12c6
+ARG TASTE_SKILL_REF=v2.5.1@f6b76575f949707b4e3c37cd86cb44b0b98643e8
+
+# build-essential and pkg-config: native modules and cgo/cc-rs builds link against the system
+# toolchain, which Nix's rustc and go expect to find as `cc`. tini is the entrypoint's init, so
+# the children T3 spawns are reaped.
+# chromium: taste-skill's checks drive headless Chromium over CDP (CHROME_PATH below). Debian's
+# launcher reads /etc/chromium.d, where --no-sandbox is set: Chromium's own sandbox needs the user
+# namespaces the pod does not have, and the pod (non-root, no capabilities, its network policy) is
+# the boundary. fonts-liberation gives pages the metric-compatible core fonts.
+# The lib* packages are the ones `t3 browser setup` would install for T3's own headless Chrome,
+# so its first browser tab works without root.
+# t3: UID/GID 1000, the user the Nix store, the caches and the state volume belong to. Its home,
+# /data/home, is a volume mount the HelmRelease provides, so no home directory is created here.
+# D-Bus: Nix's dbus-daemon reads /etc/dbus-1/session.conf, and libdbus clients need a machine ID,
+# so dbus-run-session (sona-go's `tests` and `headless`) fails without both. One ID for the image.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates curl git bash openssl jq xz-utils tini build-essential pkg-config \
+      chromium fonts-liberation fontconfig \
+      libnss3 libglib2.0-0t64 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
+      libdbus-1-3 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 \
+      libxkbcommon0 libgbm1 libasound2t64 libexpat1 \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd --gid 1000 t3 \
+ && useradd --uid 1000 --gid 1000 --no-create-home --home-dir /data/home --shell /bin/bash t3 \
+ && install -d -o 1000 -g 1000 -m 0755 /nix /var/cache/agent \
+ && mkdir -m 0755 /etc/nix /opt/omp \
+ && printf '%s\n' 'export CHROMIUM_FLAGS="$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromium.d/t3-no-sandbox \
+ && od -An -N16 -tx1 /dev/urandom | tr -d ' \n' > /etc/machine-id \
+ && echo >> /etc/machine-id
+
+# nix.conf:
+# sandbox: an unprivileged container has no user namespaces for Nix's build sandbox.
+# min-free/max-free: the pod lives for weeks, and every devenv shell adds store paths to its
+# writable layer, so Nix collects garbage by itself when less than 5 GiB is free on the volume
+# holding /nix, until 15 GiB is free (values in bytes).
+# git: bot-cliffe's credentials come from git-credential-cliffe, which mints a GitHub App
+# installation token per use; the identity itself is set by the HelmRelease (GIT_CONFIG_*).
+RUN printf '%s\n' \
+      'experimental-features = nix-command flakes' \
+      'sandbox = false' \
+      'build-users-group =' \
+      'max-jobs = auto' \
+      'min-free = 5368709120' \
+      'max-free = 16106127360' \
+      'extra-substituters = https://devenv.cachix.org' \
+      'extra-trusted-public-keys = devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=' \
+      > /etc/nix/nix.conf \
+ && git config --system credential.https://github.com.helper cliffe
+
+# The session bus configuration (see the file).
+COPY dbus-session.conf /etc/dbus-1/session.conf
+
+# T3 Code's release is a single-executable tarball with its web client beside it.
+RUN set -eu; \
+    base="https://github.com/pingdotgg/t3code/releases/download/v${T3_VERSION}"; \
+    asset="t3-${T3_VERSION}-linux-x64.tar.gz"; \
+    cd /tmp; \
+    curl -fsSL -O "$base/$asset"; \
+    curl -fsSL -O "$base/SHA256SUMS"; \
+    grep "  ${asset}\$" SHA256SUMS | sha256sum -c -; \
+    mkdir /opt/t3; \
+    tar -xzf "$asset" -C /opt/t3 --strip-components=1; \
+    ln -s /opt/t3/t3 /usr/local/bin/t3; \
+    rm -f "$asset" SHA256SUMS; \
+    t3 --version
+
+# omp is one binary; the release lists its sums in SHA256SUMS.txt.
+RUN set -eu; \
+    base="https://github.com/can1357/oh-my-pi/releases/download/v${OMP_VERSION}"; \
+    cd /tmp; \
+    curl -fsSL -o omp "$base/omp-linux-x64"; \
+    curl -fsSL -o SHA256SUMS.txt "$base/SHA256SUMS.txt"; \
+    sum=$(awk '$2 == "omp-linux-x64" { print $1 }' SHA256SUMS.txt); \
+    test -n "$sum"; \
+    echo "${sum}  omp" | sha256sum -c -; \
+    install -m 0755 omp /usr/local/bin/omp; \
+    rm -f omp SHA256SUMS.txt; \
+    omp --version
+
+# The design skills, read-only at /opt/omp/skills (the entrypoint syncs them into omp's agent
+# directory): impeccable's omp-compatible Pi build with its engine at the path its launcher tries
+# first, and taste-skill under its skill name.
+RUN set -eu; \
+    fetch() { \
+      repo=$1; commit=${2#*@}; path=$3; dest=$4; \
+      mkdir -p "$dest"; \
+      curl -fsSL "https://codeload.github.com/$repo/tar.gz/$commit" \
+        | tar -xz -C "$dest" --strip-components="$(echo "$path" | awk -F/ '{print NF + 1}')" \
+            "${repo#*/}-$commit/$path"; \
+    }; \
+    fetch pbakaus/impeccable "$IMPECCABLE_REF" .pi/skills/impeccable /opt/omp/skills/impeccable; \
+    fetch Leonxlnx/taste-skill "$TASTE_SKILL_REF" skills/taste-skill /opt/omp/skills/design-taste-frontend; \
+    cd /opt/omp/skills/impeccable/scripts; \
+    engine=$(cat VERSION); \
+    sum=$(awk -v v="$engine" '$1 == v && $2 == "impeccable-linux-x64" { print $3 }' engine-checksums.txt); \
+    test -n "$sum"; \
+    mkdir -p bin/linux-x64; \
+    curl -fsSL -o bin/linux-x64/impeccable \
+      "https://github.com/pbakaus/impeccable/releases/download/engine-v${engine}/impeccable-linux-x64"; \
+    echo "${sum}  bin/linux-x64/impeccable" | sha256sum -c -; \
+    chmod 0755 bin/linux-x64/impeccable; \
+    IMPECCABLE_NO_TELEMETRY=1 ./impeccable engine-probe; \
+    grep -q '^name: impeccable$' /opt/omp/skills/impeccable/SKILL.md; \
+    grep -q '^name: design-taste-frontend$' /opt/omp/skills/design-taste-frontend/SKILL.md; \
+    chmod -R a+rX /opt/omp/skills
+
+USER t3
+
+# HOME during the build is a scratch directory: the real one is a volume the HelmRelease mounts.
+# Nix, devenv and the baseline tools go into one profile under /nix that PATH names, so nothing
+# depends on the build's HOME. nodejs, pnpm, go, rustc, cargo and gh stand in for the universal
+# image Kandev's workers were built on.
+RUN set -eu; \
+    export HOME=/tmp/nix-build-home; \
+    mkdir -p "$HOME"; \
+    curl -fsSL "https://releases.nixos.org/nix/nix-${NIX_VERSION}/install" -o /tmp/install-nix; \
+    echo "${NIX_INSTALL_SHA256}  /tmp/install-nix" | sha256sum -c -; \
+    sh /tmp/install-nix --no-daemon --no-channel-add --no-modify-profile; \
+    "$HOME/.nix-profile/bin/nix" profile add --profile /nix/var/nix/profiles/agent \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#nix" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#devenv" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#nodejs" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#pnpm" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#go" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#rustc" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#cargo" \
+      "github:NixOS/nixpkgs/${NIXPKGS_REV}#gh"; \
+    rm -rf "$HOME" /tmp/install-nix; \
+    /nix/var/nix/profiles/agent/bin/nix-collect-garbage --quiet; \
+    /nix/var/nix/profiles/agent/bin/nix --version; \
+    /nix/var/nix/profiles/agent/bin/devenv version
+
+USER root
+
+# Claude Code, for T3's Claude provider: T3 starts `claude` for titles, commit messages and PR
+# text (omp has no Claude Code bridge, and ACP agents are not used for text generation). Its
+# launcher runs on the profile's Node.
+RUN PATH=/nix/var/nix/profiles/agent/bin:$PATH \
+    npm install --global --prefix /opt/claude-code --cache /tmp/npm-cache \
+      --no-audit --no-fund "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+ && rm -rf /tmp/npm-cache \
+ && /opt/claude-code/bin/claude --version
+
+# T3 builds a thread's PATH from `$SHELL -ilc`, and Debian's /etc/profile resets PATH, so a login
+# shell would lose the Nix profile and /opt tools the image's ENV adds. This puts them back.
+RUN printf '%s\n' 'export PATH="/usr/local/bin:/opt/claude-code/bin:/nix/var/nix/profiles/agent/bin:$PATH"' \
+      > /etc/profile.d/agent-path.sh
+
+# T3's managed policy (see the file), root-owned so a thread cannot change what its server enforces.
+COPY --chmod=0644 policy.json /etc/t3code/policy.json
+
+# omp's defaults (see the files): config.yml is loaded through PI_CONFIG_FILES below, AGENTS.md
+# and skills/ are synced into the agent directory by the entrypoint.
+COPY --chmod=0644 omp/config.yml omp/AGENTS.md /opt/omp/
+
+# gh is ahead of the profile's on PATH. git-credential-cliffe is git's credential helper for
+# github.com and the wrapper's token source: see the scripts.
+COPY --chmod=0755 entrypoint.sh /usr/local/bin/t3-entrypoint
+COPY --chmod=0755 git-credential-cliffe gh /usr/local/bin/
+
+# Caches go to the pod's writable layer (ephemeral storage), not the state volume and not a
+# worktree, where they would show up as untracked files an agent could commit.
+# SHELL: T3 and its terminals start the user's login shell from it.
+# PI_CONFIG_FILES: omp's defaults overlay. The agent directory (PI_CODING_AGENT_DIR), HOME and
+# T3CODE_HOME are on the state volume, so the HelmRelease sets them, with T3's host and port.
+# The design skills: taste-skill finds Chromium through CHROME_PATH, and impeccable's engine
+# sends no telemetry. T3 sends none either (the policy also forbids it).
+ENV PATH=/usr/local/bin:/opt/claude-code/bin:/nix/var/nix/profiles/agent/bin:$PATH \
+    SHELL=/bin/bash \
+    XDG_CACHE_HOME=/var/cache/agent/xdg \
+    XDG_DATA_HOME=/var/cache/agent/share \
+    XDG_STATE_HOME=/var/cache/agent/state \
+    GOCACHE=/var/cache/agent/go-build \
+    GOMODCACHE=/var/cache/agent/go-mod \
+    CARGO_HOME=/var/cache/agent/cargo \
+    npm_config_cache=/var/cache/agent/npm \
+    npm_config_store_dir=/var/cache/agent/pnpm-store \
+    PI_CONFIG_FILES=/opt/omp/config.yml \
+    CHROME_PATH=/usr/bin/chromium \
+    IMPECCABLE_NO_TELEMETRY=1 \
+    T3CODE_TELEMETRY_ENABLED=false
+
+USER t3
+WORKDIR /data
+ENTRYPOINT ["tini", "--", "/usr/local/bin/t3-entrypoint"]

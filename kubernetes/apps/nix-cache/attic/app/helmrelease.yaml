@@ -1,6 +1,6 @@
 ---
 # Attic binary cache server for coredev-uk/nixos. The hosts pull https://attic.hera.ac/coredev
-# (public: reading needs no token); GitHub Actions pushes with its ATTIC_TOKEN. The cache skips
+# (public: reading needs no token); CI pushes with its ATTIC_TOKEN. The cache skips
 # anything signed by cache.nixos.org, nix-community or nix-citizen (its upstream keys), so it
 # holds only the paths nobody else builds: config files, overrides and unfree software.
 #
@@ -122,9 +122,10 @@ spec:
             port: *port
           metrics:
             port: *metricsPort
-    # Uploads are streamed (chunked), which Cloudflare passes beyond its 100 MB body limit.
+    # Pushes bypass Cloudflare, which rejects request bodies over 100 MB, streamed or not: the
+    # nixos runner reaches envoy-external directly, and poseidon's weekly build over the tailnet.
     route:
-      # clarence:public GitHub's runners push and poseidon substitutes from anywhere; Nix can't follow a login, so reads are open and pushes need an Attic token
+      # clarence:public the hosts substitute from anywhere and Nix can't follow a login, so reads are open; pushes need an Attic token
       app:
         annotations:
           gatus.home-operations.com/endpoint: |-

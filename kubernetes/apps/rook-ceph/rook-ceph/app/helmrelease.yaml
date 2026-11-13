@@ -17,5 +17,5 @@ spec:
     resources:
       requests:
         cpu: 100m # unchangable
-        memory: 128Mi # unchangable
+        memory: 224Mi # 30-day RSS p95 124Mi, daily peak 178Mi (2026-11-13)
       limits: {}

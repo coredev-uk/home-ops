@@ -41,3 +41,8 @@ spec:
       owner: attic
       secret:
         name: attic-postgres-credentials
+      # The exporter (pg_monitor) reads Attic's tables for queries.yaml. Attic creates them at
+      # its first start, owned by attic, so they get the grant by default. Applied by hand to the
+      # running cluster, which was bootstrapped before this.
+      postInitApplicationSQL:
+        - ALTER DEFAULT PRIVILEGES FOR ROLE attic IN SCHEMA public GRANT SELECT ON TABLES TO pg_monitor

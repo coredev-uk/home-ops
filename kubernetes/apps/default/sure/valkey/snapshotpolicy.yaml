@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+# Sure's job queue (appendonly, noeviction): a snapshot keeps scheduled and queued jobs.
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: sure-valkey
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    cache:
+      capacity: 1Gi
+      mode: Persistent
+      storageClassName: ceph-block
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+  repository:
+    kind: ClusterRepository
+    name: expanse
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: sure-valkey
+  volumeSnapshotClassName: csi-ceph-blockpool

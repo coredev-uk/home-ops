@@ -1,7 +1,8 @@
 ---
 # Clarence's state file (/var/lib/clarence/state.db), one per controller: job schedules, the
-# command cursor, Jev's answers, proposal history and the last report. Bookkeeping only, so
-# plain claims rather than the kopiur component (which backs up one claim named ${APP}).
+# command cursor, Jev's answers, proposal history, Trivy scans and the report's first-seen times.
+# Plain claims rather than the kopiur component (which backs up one claim named ${APP});
+# snapshotpolicy.yaml backs each one up.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

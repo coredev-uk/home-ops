@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+# The kopiur component's policy for a claim that already exists (the component creates its own).
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: dynacat
+spec:
+  compression:
+    compressor: zstd
+  mover:
+    cache:
+      capacity: 1Gi
+      mode: Persistent
+      storageClassName: ceph-block
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+  repository:
+    kind: ClusterRepository
+    name: expanse
+  retention:
+    keepLatest: 3
+    keepHourly: 24
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: dynacat
+  volumeSnapshotClassName: csi-ceph-blockpool

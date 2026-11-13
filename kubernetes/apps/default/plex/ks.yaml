@@ -27,6 +27,9 @@ kind: Kustomization
 metadata:
   name: plex-tools
 spec:
+  dependsOn:
+    - name: kopiur
+      namespace: kopiur-system
   interval: 1h
   path: ./kubernetes/apps/default/plex/tools
   prune: true

@@ -19,7 +19,7 @@ LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
 # devenv 2.4 or later.
 ARG NIX_VERSION=2.34.9
 ARG NIX_INSTALL_SHA256=a03ce2e9eaf4ea1560260b9a93e311dbaf589d28fb5c9318f8d9e768ee6339d8
-ARG NIXPKGS_REV=13e53762c5afaf384d4614e94527a9ccfafe41d0
+ARG NIXPKGS_REV=2074cc672349f14240fb7ea90d509e0b643e9dd4
 
 # T3 Code, oh-my-pi and Claude Code: release versions that Renovate moves (.renovaterc.json5).
 # The build checks T3's and omp's downloads against the SHA-256 sums their releases publish.

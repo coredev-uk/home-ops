@@ -108,7 +108,9 @@
     "ghcr.io/rook/rook-ceph-cluster": "rook/rook",
     "ghcr.io/coredns/charts/coredns": "coredns/helm",
     "ghcr.io/spegel-org/helm-charts/spegel": "spegel-org/spegel",
-    "ghcr.io/prometheus-community/charts/prometheus-adapter": "prometheus-community/helm-charts"
+    "ghcr.io/prometheus-community/charts/prometheus-adapter": "prometheus-community/helm-charts",
+    "ghcr.io/prometheus-community/charts/prometheus-blackbox-exporter": "prometheus-community/helm-charts",
+    "siderolabs/talos": "siderolabs/talos"
   },
   "checks": {
     "schemaCache": "/tmp/kubeconform",
@@ -245,7 +247,7 @@
       "id": "migration",
       "criteria": {
         "true": "Run a command or migration, edit configuration, or upgrade in a set order, because of a change in this release.",
-        "false": "Nothing to do beyond deploying the new version. Migrations the software runs by itself on start (database or media-info migrations included) are not a manual step, and general advice repeated for every release, such as 'always take a backup before upgrading' or 'if you are using docker, update the container image instead of updating inside the container', is not one either. A step the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater, switching a non-docker install's update branch, a desktop app's macOS `xattr -d com.apple.quarantine` or Windows installer) is not one when the package in `package_updates` is a container image or Helm chart."
+        "false": "Nothing to do beyond deploying the new version. Migrations the software runs by itself on start (database or media-info migrations included) are not a manual step, and general advice repeated for every release, such as 'always take a backup before upgrading' or 'if you are using docker, update the container image instead of updating inside the container', is not one either. A step the notes limit to another way of installing or updating the software (a binary download, a package manager, the in-app updater, switching a non-docker install's update branch, a desktop app's macOS `xattr -d com.apple.quarantine` or Windows installer) is not one when the package in `package_updates` is a container image or Helm chart. Urging users to update soon, such as a security release whose advisories are published later, is not a step either: deploying the update is what it asks."
       },
       "reviewAbove": 0.3,
       "instructions": "Do the release notes in `release_notes` tell the operator to do something by hand for this particular upgrade?"

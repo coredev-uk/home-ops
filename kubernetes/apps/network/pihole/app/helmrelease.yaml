@@ -148,10 +148,11 @@ spec:
             memory: 32Mi
           limits:
             memory: 64Mi
+    # 30-day RSS p95 13Mi, daily peak 18Mi (2026-11-13).
     resources:
       requests:
         cpu: 100m
-        memory: 256Mi
+        memory: 32Mi
       limits:
         memory: 512Mi
   postRenderers:

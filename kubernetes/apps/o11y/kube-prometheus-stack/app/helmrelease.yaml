@@ -70,6 +70,10 @@ spec:
         alertmanagerConfiguration:
           name: alertmanager
         externalUrl: https://alertmanager.hera.ac
+        # The chart requests 200Mi; 30-day RSS p95 24Mi, daily peak 26Mi (2026-11-13).
+        resources:
+          requests:
+            memory: 32Mi
         storage:
           volumeClaimTemplate:
             spec:
@@ -182,10 +186,11 @@ spec:
         serviceMonitorSelectorNilUsesHelmValues: false
         retention: 30d
         retentionSize: 40GiB
+        # 30-day RSS p95 2189Mi, daily peak 2396Mi (2026-11-13).
         resources:
           requests:
             cpu: 100m
-            memory: 2000Mi
+            memory: 2880Mi
           limits:
             memory: 3500Mi
         storageSpec:

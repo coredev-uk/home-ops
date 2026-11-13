@@ -17,10 +17,11 @@ spec:
           imageRepository: mirror.gcr.io/envoyproxy/envoy
           # Envoy uses under 100Mi. Without a memory request Kubernetes requests the limit, so
           # each gateway's two pods reserved 4Gi, room T3's environment pods need on hyperion-0.
+          # 30-day RSS p95 74Mi at most (envoy-internal), daily peak 74Mi (2026-11-13).
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 96Mi
             limits:
               memory: 2Gi
   shutdown:

@@ -155,9 +155,14 @@
   "backups": {
     "ignore": [
       "actions-runner-system/nixos-runner-store",
+      "clarence/clarence-*-state",
       "clarence/trivy-cache",
+      "default/dynacat",
       "default/home-assistant-cache",
+      "default/plex-letterboxd",
+      "default/sure-valkey",
       "o11y/alertmanager-kube-prometheus-stack-db-*",
+      "o11y/gatus-sidecar",
       "o11y/prometheus-kube-prometheus-stack-db-*",
       "o11y/server-volume-victoria-logs-0",
       "t3/t3-a-nix",

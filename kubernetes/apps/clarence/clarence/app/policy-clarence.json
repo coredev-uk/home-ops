@@ -119,6 +119,9 @@
       }
     }
   ],
+  "upstreams": {
+    "golang.org/x/sync": "golang/sync"
+  },
   "upstreamIssues": {
     "maxIssues": 30,
     "askPerUpstream": 10,

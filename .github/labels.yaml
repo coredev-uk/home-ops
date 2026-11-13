@@ -52,3 +52,7 @@
 - name: kind/report
   color: "c2e0c6"
   description: "Clarence's daily report"
+# Renovate's stopUpdatingLabel: Clarence pins a pull request that waits only on release age with it
+- name: stop-updating
+  color: "fbca04"
+  description: "Renovate keeps this branch on its version"

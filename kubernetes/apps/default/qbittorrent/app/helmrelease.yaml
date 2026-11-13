@@ -45,11 +45,10 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-            # 30-day RSS p95 44Mi, daily peak 113Mi (2026-11-13). The 2Gi limit stays: unpacking bursts reach ~1Gi.
             resources:
               requests:
                 cpu: 100m
-                memory: 144Mi
+                memory: 944Mi
               limits:
                 memory: 2Gi
     defaultPodOptions:

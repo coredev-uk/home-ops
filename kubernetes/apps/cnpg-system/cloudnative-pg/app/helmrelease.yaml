@@ -12,10 +12,8 @@ spec:
   values:
     monitoring:
       podMonitorEnabled: true
-    # The manager's RSS p95 over 30 days is 65Mi, daily peak 71Mi (2026-11-13).
     resources:
       requests:
         cpu: 10m
-        memory: 96Mi
       limits:
         memory: 512Mi

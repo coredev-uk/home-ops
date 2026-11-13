@@ -26,10 +26,8 @@ spec:
       runAsGroup: 1000
       fsGroup: 1000
       fsGroupChangePolicy: OnRootMismatch
-    # 30-day RSS p95 172Mi, daily peak 188Mi (2026-11-13).
     resources:
       requests:
         cpu: 100m
-        memory: 240Mi
       limits:
         memory: 2Gi

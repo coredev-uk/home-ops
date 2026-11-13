@@ -79,10 +79,6 @@ spec:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
                 capabilities: { drop: ["ALL"] }
-              # 30-day RSS p95 333Mi, daily peak 338Mi (2026-11-13).
-              resources:
-                requests:
-                  memory: 416Mi
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000

@@ -10,10 +10,6 @@ spec:
     name: flux-operator
   interval: 1h
   values:
-    # 30-day RSS p95 219Mi, daily peak 233Mi (2026-11-13).
-    resources:
-      requests:
-        memory: 288Mi
     serviceMonitor:
       create: true
     web:

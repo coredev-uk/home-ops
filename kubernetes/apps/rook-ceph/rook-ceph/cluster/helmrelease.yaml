@@ -15,6 +15,14 @@ spec:
       cephConfig:
         mon:
           mon_cluster_log_level: info
+        # osd.1's DRAM-less SATA SSD (storage.nodes below) never learns which blocks BlueStore
+        # freed, so under a sustained write its garbage collection stalls: the nix-cache runner's
+        # first 52 GB store pushed commits past 5 s (866 slow operations in an hour) and raised
+        # BLUESTORE_SLOW_OP_ALERT. Discards tell it, issued by a background thread so a write
+        # never waits on one.
+        osd.1:
+          bdev_enable_discard: "true"
+          bdev_async_discard_threads: "1"
       cleanupPolicy:
         wipeDevicesFromOtherClusters: false
       csi:

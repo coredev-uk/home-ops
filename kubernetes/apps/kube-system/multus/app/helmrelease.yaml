@@ -10,8 +10,10 @@ spec:
     name: multus
   interval: 1h
   values:
+    # 30-day RSS p95 4Mi, daily peak 5Mi (2026-11-13).
     resources:
       requests:
         cpu: 10m
+        memory: 16Mi
       limits:
         memory: 512Mi

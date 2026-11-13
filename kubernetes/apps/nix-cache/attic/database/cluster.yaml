@@ -1,0 +1,43 @@
+---
+# Attic's database: which store paths the cache holds, their chunks on the NAS, and the cache's
+# signing keypair (also in 1Password, ATTIC_CACHE_KEYPAIR in item nix-cache). Backed up by kopiur
+# (snapshotpolicy.yaml).
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: attic-postgres
+spec:
+  instances: 1
+  # One instance: a PDB would block every node drain (Talos upgrades). Drains move the primary instead.
+  enablePDB: false
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-standard-bookworm
+  primaryUpdateStrategy: unsupervised
+  primaryUpdateMethod: restart
+  enableSuperuserAccess: false
+  postgresql:
+    parameters:
+      # An fsync on ceph-block takes 100-500 ms (osd.1's SSD), and a push writes a few rows per
+      # 1 MiB chunk: waiting for each commit to reach disk starved Attic's connection pool. A
+      # crash loses at most the last moments' commits (uploads the client then retries); the
+      # database stays consistent.
+      synchronous_commit: "off"
+  storage:
+    size: 5Gi
+    storageClass: ceph-block
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  monitoring:
+    customQueriesConfigMap:
+      - name: attic-postgres-metrics
+        key: queries.yaml
+  bootstrap:
+    initdb:
+      database: attic
+      owner: attic
+      secret:
+        name: attic-postgres-credentials

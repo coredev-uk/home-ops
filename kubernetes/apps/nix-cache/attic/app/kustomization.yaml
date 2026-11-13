@@ -11,13 +11,10 @@ configMapGenerator:
   - name: attic-config
     files:
       - server.toml=./resources/server.toml
-  - name: nix-cache-exporter
-    files:
-      - exporter.py=./resources/exporter.py
   - name: nix-cache-dashboard
     files:
       - nix-cache.json=./resources/nix-cache.json
-# The kopiur postBuild substitution (ks.yaml) would blank the dashboard's ${promDatasource}.
+# Flux's postBuild substitution would blank the dashboard's ${promDatasource}.
 generatorOptions:
   disableNameSuffixHash: true
   annotations:

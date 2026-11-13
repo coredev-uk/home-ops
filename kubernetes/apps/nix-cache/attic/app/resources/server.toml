@@ -6,8 +6,8 @@ listen = "[::]:8080"
 allowed-hosts = ["attic.hera.ac"]
 api-endpoint = "https://attic.hera.ac/"
 
+# The URL comes from ATTIC_SERVER_DATABASE_URL (attic-secret): attic-postgres (../database).
 [database]
-url = "sqlite:///db/server.db?mode=rwc"
 
 # The NAS share NixCache (expanse.internal), mounted at /storage.
 [storage]

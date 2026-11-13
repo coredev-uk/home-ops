@@ -1,0 +1,45 @@
+# What the Attic cache holds, for the Nix Cache dashboard and atlas's Nix view: CNPG's exporter
+# runs these against the attic database and publishes cnpg_<query>_<column>.
+nix_cache:
+  target_databases: ["attic"]
+  query: |
+    SELECT c.name AS cache,
+      count(o.id) AS objects,
+      coalesce(sum(n.nar_size), 0) AS nar_bytes,
+      coalesce(extract(epoch FROM max(o.created_at)), 0) AS last_push_timestamp_seconds,
+      count(o.id) FILTER (WHERE o.last_accessed_at > now() - interval '1 day') AS objects_accessed_24h
+    FROM cache c
+    LEFT JOIN object o ON o.cache_id = c.id
+    LEFT JOIN nar n ON n.id = o.nar_id
+    WHERE c.deleted_at IS NULL
+    GROUP BY c.name
+  metrics:
+    - cache:
+        usage: LABEL
+        description: Cache name
+    - objects:
+        usage: GAUGE
+        description: Store paths in the cache
+    - nar_bytes:
+        usage: GAUGE
+        description: Uncompressed size of the store paths in the cache
+    - last_push_timestamp_seconds:
+        usage: GAUGE
+        description: When the newest store path was pushed
+    - objects_accessed_24h:
+        usage: GAUGE
+        description: Store paths a client fetched in the last 24 hours
+
+nix_cache_storage:
+  target_databases: ["attic"]
+  query: |
+    SELECT count(*) AS chunks, coalesce(sum(coalesce(file_size, chunk_size)), 0) AS stored_bytes
+    FROM chunk
+    WHERE state = 'V'
+  metrics:
+    - chunks:
+        usage: GAUGE
+        description: Deduplicated chunks on the NAS
+    - stored_bytes:
+        usage: GAUGE
+        description: Compressed, deduplicated bytes the cache stores

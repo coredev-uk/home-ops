@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./cluster.yaml
+  - ./externalsecret.yaml
+  - ./podmonitor.yaml
+  - ./snapshotpolicy.yaml
+  - ./snapshotschedule.yaml
+configMapGenerator:
+  - name: attic-postgres-metrics
+    files:
+      - queries.yaml=./queries.yaml
+generatorOptions:
+  disableNameSuffixHash: true

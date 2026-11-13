@@ -85,7 +85,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_objects)",
+          "expr": "max(cnpg_nix_cache_objects)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -145,7 +145,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_nar_bytes)",
+          "expr": "max(cnpg_nix_cache_nar_bytes)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -205,7 +205,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_stored_bytes)",
+          "expr": "max(cnpg_nix_cache_storage_stored_bytes)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -266,7 +266,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_nar_bytes) / max(nix_cache_stored_bytes)",
+          "expr": "max(cnpg_nix_cache_nar_bytes) / max(cnpg_nix_cache_storage_stored_bytes)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -334,7 +334,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "time() - max(nix_cache_last_push_timestamp_seconds)",
+          "expr": "time() - max(cnpg_nix_cache_last_push_timestamp_seconds)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -394,7 +394,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_objects_accessed_24h)",
+          "expr": "max(cnpg_nix_cache_objects_accessed_24h)",
           "refId": "A",
           "instant": true,
           "range": false
@@ -456,7 +456,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_nar_bytes)",
+          "expr": "max(cnpg_nix_cache_nar_bytes)",
           "refId": "A",
           "legendFormat": "uncompressed"
         },
@@ -466,7 +466,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_stored_bytes)",
+          "expr": "max(cnpg_nix_cache_storage_stored_bytes)",
           "refId": "B",
           "legendFormat": "stored"
         }
@@ -527,7 +527,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max(nix_cache_objects)",
+          "expr": "max(cnpg_nix_cache_objects)",
           "refId": "A",
           "legendFormat": "paths"
         }
@@ -736,7 +736,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (container_memory_working_set_bytes{namespace=\"nix-cache\", pod=~\"attic-.+\", container!=\"\"})",
+          "expr": "max by (container) (container_memory_working_set_bytes{namespace=\"nix-cache\", pod=~\"attic-.+\", pod!~\"attic-postgres-.+\", container!=\"\"})",
           "refId": "A",
           "legendFormat": "{{container}}"
         }
@@ -746,7 +746,7 @@
       "id": 31,
       "type": "timeseries",
       "title": "Attic Database",
-      "description": "Used space against capacity on the attic claim (SQLite database, backed up by kopiur). The chunks live on the NAS.",
+      "description": "Used space against capacity on attic-postgres's volume (backed up by kopiur). The chunks live on the NAS.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -797,7 +797,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"nix-cache\", persistentvolumeclaim=~\"attic\"})",
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"nix-cache\", persistentvolumeclaim=\"attic-postgres-1\"})",
           "refId": "A",
           "legendFormat": "{{persistentvolumeclaim}} used"
         },
@@ -807,7 +807,7 @@
             "uid": "${promDatasource}"
           },
           "editorMode": "code",
-          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"nix-cache\", persistentvolumeclaim=~\"attic\"})",
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"nix-cache\", persistentvolumeclaim=\"attic-postgres-1\"})",
           "refId": "B",
           "legendFormat": "{{persistentvolumeclaim}} capacity"
         }

@@ -8,8 +8,6 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./prometheusrule.yaml
-  - ./snapshotpolicy.yaml
-  - ./snapshotschedule.yaml
 configMapGenerator:
   - name: gatus-sidecar-configmap
     files:

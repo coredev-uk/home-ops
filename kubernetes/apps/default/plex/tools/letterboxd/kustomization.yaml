@@ -7,8 +7,6 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./pvc.yaml
-  - ./snapshotpolicy.yaml
-  - ./snapshotschedule.yaml
 configMapGenerator:
   - name: plex-letterboxd-configmap
     files:

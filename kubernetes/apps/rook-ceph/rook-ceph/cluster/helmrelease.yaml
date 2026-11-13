@@ -42,20 +42,14 @@ spec:
             enabled: true
       # Chart defaults request 1000m per mon and 500m per mgr; each uses under 100m (7 days of
       # 5m peaks), and on the 6-core nodes those requests left no CPU to schedule into. OSDs
-      # request 1000m by default and peaked at 470m over 14 days. Memory over 30 days: mon RSS p95
-      # 1081Mi, daily peak 1073Mi; mgr p95 875Mi, daily peak 818Mi, max 977Mi (2026-11-13), so its
-      # limit rises from 1Gi.
+      # request 1000m by default and peaked at 470m over 14 days.
       resources:
         mon:
           requests:
             cpu: 200m
-            memory: 1312Mi
         mgr:
           requests:
             cpu: 200m
-            memory: 1024Mi
-          limits:
-            memory: 1536Mi
         osd:
           requests:
             cpu: 500m

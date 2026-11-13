@@ -61,11 +61,10 @@ spec:
             # Checks keep a few repository snapshots in memory and render them with kustomize
             # and Helm (checks.helm); CVE scans run the Trivy client in the same container,
             # which unpacks image layers.
-            # 30-day RSS p95 212Mi, daily peak 251Mi (2026-11-13).
-            resources:
+            resources: &resources
               requests:
                 cpu: 20m
-                memory: 304Mi
+                memory: 128Mi
               limits:
                 memory: 1Gi
       # sona-go deploys nowhere: no Kubernetes API access at all.
@@ -87,12 +86,7 @@ spec:
               - -state=/var/lib/clarence/state.db
             probes: *probes
             securityContext: *securityContext
-            resources: &resources
-              requests:
-                cpu: 20m
-                memory: 128Mi
-              limits:
-                memory: 1Gi
+            resources: *resources
       # self serves coredev-uk/clarence, Clarence's own source: like sona-go, nothing deploys
       # (a merge builds an image this file pins by hand), so no Kubernetes API access.
       self:

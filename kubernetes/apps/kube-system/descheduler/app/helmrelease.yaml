@@ -81,9 +81,7 @@ spec:
       enabled: true
     leaderElection:
       enabled: true
-    # The chart requests 500m; it peaked at 5m over 14 days. It also requests 256Mi;
-    # 30-day RSS p95 28Mi, daily peak 28Mi (2026-11-13).
+    # The chart requests 500m; it peaked at 5m over 14 days.
     resources:
       requests:
         cpu: 50m
-        memory: 48Mi

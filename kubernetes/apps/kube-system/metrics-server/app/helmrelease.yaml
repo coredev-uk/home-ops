@@ -20,7 +20,3 @@ spec:
       enabled: true
     serviceMonitor:
       enabled: true
-    # The chart requests 200Mi; 30-day RSS p95 36Mi, daily peak 37Mi (2026-11-13).
-    resources:
-      requests:
-        memory: 48Mi

@@ -22,8 +22,6 @@ spec:
         log:
           rotation:
             enabled: false
-        # Memory requests of csi-rbdplugin: node plugin 30-day RSS p95 97Mi, daily peak 109Mi; controller
-        # plugin p95 54Mi, daily peak 52Mi (2026-11-13).
         # CPU requests well under the defaults rook wrote: every CSI container idles near 0 (7
         # days of 5m peaks under 20m), and they were reserving ~4 cores across the nodes.
         nodePlugin:
@@ -34,7 +32,7 @@ spec:
                 memory: 1Gi
               requests:
                 cpu: 50m
-                memory: 144Mi
+                memory: 512Mi
             registrar:
               limits:
                 memory: 256Mi
@@ -60,7 +58,7 @@ spec:
               limits:
                 memory: 1Gi
               requests:
-                memory: 80Mi
+                memory: 512Mi
             provisioner:
               limits:
                 memory: 256Mi

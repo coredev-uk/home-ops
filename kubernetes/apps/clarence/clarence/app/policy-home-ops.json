@@ -131,7 +131,7 @@
     "prometheusUrl": "http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090",
     "everyHours": 24,
     "refreshHours": 168,
-    "lookbackDays": 30,
+    "lookbackDays": 90,
     "minDays": 5,
     "exclude": [],
     "autoMerge": true

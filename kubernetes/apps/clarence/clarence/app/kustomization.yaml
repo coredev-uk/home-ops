@@ -9,6 +9,8 @@ resources:
   - ./ocirepository.yaml
   - ./prometheusrule.yaml
   - ./pvc.yaml
+  - ./snapshotpolicy.yaml
+  - ./snapshotschedule.yaml
 configMapGenerator:
   - name: clarence-home-ops-policy
     files:

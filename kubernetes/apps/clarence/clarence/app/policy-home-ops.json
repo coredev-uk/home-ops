@@ -154,6 +154,7 @@
   },
   "backups": {
     "ignore": [
+      "actions-runner-system/nixos-runner-store",
       "clarence/trivy-cache",
       "default/home-assistant-cache",
       "o11y/alertmanager-kube-prometheus-stack-db-*",

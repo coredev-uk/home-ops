@@ -159,10 +159,6 @@ spec:
             - apiGroups: ["ceph.rook.io"]
               resources: ["cephclusters"]
               verbs: ["get", "list"]
-            # The daily report counts apps the zeroscaler HPA holds at zero as parked.
-            - apiGroups: ["autoscaling"]
-              resources: ["horizontalpodautoscalers"]
-              verbs: ["get", "list"]
             # The daily report lists PVCs no kopiur SnapshotPolicy backs up (backups).
             - apiGroups: ["kopiur.home-operations.com"]
               resources: ["snapshotpolicies"]

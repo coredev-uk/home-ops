@@ -96,6 +96,13 @@ spec:
         globalMounts:
           - path: /app/config/dynacat.yml
             subPath: dynacat.yml
+      # Served under /assets/meridian/, see theme.custom-css-file in the config.
+      theme:
+        type: configMap
+        name: "{{ .Release.Name }}-theme"
+        globalMounts:
+          - path: /app/assets/meridian
+            readOnly: true
       data:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:

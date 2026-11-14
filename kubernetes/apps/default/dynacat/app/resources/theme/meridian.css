@@ -207,6 +207,11 @@ a.color-primary-if-not-visited:hover,
     opacity: 1;
 }
 
+/* Dynacat dims bookmark icons to 0.8; the colour set reads at full strength. */
+.bookmarks-icon {
+    opacity: 1;
+}
+
 .value-separator {
     border-bottom-color: var(--m-rule);
 }

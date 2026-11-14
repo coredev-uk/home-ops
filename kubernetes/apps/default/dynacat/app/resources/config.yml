@@ -347,13 +347,54 @@ pages:
                   </div>
                   {{ end }}
 
-              - type: markets
+              # Crypto accounts from Sure (Coinbase), largest first: what each
+              # holds and is worth. No period change: Sure keeps no crypto
+              # price history, so holdings carry the purchase price forward
+              # until the live price lands, and any change would be that jump.
+              - type: custom-api
                 title: Crypto
-                markets:
-                  - symbol: BTC-USD
-                    name: Bitcoin
-                  - symbol: ETH-USD
-                    name: Ethereum
+                title-url: https://sure.hera.ac
+                cache: 30m
+                url: http://sure.default.svc.cluster.local:3000/api/v1/accounts
+                headers:
+                  X-Api-Key: ${SURE_API_KEY}
+                parameters:
+                  per_page: "100"
+                options:
+                  api-key: ${SURE_API_KEY}
+                template: |
+                  {{ $key := .Options.StringOr "api-key" "" }}
+                  {{ $api := "http://sure.default.svc.cluster.local:3000/api/v1/" }}
+                  {{ $accounts := sortByInt "balance_cents" "desc" (.JSON.Array "accounts.#(account_type==\"crypto\")#") }}
+                  {{ if eq (len $accounts) 0 }}
+                  <p class="color-subdue">No crypto accounts in Sure.</p>
+                  {{ else }}
+                  {{ $symbol := findMatch "^[^0-9]+" ((index $accounts 0).String "balance") }}
+                  {{ $total := 0 }}
+                  {{ range $accounts }}{{ $total = add $total (.Int "balance_cents") }}{{ end }}
+                  <div class="flex justify-between items-baseline gap-10">
+                    <span class="color-highlight">{{ (index $accounts 0).String "institution_name" }}</span>
+                    <span class="size-h3 color-highlight shrink-0">{{ $symbol }}{{ formatNumber (div $total 100) }}.{{ printf "%02d" (mod $total 100) }}</span>
+                  </div>
+                  <ul class="list list-gap-10 margin-top-10">
+                    {{ range $accounts }}
+                    {{ $id := .String "id" }}
+                    {{ $balances := newRequest (concat $api "balances") | withHeader "X-Api-Key" $key | withParameter "account_id" $id | withParameter "per_page" "1" | getResponse }}
+                    {{ $holding := newRequest (concat $api "holdings") | withHeader "X-Api-Key" $key | withParameter "account_id" $id | withParameter "date" ($balances.JSON.String "balances.0.date") | withParameter "per_page" "1" | getResponse }}
+                    {{ $coin := $holding.JSON.String "holdings.0.security.ticker" | trimPrefix "CRYPTO:" }}
+                    <li>
+                      <div class="flex items-baseline gap-10">
+                        <span class="color-highlight shrink-0">{{ $coin }}</span>
+                        <span class="grow min-width-0 text-truncate color-subdue">{{ .String "name" }}</span>
+                        <span class="shrink-0">{{ .String "balance" }}</span>
+                      </div>
+                      <div class="size-h5 color-subdue">
+                        {{ $holding.JSON.String "holdings.0.qty" }} {{ $coin }}
+                      </div>
+                    </li>
+                    {{ end }}
+                  </ul>
+                  {{ end }}
 
       - size: full
         widgets:

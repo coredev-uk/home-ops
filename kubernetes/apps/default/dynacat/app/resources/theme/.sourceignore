@@ -1,0 +1,2 @@
+# Flux drops *.png by default; the home-screen icon is served from here.
+!app-icon.png

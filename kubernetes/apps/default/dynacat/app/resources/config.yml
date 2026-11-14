@@ -122,29 +122,29 @@ pages:
               {{ $health := .Subrequest "health" }}
               {{ $networks := .Subrequest "networks" }}
               {{ $routes := .Subrequest "routes" }}
-              <ul class="list list-gap-14 network-widget">
+              <ul class="list list-gap-14">
                 {{ range .JSON.Array "connections" }}
                 {{ $id := .String "network_id" }}
                 {{ $up := eq (.String "status") "CONNECTED" }}
                 {{ $route := $routes.JSON.Array (concat "#(network_id==\"" $id "\")#") }}
                 <li>
-                  <div class="network-row">
-                    <span class="network-dot {{ if $up }}is-on{{ else }}is-down{{ end }}"></span>
+                  <div class="status-row">
+                    <span class="status-dot {{ if $up }}is-on{{ else }}is-down{{ end }}"></span>
                     <span class="color-highlight grow min-width-0 text-truncate">{{ $networks.JSON.String (concat "data.#(_id==\"" $id "\").name") }}</span>
                     {{ if $up }}
-                    <span class="network-state is-on">Connected</span>
+                    <span class="status-state is-on">Connected</span>
                     {{ else }}
-                    <span class="network-state is-down">{{ .String "status" | replaceAll "_" " " }}</span>
+                    <span class="status-state is-down">{{ .String "status" | replaceAll "_" " " }}</span>
                     {{ end }}
                   </div>
-                  <ul class="list-horizontal-text size-h5 network-meta">
+                  <ul class="list-horizontal-text size-h5 status-meta">
                     <li>{{ .String "remote_ip" }}</li>
                     {{ if $up }}<li>connected <span {{ .String "assoc_time" | parseTime "unix" | toRelativeTime }}></span></li>{{ end }}
                     <li>down {{ printf "%.1f" (div (.Float "rx_rate_bps") 1000000) }} · up {{ printf "%.1f" (div (.Float "tx_rate_bps") 1000000) }} Mbps</li>
                   </ul>
                   {{ range $route }}
                   {{ $target := .String "target_devices.0.network_id" }}
-                  <ul class="list-horizontal-text size-h5 network-meta">
+                  <ul class="list-horizontal-text size-h5 status-meta">
                     <li>Routes {{ $networks.JSON.String (concat "data.#(_id==\"" $target "\").name") }}</li>
                     <li>{{ if .Bool "kill_switch_enabled" }}kill switch on{{ else }}<span class="color-negative">no kill switch</span>{{ end }}</li>
                   </ul>
@@ -156,12 +156,12 @@ pages:
                   {{ $wan := "data.#(subsystem==\"wan\")" }}
                   {{ $www := "data.#(subsystem==\"www\")" }}
                   {{ $wanUp := eq ($health.JSON.String (concat $wan ".status")) "ok" }}
-                  <div class="network-row">
-                    <span class="network-dot {{ if $wanUp }}is-ok{{ else }}is-down{{ end }}"></span>
+                  <div class="status-row">
+                    <span class="status-dot {{ if $wanUp }}is-ok{{ else }}is-down{{ end }}"></span>
                     <span class="color-highlight grow min-width-0 text-truncate">{{ $health.JSON.String (concat $wan ".isp_name") }}</span>
-                    <span class="network-state">{{ $health.JSON.Int (concat $www ".latency") }} ms</span>
+                    <span class="status-state">{{ $health.JSON.Int (concat $www ".latency") }} ms</span>
                   </div>
-                  <ul class="list-horizontal-text size-h5 network-meta">
+                  <ul class="list-horizontal-text size-h5 status-meta">
                     <li>{{ $health.JSON.String (concat $wan ".wan_ip") }}</li>
                     <li>down {{ printf "%.0f" ($health.JSON.Float (concat $www ".xput_down")) }} · up {{ printf "%.0f" ($health.JSON.Float (concat $www ".xput_up")) }} Mbps</li>
                   </ul>
@@ -353,13 +353,96 @@ pages:
                     url: https://sure.hera.ac
                     icon: mdi:finance
 
-          - type: repository
-            title: Home Ops Repo
-            repository: coredev-uk/home-ops
-            pull-requests-limit: 8
-            issues-limit: -1
-            commits-limit: 5
-            cache: 1h
+          # What needs a look: firing alerts (Watchdog and other severity
+          # "none" heartbeats left out), Flux objects that failed to
+          # reconcile, and the repo's open pull requests.
+          - type: custom-api
+            title: Health
+            title-url: https://alertmanager.hera.ac
+            cache: 1m
+            url: http://kube-prometheus-stack-alertmanager.o11y.svc.cluster.local:9093/api/v2/alerts
+            parameters:
+              active: "true"
+              silenced: "false"
+              inhibited: "false"
+            subrequests:
+              flux-failing:
+                url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+                parameters:
+                  query: gotk_resource_info{ready="False"}
+              flux-ready:
+                url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+                parameters:
+                  query: count(gotk_resource_info{ready="True"})
+              source:
+                url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+                parameters:
+                  query: gotk_resource_info{customresource_kind="GitRepository",exported_namespace="flux-system",name="flux-system"}
+              pulls:
+                url: https://api.github.com/search/issues
+                headers:
+                  Authorization: Bearer ${GITHUB_TOKEN}
+                  Accept: application/vnd.github+json
+                parameters:
+                  q: repo:coredev-uk/home-ops is:pr is:open
+            template: |
+              {{ $alerts := .JSON.Array "#(labels.severity!=\"none\")#" }}
+              {{ $failing := (.Subrequest "flux-failing").JSON.Array "data.result" }}
+              {{ $ready := (.Subrequest "flux-ready").JSON.String "data.result.0.value.1" }}
+              {{ $revision := (.Subrequest "source").JSON.String "data.result.0.metric.revision" }}
+              {{ $sha := findSubmatch "sha1:([0-9a-f]{7})" $revision }}
+              {{ $pulls := (.Subrequest "pulls").JSON.Int "total_count" }}
+              <ul class="list list-gap-14">
+                {{ if and (eq (len $alerts) 0) (eq (len $failing) 0) }}
+                <li>
+                  <div class="status-row">
+                    <span class="status-dot is-ok"></span>
+                    <span class="color-highlight grow">Nothing needs attention</span>
+                  </div>
+                  <ul class="list-horizontal-text size-h5 status-meta">
+                    <li>No alerts firing</li>
+                    <li>{{ $ready }} Flux objects ready</li>
+                  </ul>
+                </li>
+                {{ end }}
+
+                {{ range sortByString "labels.severity" "asc" $alerts }}
+                {{ $severity := .String "labels.severity" }}
+                <li>
+                  <div class="status-row">
+                    <span class="status-dot {{ if eq $severity "critical" }}is-down{{ else if eq $severity "warning" }}is-warn{{ end }}"></span>
+                    <a class="color-highlight grow min-width-0 text-truncate" href="{{ .String "generatorURL" }}" target="_blank" rel="noreferrer">{{ .String "labels.alertname" }}</a>
+                    <span class="status-state" {{ .String "startsAt" | parseTime "rfc3339" | toRelativeTime }}></span>
+                  </div>
+                  <ul class="list-horizontal-text size-h5 status-meta">
+                    <li>{{ $severity }}</li>
+                    {{ if .String "labels.namespace" }}<li>{{ .String "labels.namespace" }}</li>{{ end }}
+                    <li>{{ .String "annotations.summary" }}</li>
+                  </ul>
+                </li>
+                {{ end }}
+
+                {{ range $failing }}
+                <li>
+                  <div class="status-row">
+                    <span class="status-dot is-down"></span>
+                    <span class="color-highlight grow min-width-0 text-truncate">{{ .String "metric.exported_namespace" }}/{{ .String "metric.name" }}</span>
+                    <span class="status-state is-down">Not ready</span>
+                  </div>
+                  <ul class="list-horizontal-text size-h5 status-meta">
+                    <li>{{ .String "metric.customresource_kind" }}</li>
+                  </ul>
+                </li>
+                {{ end }}
+
+                <li>
+                  <div class="status-row">
+                    <span class="status-dot"></span>
+                    <a class="color-highlight grow" href="https://github.com/coredev-uk/home-ops/pulls" target="_blank" rel="noreferrer">{{ $pulls }} open pull request{{ if ne $pulls 1 }}s{{ end }}</a>
+                    {{ if $sha }}<a class="status-state" href="https://github.com/coredev-uk/home-ops/commit/{{ $sha }}" target="_blank" rel="noreferrer">main @ {{ $sha }}</a>{{ end }}
+                  </div>
+                </li>
+              </ul>
 
           - type: to-do
             id: home-ops

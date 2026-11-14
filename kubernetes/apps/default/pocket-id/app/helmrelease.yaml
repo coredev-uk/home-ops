@@ -150,6 +150,10 @@ spec:
       # application-images so the images live in git; Pocket ID only falls back
       # to its bundled logo when a name is missing. logoEmail.png is the 512px
       # home-screen icon (see the route).
+      # background.jpg: "Dover at night" by Alexey Komarov, 22 October 2016
+      # (https://commons.wikimedia.org/wiki/File:Dover_at_night.jpg), CC BY-SA 4.0
+      # (https://creativecommons.org/licenses/by-sa/4.0); resized to 2560px wide,
+      # and this copy is under the same licence.
       branding:
         type: configMap
         name: "{{ .Release.Name }}-branding"
@@ -165,6 +169,9 @@ spec:
             readOnly: true
           - path: /app/data/uploads/application-images/logoEmail.png
             subPath: logoEmail.png
+            readOnly: true
+          - path: /app/data/uploads/application-images/background.jpg
+            subPath: background.jpg
             readOnly: true
       tmp:
         type: emptyDir

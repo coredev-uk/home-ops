@@ -6,3 +6,11 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./ocirepository.yaml
+configMapGenerator:
+  - name: pocket-id-branding
+    files:
+      - ./resources/branding/logoLight.svg
+      - ./resources/branding/logoDark.svg
+      - ./resources/branding/favicon.ico
+generatorOptions:
+  disableNameSuffixHash: true

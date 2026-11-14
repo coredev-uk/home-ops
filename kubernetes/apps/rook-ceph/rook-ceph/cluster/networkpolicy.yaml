@@ -7,6 +7,9 @@
 # OAuth2 mode itself is mgr state, not part of the CephCluster, so it was set once from
 # the toolbox and survives restarts:
 #   ceph dashboard sso enable oauth2 "contains(groups || \`[]\`, 'cluster_admin') && \`[\"administrator\"]\` || \`[\"read-only\"]\`"
+# On Ceph 20.2 the first enable keeps the SAML config object and drops roles_path, so
+# run it, `ceph mgr fail`, then run it again (`ceph config-key get mgr/dashboard/ssodb_v1`
+# should show the roles_path).
 # Break-glass, back to the admin password (rook-ceph-dashboard-password):
 #   ceph dashboard sso disable
 apiVersion: networking.k8s.io/v1

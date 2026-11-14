@@ -3,6 +3,11 @@ server:
   host: 0.0.0.0
   port: 8080
   proxied: true
+  # Envoy Gateway's pods. Without this Dynacat ignores X-Forwarded-*, so it
+  # sees every request as plain HTTP from Envoy: session cookies lose Secure
+  # and login rate limits count Envoy, not the visitor.
+  trusted-proxies:
+    - 10.42.0.0/16
   cache-dir: /app/assets/.cache
   # The config is mounted read-only from a ConfigMap and managed in git, so the
   # web UI editor could never save anyway. Dynacat defaults this to true and
@@ -12,8 +17,17 @@ server:
   # path resolves under the read-only /app/config.
   db-path: /app/data/dynacat.db
 
+# Pocket ID only (client "Home"): no local users, so the password form goes
+# and the login page hands straight over to id.hera.ac.
 auth:
   secret-key: ${AUTH_SECRET_KEY}
+  disable-password: true
+  auto-redirect-oidc: true
+  oidc:
+    issuer-url: https://id.hera.ac
+    client-id: ${OIDC_CLIENT_ID}
+    client-secret: ${OIDC_CLIENT_SECRET}
+    redirect-url: https://home.hera.ac/api/oidc/callback
 
 # Meridian, the desktop's system palette (lib/theme in ~/.dotfiles). These HSL
 # values are the base tokens Dynacat derives from; meridian.css (the

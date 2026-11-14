@@ -452,7 +452,9 @@ pages:
                 public-url: https://plex.hera.ac
 
           # Six groups, so the grid fills evenly at both three columns (wide)
-          # and two (laptop): the cluster row first, then the media row.
+          # and two (laptop): the cluster row first, then the media row. Icons are
+          # all the full-colour set from Dashboard Icons (di:), like the Pocket ID
+          # app icons; Pocket ID itself shows the HyperionID mark.
           - type: bookmarks
             title: Services
             groups:
@@ -460,13 +462,13 @@ pages:
                 links:
                   - title: UniFi
                     url: https://unifi.internal
-                    icon: si:ubiquiti
+                    icon: di:unifi
                   - title: UNAS
                     url: https://expanse.internal
-                    icon: si:ubiquiti
+                    icon: di:ubiquiti
                   - title: Pi-hole
                     url: https://pihole.hera.ac
-                    icon: si:pihole
+                    icon: di:pi-hole
                   - title: Rook Ceph
                     url: https://rook.hera.ac
                     icon: di:rook
@@ -485,61 +487,61 @@ pages:
                     icon: di:gatus
                   - title: Grafana
                     url: https://grafana.hera.ac
-                    icon: si:grafana
+                    icon: di:grafana
                   - title: Prometheus
                     url: https://prometheus.hera.ac
-                    icon: si:prometheus
+                    icon: di:prometheus
                   - title: Alertmanager
                     url: https://alertmanager.hera.ac
-                    icon: si:prometheus
+                    icon: di:alertmanager
                   - title: Change Detection
                     url: https://changes.hera.ac
-                    icon: si:changedetection
+                    icon: di:changedetection
 
               - title: Personal
                 links:
                   - title: Home Assistant
                     url: https://hass.hera.ac
-                    icon: si:homeassistant
+                    icon: di:home-assistant
                   - title: Docs
                     url: https://docs.hera.ac
-                    icon: si:outline
+                    icon: di:outline
                   - title: Mealie
                     url: https://mealie.hera.ac
-                    icon: si:mealie
+                    icon: di:mealie
                   - title: Sure
                     url: https://sure.hera.ac
-                    icon: mdi:finance
+                    icon: di:sure
 
               - title: Watch
                 links:
                   - title: Plex
                     url: https://plex.hera.ac/web
-                    icon: si:plex
+                    icon: di:plex
                   - title: Seerr
                     url: https://seerr.hera.ac
-                    icon: sh:jellyseerr-light
+                    icon: di:seerr
                   - title: Tautulli
                     url: https://tautulli.hera.ac
-                    icon: sh:tautulli
+                    icon: di:tautulli
                   - title: Maintainerr
                     url: https://maintainerr.hera.ac
-                    icon: sh:maintainerr
+                    icon: di:maintainerr
 
               - title: Library
                 links:
                   - title: Radarr
                     url: https://radarr.hera.ac
-                    icon: si:radarr
+                    icon: di:radarr
                   - title: Sonarr
                     url: https://sonarr.hera.ac
-                    icon: si:sonarr
+                    icon: di:sonarr
                   - title: Sportarr
                     url: https://sportarr.hera.ac
                     icon: di:sportarr
                   - title: Bazarr
                     url: https://bazarr.hera.ac
-                    icon: sh:bazarr-light
+                    icon: di:bazarr
                   - title: Profilarr
                     url: https://profilarr.hera.ac
                     icon: di:profilarr
@@ -548,10 +550,10 @@ pages:
                 links:
                   - title: Prowlarr
                     url: https://prowlarr.hera.ac
-                    icon: sh:prowlarr-light
+                    icon: di:prowlarr
                   - title: SABnzbd
                     url: https://sabnzbd.hera.ac
-                    icon: sh:sabnzbd-light
+                    icon: di:sabnzbd
                   - title: Qui
                     url: https://qui.hera.ac
                     icon: di:qui

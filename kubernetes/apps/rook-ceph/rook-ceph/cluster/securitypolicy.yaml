@@ -1,0 +1,33 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+# Sign-in to the Ceph dashboard through Pocket ID (client "Rook Ceph", cluster_admin only).
+#
+# The dashboard runs in OAuth2 SSO mode (`ceph dashboard sso enable oauth2`, see
+# networkpolicy.yaml for the command): it reads the user from a JWT in a cookie named
+# `token` and maps the `groups` claim to its roles. Envoy keeps the session, so it stores
+# the ID token, unencrypted, in that cookie; the dashboard does not check the token's
+# signature, which is why networkpolicy.yaml lets only Envoy reach port 7000.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: rook-ceph-dashboard
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: rook-ceph-dashboard
+  oidc:
+    provider:
+      issuer: https://id.hera.ac
+    clientID: 32b68c3b-875e-4bce-b05d-08f52a8ae652
+    clientSecret:
+      name: rook-ceph-dashboard-oidc
+    scopes: ["openid", "profile", "email", "groups"]
+    redirectURL: https://rook.hera.ac/oauth2/callback
+    refreshToken: true
+    cookieNames:
+      idToken: token
+    disableTokenEncryption: true
+    # The dashboard's own sign-out link in OAuth2 mode; Envoy clears the session and
+    # ends the Pocket ID one, which returns to https://rook.hera.ac/.
+    logoutPath: /auth/oauth2/logout

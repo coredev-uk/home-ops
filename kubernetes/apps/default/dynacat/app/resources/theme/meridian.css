@@ -366,6 +366,18 @@ a.color-primary-if-not-visited:hover,
     color: var(--m-text2);
 }
 
+/* Crypto (custom-api over Sure): the total is rendered after the rows, since
+   it sums their weekly change, and shown first. */
+
+.crypto {
+    display: flex;
+    flex-direction: column;
+}
+
+.crypto-total {
+    order: -1;
+}
+
 /* Cluster Nodes (custom-api over Prometheus) */
 
 .node + .node {

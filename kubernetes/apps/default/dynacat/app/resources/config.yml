@@ -348,9 +348,13 @@ pages:
                   {{ end }}
 
               # Crypto accounts from Sure (Coinbase), largest first: what each
-              # holds and is worth. No period change: Sure keeps no crypto
-              # price history, so holdings carry the purchase price forward
-              # until the live price lands, and any change would be that jump.
+              # holds and is worth, and its gain or loss over the past week.
+              # The week comes from Yahoo's chart (the close 7 days ago and the
+              # current price, in the account's currency), not Sure: Sure keeps
+              # no crypto price history, so holdings carry the purchase price
+              # forward until the live price lands. Gain = quantity x price
+              # change. The total renders after the rows (it needs their sum)
+              # and .crypto-total moves it to the top.
               - type: custom-api
                 title: Crypto
                 title-url: https://sure.hera.ac
@@ -371,29 +375,53 @@ pages:
                   {{ else }}
                   {{ $symbol := findMatch "^[^0-9]+" ((index $accounts 0).String "balance") }}
                   {{ $total := 0 }}
-                  {{ range $accounts }}{{ $total = add $total (.Int "balance_cents") }}{{ end }}
-                  <div class="flex justify-between items-baseline gap-10">
-                    <span class="color-highlight">{{ (index $accounts 0).String "institution_name" }}</span>
-                    <span class="size-h3 color-highlight shrink-0">{{ $symbol }}{{ formatNumber (div $total 100) }}.{{ printf "%02d" (mod $total 100) }}</span>
-                  </div>
+                  {{ $week := 0.0 }}
+                  <div class="crypto">
                   <ul class="list list-gap-10 margin-top-10">
                     {{ range $accounts }}
+                    {{ $total = add $total (.Int "balance_cents") }}
                     {{ $id := .String "id" }}
                     {{ $balances := newRequest (concat $api "balances") | withHeader "X-Api-Key" $key | withParameter "account_id" $id | withParameter "per_page" "1" | getResponse }}
                     {{ $holding := newRequest (concat $api "holdings") | withHeader "X-Api-Key" $key | withParameter "account_id" $id | withParameter "date" ($balances.JSON.String "balances.0.date") | withParameter "per_page" "1" | getResponse }}
                     {{ $coin := $holding.JSON.String "holdings.0.security.ticker" | trimPrefix "CRYPTO:" }}
+                    {{ $chart := newRequest (concat "https://query1.finance.yahoo.com/v8/finance/chart/" $coin "-" (.String "currency")) | withHeader "User-Agent" "Mozilla/5.0" | withParameter "range" "7d" | withParameter "interval" "1d" | getResponse }}
+                    {{ $now := $chart.JSON.Float "chart.result.0.meta.regularMarketPrice" }}
+                    {{ $then := $chart.JSON.Float "chart.result.0.meta.chartPreviousClose" }}
                     <li>
                       <div class="flex items-baseline gap-10">
                         <span class="color-highlight shrink-0">{{ $coin }}</span>
                         <span class="grow min-width-0 text-truncate color-subdue">{{ .String "name" }}</span>
                         <span class="shrink-0">{{ .String "balance" }}</span>
                       </div>
-                      <div class="size-h5 color-subdue">
-                        {{ $holding.JSON.String "holdings.0.qty" }} {{ $coin }}
+                      <div class="flex justify-between items-baseline gap-10 size-h5 color-subdue">
+                        <span class="min-width-0 text-truncate">{{ $holding.JSON.String "holdings.0.qty" }} {{ $coin }}</span>
+                        {{ if and (gt $now 0.0) (gt $then 0.0) }}
+                        {{ $gain := mul ($holding.JSON.Float "holdings.0.qty") (sub $now $then) }}
+                        {{ $week = add $week $gain }}
+                        {{ $abs := $gain }}{{ if lt $gain 0.0 }}{{ $abs = mul $gain -1.0 }}{{ end }}
+                        {{ $pct := mul (div (sub $now $then) $then) 100.0 }}{{ if lt $pct 0.0 }}{{ $pct = mul $pct -1.0 }}{{ end }}
+                        <span class="shrink-0 {{ if ge $gain 0.0 }}color-positive{{ else }}color-negative{{ end }}">{{ if ge $gain 0.0 }}+{{ else }}−{{ end }}{{ $symbol }}{{ printf "%.2f" $abs }} · {{ printf "%.1f" $pct }}%</span>
+                        {{ end }}
                       </div>
                     </li>
                     {{ end }}
                   </ul>
+                  {{ $value := div (toFloat $total) 100.0 }}
+                  <div class="crypto-total">
+                    <div class="flex justify-between items-baseline gap-10">
+                      <span class="color-highlight">{{ (index $accounts 0).String "institution_name" }}</span>
+                      <span class="size-h3 color-highlight shrink-0">{{ $symbol }}{{ formatNumber (div $total 100) }}.{{ printf "%02d" (mod $total 100) }}</span>
+                    </div>
+                    {{ if ne $week 0.0 }}
+                    {{ $abs := $week }}{{ if lt $week 0.0 }}{{ $abs = mul $week -1.0 }}{{ end }}
+                    {{ $pct := mul (div $week (sub $value $week)) 100.0 }}{{ if lt $pct 0.0 }}{{ $pct = mul $pct -1.0 }}{{ end }}
+                    <div class="flex justify-between items-baseline gap-10 size-h5 color-subdue">
+                      <span>Past 7 days</span>
+                      <span class="shrink-0 {{ if ge $week 0.0 }}color-positive{{ else }}color-negative{{ end }}">{{ if ge $week 0.0 }}+{{ else }}−{{ end }}{{ $symbol }}{{ printf "%.2f" $abs }} · {{ printf "%.1f" $pct }}%</span>
+                    </div>
+                    {{ end }}
+                  </div>
+                  </div>
                   {{ end }}
 
       - size: full

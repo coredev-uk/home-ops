@@ -84,6 +84,11 @@ spec:
             port: *port
     route:
       app:
+        # "/" now redirects to Pocket ID; /api/healthz stays open.
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 200"]
+            path: /api/healthz
         hostnames:
           - home.hera.ac
         parentRefs:

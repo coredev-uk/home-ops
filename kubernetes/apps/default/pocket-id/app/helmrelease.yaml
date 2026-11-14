@@ -35,6 +35,10 @@ spec:
               UI_CONFIG_DISABLED: true
               APP_NAME: HyperionID
               SESSION_DURATION: 120
+              # After signing in to Pocket ID itself, land on "My apps": each person's
+              # launch links, limited to the clients their groups can use. The
+              # dashboard would turn away everyone outside cluster_admin.
+              HOME_PAGE_URL: /settings/apps
               # Meridian's gilt, lifted just past the 0.55 luminance at which Pocket ID
               # labels a button dark instead of white: gilt itself (#c9a24f) would get
               # a white label at 2.3:1. This one gives a dark label at 12.6:1.
@@ -97,6 +101,10 @@ spec:
             port: *port
           metrics:
             port: *metricsPort
+    serviceMonitor:
+      app:
+        endpoints:
+          - port: metrics
     route:
       app:
         annotations:

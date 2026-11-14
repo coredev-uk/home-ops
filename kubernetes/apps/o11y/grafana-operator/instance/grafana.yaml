@@ -20,6 +20,9 @@ spec:
       reporting_enabled: "false"
     auth:
       disable_login_form: "true"
+      # auto_login would sign straight back in through the still-open Pocket ID
+      # session, so sign-out continues to Pocket ID's sign-out page to end it.
+      signout_redirect_url: https://id.hera.ac/logout
     auth.basic:
       enabled: "true"
     auth.anonymous:

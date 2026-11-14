@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/networking.k8s.io/networkpolicy_v1.json
+# Only Envoy may reach the Ceph dashboard (port 7000). In OAuth2 SSO mode the dashboard
+# trusts the JWT in the `token` cookie without checking its signature, so a client that
+# reached it directly could claim any role. Every other mgr port stays open as before.
+#
+# OAuth2 mode itself is mgr state, not part of the CephCluster, so it was set once from
+# the toolbox and survives restarts:
+#   ceph dashboard sso enable oauth2 "contains(groups || \`[]\`, 'cluster_admin') && \`[\"administrator\"]\` || \`[\"read-only\"]\`"
+# Break-glass, back to the admin password (rook-ceph-dashboard-password):
+#   ceph dashboard sso disable
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rook-ceph-mgr-dashboard
+spec:
+  podSelector:
+    matchLabels:
+      app: rook-ceph-mgr
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              gateway.envoyproxy.io/owning-gateway-name: envoy-internal
+      ports:
+        - protocol: TCP
+          port: 7000
+    - ports:
+        - protocol: TCP
+          port: 1
+          endPort: 6999
+        - protocol: TCP
+          port: 7001
+          endPort: 65535
+        - protocol: UDP
+          port: 1
+          endPort: 65535

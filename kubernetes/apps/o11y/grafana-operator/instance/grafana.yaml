@@ -32,11 +32,14 @@ spec:
       name: HyperionID
       allow_sign_up: "true"
       auto_login: "true"
-      skip_org_role_sync: "true"
+      # Roles come from Pocket ID's groups claim at every sign-in: cluster_admin
+      # becomes Grafana server admin (and Admin of the org), anyone else Viewer.
+      skip_org_role_sync: "false"
+      allow_assign_grafana_admin: "true"
       scopes: openid profile email groups
       use_pkce: "true"
       use_refresh_token: "true"
-      role_attribute_path: contains(groups[*], 'cluster_admin') && 'Editor' || 'Viewer'
+      role_attribute_path: contains(groups[*], 'cluster_admin') && 'GrafanaAdmin' || 'Viewer'
     database:
       type: postgres
       host: grafana-postgres-rw.o11y.svc.cluster.local:5432

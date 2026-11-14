@@ -145,8 +145,8 @@ spec:
         existingClaim: "{{ .Release.Name }}"
         globalMounts:
           - path: /app/data
-      # The HyperionID mark (resources/branding): the gilt sun over the horizon,
-      # which is also a person signing in. Mounted over the PVC's
+      # The HyperionID mark (resources/branding): the letters ID, with a gilt
+      # half sun rising inside the D (Hyperion, Titan of light). Mounted over the PVC's
       # application-images so the images live in git; Pocket ID only falls back
       # to its bundled logo when a name is missing. logoEmail.png is the 512px
       # home-screen icon (see the route).

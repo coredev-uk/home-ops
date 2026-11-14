@@ -366,6 +366,43 @@ a.color-primary-if-not-visited:hover,
     color: var(--m-text2);
 }
 
+/* Cluster Nodes (custom-api over Prometheus) */
+
+.node + .node {
+    margin-top: 1.8rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--m-rule);
+}
+
+.node-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    margin-top: 1rem;
+}
+
+.node-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+    font-size: var(--font-size-h5);
+    color: var(--m-text2);
+}
+
+.node-sub {
+    margin-top: 0.4rem;
+    font-size: var(--font-size-h6);
+    color: var(--m-text2);
+}
+
+/* Caution never reports by hue alone: the reading also says "hot". */
+.node-hot {
+    color: var(--m-caution);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
 /* Footer */
 
 .footer {

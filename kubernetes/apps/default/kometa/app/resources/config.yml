@@ -100,10 +100,6 @@ libraries:
       - default: streaming
         template_variables:
           region: GB
-      # Returning, Ended and Cancelled badges only; Airing is left off.
-      - default: status
-        template_variables:
-          use_airing: false
       - default: ratings
         template_variables:
           rating1: critic

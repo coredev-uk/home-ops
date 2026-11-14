@@ -359,7 +359,7 @@ pages:
                     url: https://changes.hera.ac
                     icon: si:changedetection
 
-              - title: Personal & Tools
+              - title: Personal
                 links:
                   - title: Home Assistant
                     url: https://hass.hera.ac
@@ -373,12 +373,6 @@ pages:
                   - title: Sure
                     url: https://sure.hera.ac
                     icon: mdi:finance
-                  - title: T3 Code (a)
-                    url: https://t3-a.hera.ac
-                    icon: mdi:robot-outline
-                  - title: T3 Code (b)
-                    url: https://t3-b.hera.ac
-                    icon: mdi:robot-outline
 
               - title: Watch
                 links:

@@ -12,5 +12,6 @@ configMapGenerator:
       - ./resources/branding/logoLight.svg
       - ./resources/branding/logoDark.svg
       - ./resources/branding/favicon.ico
+      - ./resources/branding/logoEmail.png
 generatorOptions:
   disableNameSuffixHash: true

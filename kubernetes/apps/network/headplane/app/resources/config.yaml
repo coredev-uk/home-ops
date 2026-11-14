@@ -16,3 +16,7 @@ oidc:
   use_pkce: true
   scope: "openid email profile"
   profile_picture_source: oidc
+  # Logging out also ends the Pocket ID session (RP-initiated logout), then
+  # returns here; the client "Headscale" lists this URL as a logout callback.
+  use_end_session: true
+  post_logout_redirect_uri: https://headplane.hera.ac/admin/login

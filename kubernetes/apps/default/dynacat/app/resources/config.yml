@@ -42,18 +42,18 @@ theme:
   custom-css-file: /assets/meridian/meridian.css
 
 # The Hera mark (resources/theme): an H whose crossbar carries a gilt dot.
-# icon.svg is the tab favicon on its plate; app-icon.png is a full-bleed
-# square the home screen rounds itself. No logo-url: the navigation it would
-# sit in is hidden.
+# icon.svg is the tab favicon on its plate, logo.svg the bare mark in the
+# header, app-icon.png a full-bleed square the home screen rounds itself.
 branding:
   favicon-url: /assets/meridian/icon.svg
+  logo-url: /assets/meridian/logo.svg
   app-icon-url: /assets/meridian/app-icon.png
   app-background-color: "#151920"
 
 pages:
   - name: Home
-    # The only page, so the navigation bar has nothing to switch between.
-    hide-desktop-navigation: true
+    # The header carries the signed-in user and the sign-out button; on phones
+    # both are under the menu.
     head-widgets:
       - type: monitor
         title: Critical Services

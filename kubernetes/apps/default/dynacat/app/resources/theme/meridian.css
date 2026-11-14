@@ -415,6 +415,41 @@ a.color-primary-if-not-visited:hover,
     text-underline-offset: 0.2em;
 }
 
+/* Header: the signed-in user and a labelled sign-out button. Dynacat draws the
+   button as an icon alone; the label makes it findable at a glance. */
+
+.nav-username {
+    color: var(--m-text2);
+}
+
+.nav-user button[type="submit"] {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.9rem !important;
+    border: 1px solid var(--m-rule) !important;
+    border-radius: var(--border-radius);
+    color: var(--m-text);
+    font: inherit;
+    font-size: var(--font-size-h5);
+    transition: background-color 0.16s, border-color 0.16s;
+}
+
+.nav-user button[type="submit"]::after {
+    content: "Sign out";
+}
+
+.nav-user button[type="submit"]:hover {
+    background: var(--m-hover) !important;
+    border-color: var(--m-selection) !important;
+}
+
+.nav-user .logout-button {
+    width: 1.6rem;
+    height: 1.6rem;
+    fill: currentColor;
+}
+
 /* Footer */
 
 .footer {

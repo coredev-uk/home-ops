@@ -1,2 +1,4 @@
-# Flux drops *.png by default; the 512px app icon is served from here.
+# Flux drops *.png and *.jpg by default; the 512px app icon and the sign-in
+# background are served from here.
 !logoEmail.png
+!background.jpg

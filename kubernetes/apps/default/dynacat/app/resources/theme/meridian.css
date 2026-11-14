@@ -153,6 +153,12 @@ input, textarea, button, select {
     color: var(--m-text);
 }
 
+/* The show-more chevron is U+E0B1, which only Dynacat's bundled JetBrains
+   Mono carries; in Atkinson it has no glyph and draws nothing. */
+.expand-toggle-button-icon::before {
+    font-family: 'JetBrains Mono', monospace;
+}
+
 /* Links: unvisited reads as a primary legend, visited steps down to text2.
    Brightness carries it; gold stays for "here" and "on". */
 
@@ -309,15 +315,15 @@ a.color-primary-if-not-visited:hover,
     border-radius: var(--border-radius);
 }
 
-/* Network (custom-api) */
+/* Status rows in the Network and Health widgets (custom-api) */
 
-.network-row {
+.status-row {
     display: flex;
     align-items: center;
     gap: 0.8rem;
 }
 
-.network-dot {
+.status-dot {
     width: 0.7rem;
     height: 0.7rem;
     border-radius: 50%;
@@ -325,32 +331,36 @@ a.color-primary-if-not-visited:hover,
     background: var(--m-muted);
 }
 
-.network-dot.is-on {
+.status-dot.is-on {
     background: var(--m-gilt);
 }
 
-.network-dot.is-ok {
+.status-dot.is-ok {
     background: var(--m-ok);
 }
 
-.network-dot.is-down {
+.status-dot.is-warn {
+    background: var(--m-caution);
+}
+
+.status-dot.is-down {
     background: var(--m-alert);
 }
 
-.network-state {
+.status-state {
     flex-shrink: 0;
     color: var(--m-text2);
 }
 
-.network-state.is-on {
+.status-state.is-on {
     color: var(--m-gilt);
 }
 
-.network-state.is-down {
+.status-state.is-down {
     color: var(--m-alert);
 }
 
-.network-meta {
+.status-meta {
     margin-top: 0.2rem;
     padding-left: 1.5rem;
     color: var(--m-text2);

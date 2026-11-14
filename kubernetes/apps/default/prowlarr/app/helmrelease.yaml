@@ -95,13 +95,17 @@ spec:
                   periodSeconds: 30
                   timeoutSeconds: 10
                   failureThreshold: 3
+            # Byparr starts a browser per request, about 700Mi each while it solves a
+            # challenge. Idle ~130Mi, 14-day daily peaks 1-2.5Gi. When the pod starts,
+            # Prowlarr fires four solves at once (2026-11-14 03:13), which reached 3Gi
+            # and was OOM-killed.
             resources:
               requests:
                 cpu: 100m
                 memory: 1024Mi
               limits:
                 cpu: 2000m
-                memory: 3Gi
+                memory: 4Gi
     defaultPodOptions:
       annotations:
         k8s.v1.cni.cncf.io/networks: |-

@@ -1,0 +1,2 @@
+# Flux drops *.png by default; the 512px app icon is served from here.
+!logoEmail.png

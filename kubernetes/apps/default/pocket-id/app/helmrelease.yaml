@@ -35,7 +35,10 @@ spec:
               UI_CONFIG_DISABLED: true
               APP_NAME: HyperionID
               SESSION_DURATION: 120
-              ACCENT_COLOR: hsl(232 100% 58.1%)
+              # Meridian's gilt, lifted just past the 0.55 luminance at which Pocket ID
+              # labels a button dark instead of white: gilt itself (#c9a24f) would get
+              # a white label at 2.3:1. This one gives a dark label at 12.6:1.
+              ACCENT_COLOR: "#e5c77f"
             envFrom:
               - secretRef:
                   name: pocket-id-secret
@@ -104,6 +107,39 @@ spec:
         parentRefs:
           - name: envoy-external
             namespace: network
+        rules:
+          # The tab icon and logos are configurable, but the home-screen and PWA
+          # icons are bundled PNG/SVGs. These paths are answered from the
+          # branding images instead; the email logo slot holds the 512px icon,
+          # since no SMTP is configured.
+          - backendRefs: &backendRefs
+              - identifier: app
+                port: *port
+            matches:
+              - path:
+                  type: Exact
+                  value: /img/static-logo-512.png
+              - path:
+                  type: Exact
+                  value: /img/static-logo-rounded-512.png
+            filters:
+              - type: URLRewrite
+                urlRewrite:
+                  path:
+                    type: ReplaceFullPath
+                    replaceFullPath: /api/application-images/email
+          - backendRefs: *backendRefs
+            matches:
+              - path:
+                  type: Exact
+                  value: /img/static-logo.svg
+            filters:
+              - type: URLRewrite
+                urlRewrite:
+                  path:
+                    type: ReplaceFullPath
+                    replaceFullPath: /api/application-images/logo
+          - backendRefs: *backendRefs
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
@@ -112,8 +148,8 @@ spec:
       # The HyperionID mark (resources/branding): the gilt sun over the horizon,
       # which is also a person signing in. Mounted over the PVC's
       # application-images so the images live in git; Pocket ID only falls back
-      # to its bundled logo when a name is missing. The apple-touch icon is
-      # bundled in the image and can't be replaced.
+      # to its bundled logo when a name is missing. logoEmail.png is the 512px
+      # home-screen icon (see the route).
       branding:
         type: configMap
         name: "{{ .Release.Name }}-branding"
@@ -126,6 +162,9 @@ spec:
             readOnly: true
           - path: /app/data/uploads/application-images/favicon.ico
             subPath: favicon.ico
+            readOnly: true
+          - path: /app/data/uploads/application-images/logoEmail.png
+            subPath: logoEmail.png
             readOnly: true
       tmp:
         type: emptyDir

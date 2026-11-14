@@ -475,7 +475,8 @@ pages:
                     icon: di:flux-cd
                   - title: Pocket ID
                     url: https://id.hera.ac
-                    icon: sh:pocket-id
+                    # The HyperionID mark, served by Pocket ID itself (dark-mode logo).
+                    icon: https://id.hera.ac/api/application-images/logo?light=false
 
               - title: Monitoring
                 links:

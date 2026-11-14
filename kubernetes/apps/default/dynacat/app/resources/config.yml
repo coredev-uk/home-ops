@@ -270,15 +270,68 @@ pages:
 
           - type: group
             widgets:
-              - type: markets
+              # Live from Sure, so it follows trades without editing: each
+              # investment account's value, its market gain over 30 days
+              # (net_market_flows, so deposits don't count as growth) and its
+              # largest holdings. Sure's API formats amounts as money strings
+              # and has no sort, so holdings are ranked by their digits,
+              # space-padded so a text sort is a numeric one; USD and GBP rank
+              # together at face value.
+              - type: custom-api
                 title: Portfolio
-                markets:
-                  - symbol: VUSA.L
-                    name: S&P 500 ACC
-                  - symbol: NVDA
-                    name: Nvidia
-                  - symbol: MAB.L
-                    name: Mitchells & Butlers
+                title-url: https://sure.hera.ac
+                cache: 15m
+                url: http://sure.default.svc.cluster.local:3000/api/v1/accounts
+                headers:
+                  X-Api-Key: ${SURE_API_KEY}
+                parameters:
+                  per_page: "100"
+                options:
+                  api-key: ${SURE_API_KEY}
+                template: |
+                  {{ $key := .Options.StringOr "api-key" "" }}
+                  {{ $api := "http://sure.default.svc.cluster.local:3000/api/v1/" }}
+                  {{ range .JSON.Array "accounts.#(account_type==\"investment\")#" }}
+                  {{ $id := .String "id" }}
+                  {{ $balances := newRequest (concat $api "balances") | withHeader "X-Api-Key" $key | withParameter "account_id" $id | withParameter "start_date" (offsetNow "-720h" | formatTime "DateOnly") | withParameter "per_page" "100" | getResponse }}
+                  {{ $gain := 0 }}
+                  {{ range $balances.JSON.Array "balances" }}{{ $gain = add $gain (.Int "net_market_flows_cents") }}{{ end }}
+                  {{ $abs := $gain }}{{ if lt $gain 0 }}{{ $abs = sub 0 $gain }}{{ end }}
+                  {{ $count := $balances.JSON.Int "balances.#" }}
+                  {{ $start := $balances.JSON.Int (printf "balances.%d.start_balance_cents" (sub $count 1)) }}
+                  {{ $holdings := newRequest (concat $api "holdings") | withHeader "X-Api-Key" $key | withParameter "account_id" $id | withParameter "date" ($balances.JSON.String "balances.0.date") | withParameter "per_page" "100" | getResponse }}
+                  {{ $ranked := list }}
+                  {{ range $holdings.JSON.Array "holdings" }}
+                  {{ if ne (.Float "qty") 0.0 }}
+                  {{ $ranked = append $ranked (concat (printf "%14s" (replaceMatches "[^0-9]" "" (.String "amount"))) "|" (.String "security.ticker") "|" (.String "security.name") "|" (.String "amount")) }}
+                  {{ end }}
+                  {{ end }}
+                  {{ $ranked = sortAlpha $ranked }}
+                  {{ $n := len $ranked }}
+                  <div class="portfolio-account">
+                    <div class="flex justify-between items-baseline gap-10">
+                      <span class="color-highlight text-truncate">{{ .String "name" | replaceMatches " \\(\\d+\\)$" "" }}</span>
+                      <span class="size-h3 color-highlight shrink-0">{{ .String "balance" }}</span>
+                    </div>
+                    <div class="size-h5 color-subdue">
+                      Market, 30 days:
+                      <span class="{{ if ge $gain 0 }}color-positive{{ else }}color-negative{{ end }}">{{ if ge $gain 0 }}+{{ else }}−{{ end }}£{{ formatNumber (div $abs 100) }}{{ if gt $start 0 }} ({{ printf "%+.1f" (div (mul (toFloat $gain) 100.0) (toFloat $start)) }}%){{ end }}</span>
+                    </div>
+                    <ul class="list list-gap-8 margin-top-10">
+                      {{ range $k := list 1 2 3 4 5 }}
+                      {{ if le $k $n }}
+                      {{ $row := index $ranked (sub $n $k) }}
+                      <li class="flex items-baseline gap-10">
+                        <span class="color-highlight shrink-0">{{ findSubmatch "^[^|]*\\|([^|]*)\\|" $row }}</span>
+                        <span class="grow min-width-0 text-truncate color-subdue">{{ findSubmatch "^[^|]*\\|[^|]*\\|([^|]*)\\|" $row }}</span>
+                        <span class="shrink-0">{{ findSubmatch "\\|([^|]*)$" $row }}</span>
+                      </li>
+                      {{ end }}
+                      {{ end }}
+                    </ul>
+                    {{ if gt $n 5 }}<div class="size-h5 color-subdue margin-top-10">and {{ sub $n 5 }} smaller holdings</div>{{ end }}
+                  </div>
+                  {{ end }}
 
               - type: markets
                 title: Crypto

@@ -27,7 +27,13 @@ theme:
   disable-picker: true
   custom-css-file: /assets/meridian/meridian.css
 
+# The Hera mark (resources/theme): an H whose crossbar carries a gilt dot.
+# icon.svg is the tab favicon on its plate; app-icon.png is a full-bleed
+# square the home screen rounds itself. No logo-url: the navigation it would
+# sit in is hidden.
 branding:
+  favicon-url: /assets/meridian/icon.svg
+  app-icon-url: /assets/meridian/app-icon.png
   app-background-color: "#151920"
 
 pages:

@@ -15,5 +15,7 @@ configMapGenerator:
     files:
       - ./resources/theme/meridian.css
       - ./resources/theme/atkinson-hyperlegible-next-latin-wght-normal.woff2
+      - ./resources/theme/icon.svg
+      - ./resources/theme/app-icon.png
 generatorOptions:
   disableNameSuffixHash: true

@@ -1,0 +1,370 @@
+/*
+ * Meridian for Dynacat.
+ *
+ * The desktop's system palette (lib/theme and the Quickshell DESIGN.md in
+ * ~/.dotfiles): night-slate grounds stepped by tone, enamel-cream legends, every
+ * edge a 1px rule. Gilt means "here" or "on" and nothing else is gold. Colours
+ * are assigned by role, never by hue; a change to the palette goes in the
+ * dotfiles first.
+ *
+ * Atkinson Hyperlegible Next: SIL Open Font License 1.1, see OFL.txt.
+ * Self-hosted because Dynacat's CSP only allows fonts from 'self'.
+ */
+
+@font-face {
+    font-family: 'Atkinson Hyperlegible Next';
+    font-style: normal;
+    font-weight: 200 800;
+    font-display: swap;
+    src: url('atkinson-hyperlegible-next-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+:root {
+    /* Grounds */
+    --m-ground: #151920;
+    --m-plate: #222830;
+    --m-inset: #191d24;
+    --m-hover: #2d333e;
+    --m-rule: #363d49;
+    --m-selection: #47505e;
+    /* Legends */
+    --m-text: #ece5d3;
+    --m-text2: #a9a493;
+    --m-muted: #6d717a;
+    /* Accent: "here" and "on" */
+    --m-gilt: #c9a24f;
+    --m-fill: #bdb9a9;
+    /* State */
+    --m-alert: #e06c5a;
+    --m-caution: #e0954f;
+    --m-ok: #6fb39a;
+    /* Categorical, never state */
+    --m-series1: #8fb0d3;
+
+    --color-background: var(--m-ground);
+    --color-widget-background: var(--m-plate);
+    --color-widget-background-hsl-values: 214, 17%, 16%;
+    --color-widget-content-border: var(--m-rule);
+    --color-widget-background-highlight: var(--m-hover);
+    --color-separator: var(--m-rule);
+    --color-popover-background: var(--m-plate);
+    --color-popover-border: var(--m-rule);
+    --color-progress-border: var(--m-inset);
+    --color-progress-value: var(--m-fill);
+    --color-vertical-progress-value: var(--m-fill);
+    --color-graph-gridlines: var(--m-hover);
+
+    --color-primary: var(--m-gilt);
+    --color-positive: var(--m-ok);
+    --color-negative: var(--m-alert);
+    --color-upcoming: var(--m-series1);
+
+    /* Dynacat's five text steps on Meridian's two legends. */
+    --color-text-highlight: var(--m-text);
+    --color-text-paragraph: color-mix(in srgb, var(--m-text) 80%, var(--m-text2));
+    --color-text-base: color-mix(in srgb, var(--m-text) 45%, var(--m-text2));
+    --color-text-base-muted: var(--m-text2);
+    --color-text-subdue: var(--m-text2);
+
+    --border-radius: 6px;
+    --widget-gap: 20px;
+    --widget-content-vertical-padding: 14px;
+    --widget-content-horizontal-padding: 16px;
+}
+
+/* Browser surfaces */
+
+html {
+    scrollbar-color: var(--m-rule) transparent;
+    caret-color: var(--m-gilt);
+}
+
+::selection {
+    background-color: var(--m-selection);
+    color: var(--m-text);
+}
+
+:focus-visible {
+    outline: 2px solid var(--m-gilt);
+    outline-offset: 2px;
+}
+
+body {
+    font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+    font-feature-settings: "tnum" 1;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+input, textarea, button, select {
+    font-family: inherit;
+}
+
+/* Meridian sets no type in capitals. */
+.uppercase,
+.widget-group-title,
+.expand-toggle-button {
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+/* Plates: flat, tonal depth with a 1px rule; no drop shadow. */
+
+.widget-content:not(.widget-content-frameless),
+.widget-content-frame {
+    border-radius: 10px;
+    border-color: var(--m-rule);
+    box-shadow: none;
+}
+
+/* Section headings sit above their plate in text2, like the shell's. */
+.widget-header {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: var(--m-text2);
+}
+
+.widget-header a:hover {
+    color: var(--m-text);
+}
+
+.widget-group-title {
+    color: var(--m-text2);
+    border-bottom-style: solid;
+}
+
+.widget-group-title:hover:not(.widget-group-title-current) {
+    color: var(--m-text);
+}
+
+.widget-group-title-current {
+    color: var(--m-text);
+    border-bottom-color: var(--m-gilt);
+}
+
+.expand-toggle-button {
+    color: var(--m-text2);
+    font-size: var(--font-size-h5);
+}
+
+.expand-toggle-button:hover {
+    color: var(--m-text);
+}
+
+/* Links: unvisited reads as a primary legend, visited steps down to text2.
+   Brightness carries it; gold stays for "here" and "on". */
+
+.color-primary-if-not-visited:not(:visited) {
+    color: var(--m-text);
+}
+
+.color-primary-if-not-visited:visited {
+    color: var(--m-text2);
+}
+
+.visited-indicator:not(:visited)::before,
+.visited-indicator:not(:visited)::after {
+    color: var(--m-text2);
+}
+
+.visited-indicator::before,
+.visited-indicator::after {
+    color: var(--m-muted);
+}
+
+a.color-primary-if-not-visited:hover,
+.bookmarks-link:hover {
+    color: var(--m-text);
+    text-decoration: underline;
+    text-decoration-color: var(--m-selection);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.25em;
+}
+
+/* Bookmark group titles are section headings, not accents. */
+.bookmarks-group {
+    --bookmarks-group-color: var(--m-text2);
+}
+
+.bookmarks-group-title {
+    font-weight: 700;
+}
+
+.bookmarks-link:not(.bookmarks-link-no-arrow)::after {
+    color: var(--m-muted);
+}
+
+.bookmarks-icon-container {
+    background-color: var(--m-inset);
+    opacity: 1;
+}
+
+.value-separator {
+    border-bottom-color: var(--m-rule);
+}
+
+/* Readouts: a slim inset track with an enamel fill, caution near the limit. */
+
+.progress-bar {
+    background: var(--m-inset);
+    border-color: transparent;
+    border-radius: 2px;
+    padding: 0;
+    gap: 1px;
+    height: 0.6rem;
+    margin-inline: 0;
+}
+
+.progress-bar-combined {
+    height: 1.3rem;
+}
+
+.progress-value,
+.progress-value:first-child,
+.progress-value:last-child {
+    border-radius: 2px;
+}
+
+.progress-value-notice {
+    background: var(--m-caution);
+}
+
+.popover-active > .progress-bar {
+    border-color: transparent;
+    outline: 1px solid var(--m-rule);
+}
+
+/* Popovers, tooltips */
+
+.popover-frame {
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.55);
+}
+
+/* Today is "here". */
+
+.calendar-current-date {
+    background-color: var(--m-hover);
+    color: var(--m-gilt);
+    font-weight: 700;
+}
+
+.calendar-spillover-date {
+    color: var(--m-muted);
+}
+
+/* Release marks report state (show-release-state); upcoming is categorical. */
+.calendar-release-indicator:not(.calendar-release-indicator-available, .calendar-release-indicator-released, .calendar-release-indicator-upcoming) {
+    background: var(--m-text2);
+}
+
+/* Six posters a row fit the full column on a wide screen; the widget's inline
+   --cards-per-row would otherwise keep six on a laptop or phone. */
+@container widget (max-width: 640px) {
+    .latest-media-grid {
+        --cards-per-row: 4 !important;
+    }
+}
+
+@container widget (max-width: 420px) {
+    .latest-media-grid {
+        --cards-per-row: 3 !important;
+    }
+}
+
+/* Search: Dynacat wraps the field's frame in a second plate; keep only the
+   field, whose edge turns gilt while focused. */
+.widget-type-search > .widget-content {
+    padding: 0;
+    background: none;
+    border: 0;
+}
+
+.widget-type-search .search {
+    background: var(--m-plate);
+}
+
+.search-input:focus-visible {
+    outline: none;
+}
+
+.search:hover {
+    border-color: var(--m-selection);
+}
+
+.search:focus-within {
+    border-color: var(--m-gilt);
+}
+
+.search-input::placeholder {
+    color: var(--m-text2);
+}
+
+/* Media cards share the row radius. */
+
+.latest-media-card,
+.latest-media-card img {
+    border-radius: var(--border-radius);
+}
+
+/* Network (custom-api) */
+
+.network-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.network-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--m-muted);
+}
+
+.network-dot.is-on {
+    background: var(--m-gilt);
+}
+
+.network-dot.is-ok {
+    background: var(--m-ok);
+}
+
+.network-dot.is-down {
+    background: var(--m-alert);
+}
+
+.network-state {
+    flex-shrink: 0;
+    color: var(--m-text2);
+}
+
+.network-state.is-on {
+    color: var(--m-gilt);
+}
+
+.network-state.is-down {
+    color: var(--m-alert);
+}
+
+.network-meta {
+    margin-top: 0.2rem;
+    padding-left: 1.5rem;
+    color: var(--m-text2);
+}
+
+/* Footer */
+
+.footer {
+    color: var(--m-text2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

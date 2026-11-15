@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: seerr-exporter-rules
+spec:
+  groups:
+    - name: seerr.rules
+      rules:
+        # 4m here plus Alertmanager's 1m groupWait puts the push at ~5 minutes
+        # after the request, or after the last live download failed.
+        - alert: SeerrRequestStalled
+          expr: |-
+            seerr_request_stalled == 1
+          for: 4m
+          annotations:
+            summary: >-
+              {{ $labels.title }} ({{ $labels.media_type }}), requested by
+              {{ $labels.requested_by }}, is not downloading. Run an
+              interactive search to see what the quality profile rejected.
+          labels:
+            severity: critical

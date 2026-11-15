@@ -1,0 +1,72 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: seerr-exporter
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: seerr-exporter
+  interval: 1h
+  values:
+    controllers:
+      seerr-exporter:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: docker.io/library/python
+              tag: 3.15-alpine@sha256:0f9552bb28711333da16915ec146f5e6bb44a7fdac9ced15dc17c2e0206346dd
+            command:
+              - python3
+              - /app/exporter.py
+            env:
+              TZ: Europe/London
+              LISTEN_PORT: &port 8080
+              SEERR_URL: http://seerr.default.svc.cluster.local
+              RADARR_URL: http://radarr.default.svc.cluster.local
+              SONARR_URL: http://sonarr.default.svc.cluster.local
+              PYTHONDONTWRITEBYTECODE: "1"
+            envFrom:
+              - secretRef:
+                  name: seerr-exporter-secret
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 5m
+                memory: 24Mi
+              limits:
+                memory: 64Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    serviceMonitor:
+      app:
+        endpoints:
+          - port: http
+            interval: 1m
+            scrapeTimeout: 30s
+    persistence:
+      script:
+        type: configMap
+        name: seerr-exporter-configmap
+        globalMounts:
+          - path: /app/exporter.py
+            subPath: exporter.py

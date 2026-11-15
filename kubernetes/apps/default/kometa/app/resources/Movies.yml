@@ -1,15 +1,16 @@
 ---
 collections:
-
   # ── Row 1: What's new ──────────────────────────────────────────────────────
+  # Smart collections: Plex evaluates them live, so a film shows here the
+  # moment it is added. A plex_search collection only changed on the nightly
+  # 05:00 Kometa run.
 
   Recently Added Films:
-    plex_search:
+    smart_filter:
       all:
         year.gte: 1900
       sort_by: added.desc
       limit: 25
-    collection_order: custom
     sort_title: "!001_Recently Added"
     visible_home: true
     visible_shared: true
@@ -17,12 +18,11 @@ collections:
     summary: The latest films added to your Plex library.
 
   Newly Released Films:
-    plex_search:
+    smart_filter:
       all:
         year.gte: 1900
       sort_by: release.desc
       limit: 25
-    collection_order: custom
     sort_title: "!002_Newly Released"
     visible_home: true
     visible_shared: true

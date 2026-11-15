@@ -1,15 +1,14 @@
 ---
 collections:
-
   # ── Row 1: What's new ──────────────────────────────────────────────────────
+  # Smart collection: Plex evaluates it live (see Movies.yml).
 
   Recently Added TV:
-    plex_search:
+    smart_filter:
       all:
         year.gte: 1900
       sort_by: added.desc
       limit: 25
-    collection_order: custom
     sort_title: "!001_Recently Added"
     visible_home: true
     visible_shared: true

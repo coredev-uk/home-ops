@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <circle cx="256" cy="256" r="240" fill="#16233a"/>
+  <!-- a house holding the three cluster nodes -->
+  <path d="M112 248 L256 124 L400 248" fill="none" stroke="#ffffff" stroke-width="22"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M146 228 V384 H366 V228" fill="none" stroke="#ffffff" stroke-width="22"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#326ce5">
+    <rect x="184" y="236" width="144" height="34" rx="9"/>
+    <rect x="184" y="284" width="144" height="34" rx="9"/>
+    <rect x="184" y="332" width="144" height="34" rx="9"/>
+  </g>
+  <g fill="#3fa66b">
+    <circle cx="304" cy="253" r="7"/>
+    <circle cx="304" cy="301" r="7"/>
+    <circle cx="304" cy="349" r="7"/>
+  </g>
+  <g fill="#9fb8f0">
+    <rect x="200" y="249" width="56" height="8" rx="4"/>
+    <rect x="200" y="297" width="56" height="8" rx="4"/>
+    <rect x="200" y="345" width="56" height="8" rx="4"/>
+  </g>
+</svg>

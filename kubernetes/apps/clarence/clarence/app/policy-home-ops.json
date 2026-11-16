@@ -150,7 +150,11 @@
   },
   "privatePins": {
     "everyHours": 24,
-    "include": ["ghcr.io/coredev-uk/clarence", "ghcr.io/coredev-uk/t3"]
+    "include": [
+      "ghcr.io/coredev-uk/clarence",
+      "ghcr.io/coredev-uk/jellyfin-hera-tv",
+      "ghcr.io/coredev-uk/t3"
+    ]
   },
   "backups": {
     "ignore": [

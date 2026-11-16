@@ -1,15 +1,16 @@
 ---
 collections:
-
   # ── Row 1: What's new ──────────────────────────────────────────────────────
+  # Smart collection: Plex evaluates it live (see Movies.yml). Sorted by the
+  # newest episode, so a new episode of an existing show moves it to the front;
+  # added.desc only counts when the show itself was first added.
 
   Recently Added TV:
-    plex_search:
+    smart_filter:
       all:
         year.gte: 1900
-      sort_by: added.desc
+      sort_by: episode_added.desc
       limit: 25
-    collection_order: custom
     sort_title: "!001_Recently Added"
     visible_home: true
     visible_shared: true

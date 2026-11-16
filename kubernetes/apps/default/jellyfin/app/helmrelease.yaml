@@ -102,9 +102,5 @@ spec:
         path: /var/nfs/shared/Media
         globalMounts:
           - readOnly: true
-      subtitles:
-        type: emptyDir
-        globalMounts:
-          - path: /config/data/subtitles
       tmp:
         type: emptyDir

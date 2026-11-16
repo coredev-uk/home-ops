@@ -105,6 +105,10 @@ if [ "$(readlink -f /nix/var/nix/profiles/default)" != "$image_profile" ]; then
   nix-env --profile /nix/var/nix/profiles/default --set "$image_profile" >/dev/null
 fi
 mkdir -p /nix/var/nix/builds "$GCROOTS"
+# base-system, rooted: a garbage collection in the middle of a build (nix.conf's min-free) would
+# otherwise delete it, and with /etc/group gone every later build fails on the missing nixbld group.
+group_file=$(readlink -f /etc/group)
+ln -sfn "${group_file%/etc/group}" "$GCROOTS/base-system"
 
 # The job's tools, rooted (tool, tool-1, …) so a garbage collection in the middle of a build
 # keeps them, and put first on PATH.

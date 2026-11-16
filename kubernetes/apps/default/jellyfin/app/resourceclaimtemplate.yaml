@@ -2,11 +2,14 @@
 apiVersion: resource.k8s.io/v1
 kind: ResourceClaimTemplate
 metadata:
-  name: jellyfin
+  name: jellyfin-gpu
 spec:
   spec:
     devices:
       requests:
+        # Plex holds hyperion-0's iGPU through an exclusive claim; admin access
+        # (as drm-exporter uses) reaches the device without allocating it.
         - name: gpu
           exactly:
             deviceClassName: gpu.intel.com
+            adminAccess: true

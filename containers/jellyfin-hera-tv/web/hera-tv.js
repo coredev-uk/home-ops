@@ -20,6 +20,8 @@
   const state = {
     config: { heroItemCount: 8, heroIntervalSeconds: 8 },
     heroItems: null,
+    heroUser: null,
+    heroLoad: null,
     heroFetchedAt: 0,
     hero: null,
     cleanups: [],
@@ -108,7 +110,7 @@
     await api().updateFavoriteStatus(userId(), item.Id, next);
     item.UserData = { ...(item.UserData || {}), IsFavorite: next };
     button.setAttribute("aria-pressed", String(next));
-    button.querySelector(".material-icons").textContent = next ? "check" : "add";
+    button.querySelector(".material-icons").textContent = next ? "favorite" : "favorite_border";
     button.setAttribute("aria-label", next ? "Remove from Favourites" : "Add to Favourites");
   };
 
@@ -143,10 +145,12 @@
 
   // ---------- home hero ----------------------------------------------------------------
 
+  // Titles are per profile: a different signed-in user never sees the last one's list.
   const loadHeroItems = async () => {
-    const fresh = Date.now() - state.heroFetchedAt < 10 * 60 * 1000;
+    const user = userId();
+    const fresh = state.heroUser === user && Date.now() - state.heroFetchedAt < 10 * 60 * 1000;
     if (state.heroItems && fresh) return state.heroItems;
-    const result = await getJSON(`Users/${userId()}/Items`, {
+    const result = await getJSON(`Users/${user}/Items`, {
       IncludeItemTypes: "Movie,Series",
       Recursive: true,
       ImageTypes: "Backdrop,Logo",
@@ -156,7 +160,10 @@
       Limit: 40,
       Fields: "Overview,Genres,OfficialRating,CommunityRating,RunTimeTicks,ProductionYear,ChildCount,BackdropImageTags,ImageTags,UserData",
     });
-    state.heroItems = shuffle(result?.Items ?? []).slice(0, state.config.heroItemCount);
+    // ImageTypes matches items with any of the types; the hero needs the backdrop.
+    const items = (result?.Items ?? []).filter((item) => item.BackdropImageTags?.length);
+    state.heroItems = shuffle(items).slice(0, state.config.heroItemCount);
+    state.heroUser = user;
     state.heroFetchedAt = Date.now();
     return state.heroItems;
   };
@@ -200,7 +207,7 @@
         "aria-label": favourite ? "Remove from Favourites" : "Add to Favourites",
         title: "Favourites",
       },
-      icon(favourite ? "check" : "add"),
+      icon(favourite ? "favorite" : "favorite_border"),
     );
     favButton.addEventListener("click", () => toggleFavourite(item, favButton).catch(console.error));
 
@@ -218,7 +225,7 @@
           logo,
           meta,
           item.Overview ? el("p", { class: "hera-hero__overview", text: item.Overview }) : null,
-          el("div", { class: "hera-hero__actions focuscontainer-x" }, [
+          el("div", { class: "hera-hero__actions" }, [
             el(
               "button",
               {
@@ -323,13 +330,33 @@
       const release = (reason) => () => this.holds.delete(reason);
       this.node.addEventListener("pointerenter", hold("hover"));
       this.node.addEventListener("pointerleave", release("hover"));
-      this.node.addEventListener("focusin", hold("focus"));
+      // On a TV the remote rests on Play, so only focus on the pager holds the timer there.
+      this.node.addEventListener("focusin", (e) => {
+        if (!root.classList.contains("layout-tv") || e.target.closest(".hera-hero__controls")) this.holds.add("focus");
+        else this.holds.delete("focus");
+      });
       this.node.addEventListener("focusout", (e) => {
         if (!this.node.contains(e.relatedTarget)) this.holds.delete("focus");
       });
       this.node.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight" && e.target.closest(".hera-hero__pager")) this.show(this.index + 1, true);
-        if (e.key === "ArrowLeft" && e.target.closest(".hera-hero__pager")) this.show(this.index - 1, true);
+        if ((e.key === "ArrowRight" || e.key === "ArrowLeft") && e.target.closest(".hera-hero__pager")) {
+          e.preventDefault();
+          e.stopPropagation();
+          // Left past the first title returns to the buttons rather than wrapping around.
+          if (e.key === "ArrowLeft" && this.index === 0) {
+            this.node.querySelector(".hera-hero__slide.is-active .hera-hero__actions")?.lastElementChild?.focus();
+          } else {
+            this.show(this.index + (e.key === "ArrowRight" ? 1 : -1), true);
+          }
+        }
+        // Right from the last action reaches the pager: the two sit far apart on one row,
+        // which Jellyfin's spatial navigation skips.
+        const actions = e.target.closest(".hera-hero__actions");
+        if (e.key === "ArrowRight" && actions && e.target === actions.lastElementChild) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.dots[this.index]?.focus();
+        }
         // Down leaves the hero for the first shelf, as on tvOS; Jellyfin's spatial navigation
         // otherwise stays among the stacked slides.
         if (e.key === "ArrowDown") {
@@ -432,8 +459,17 @@
     const sections = tab?.querySelector(".homeSectionsContainer");
     if (!tab || !sections) return;
     root.classList.add("hera-home");
+    if (state.hero && state.heroUser !== userId()) {
+      state.hero.destroy();
+      state.hero = null;
+    }
     if (state.hero && tab.contains(state.hero.node)) return;
-    const items = await loadHeroItems();
+    // viewshow and the hashchange fallback both land here; one fetch serves both.
+    state.heroLoad ??= loadHeroItems().finally(() => {
+      state.heroLoad = null;
+    });
+    const items = await state.heroLoad;
+    if (state.hero && tab.contains(state.hero.node)) return;
     if (!items.length || !page.isConnected || page.classList.contains("hide")) {
       root.classList.remove("hera-home");
       return;
@@ -443,7 +479,12 @@
     tab.insertBefore(state.hero.node, tab.firstChild);
     // On a TV the remote starts on Play, as tvOS starts on the hero's primary action.
     if (root.classList.contains("layout-tv") && window.scrollY < 80) {
-      state.hero.node.querySelector(".hera-hero__slide.is-active .hera-btn--primary")?.focus();
+      const focusPlay = () => state.hero?.node.querySelector(".hera-hero__slide.is-active .hera-btn--primary")?.focus();
+      focusPlay();
+      // Jellyfin's own autofocus can run after us and leave focus on the body.
+      setTimeout(() => {
+        if (document.activeElement === document.body) focusPlay();
+      }, 500);
     }
   };
 
@@ -576,8 +617,13 @@
     const banner = page.querySelector("#itemBackdrop");
     if (!banner || banner.dataset.heraFilled === itemId) return;
     // Jellyfin drew its own banner (the user's setting is on): leave it.
-    if (!banner.dataset.heraFilled && /url\(/.test(getComputedStyle(banner).backgroundImage)) return;
+    if (!banner.dataset.heraFilled && /url\(/.test(getComputedStyle(banner).backgroundImage)) {
+      page.classList.remove("hera-no-backdrop");
+      return;
+    }
     const item = await api().getItem(userId(), itemId);
+    if (itemIdFromHash() !== itemId) return;
+    page.classList.toggle("hera-person", item?.Type === "Person");
     let id = null;
     let tag = null;
     if (item?.BackdropImageTags?.length) {
@@ -587,10 +633,15 @@
       id = item.ParentBackdropItemId;
       tag = item.ParentBackdropImageTags[0];
     }
-    if (!id) return;
+    // No artwork (people, books, bare collections): no banner; the portrait or cover shows.
+    page.classList.toggle("hera-no-backdrop", !id);
+    banner.dataset.heraFilled = itemId;
+    if (!id) {
+      banner.style.backgroundImage = "";
+      return;
+    }
     const width = Math.min(2560, Math.round(window.innerWidth * (window.devicePixelRatio || 1)));
     banner.style.backgroundImage = `url("${imageUrl(id, "Backdrop", { maxWidth: width, tag })}")`;
-    banner.dataset.heraFilled = itemId;
   };
 
   // The synopsis belongs with the title and buttons, over the artwork, as on tvOS; the stock
@@ -604,11 +655,15 @@
     page.classList.remove("hera-has-overview");
     const item = await api().getItem(userId(), itemId);
     if (!item?.Overview || itemIdFromHash() !== itemId) return;
+    // A second call may have finished first while this one waited.
+    info.querySelector(".hera-detail-overview")?.remove();
     const text = el("p", { class: "hera-detail-overview", "data-item": itemId, text: item.Overview });
     info.append(text);
     page.classList.add("hera-has-overview");
   };
 
+  // One observer per logo element: Jellyfin reuses the page, and onView runs on every show.
+  const logoObservers = new WeakMap();
   const markLogo = (page) => {
     const logo = page.querySelector(".detailLogo");
     const update = () => {
@@ -616,11 +671,294 @@
       page.classList.toggle("hera-has-logo", has);
     };
     update();
-    if (logo) {
+    if (logo && !logoObservers.has(logo)) {
       const observer = new MutationObserver(update);
       observer.observe(logo, { attributes: true, attributeFilter: ["style", "class"] });
-      state.cleanups.push(() => observer.disconnect());
+      logoObservers.set(logo, observer);
+      state.cleanups.push(() => {
+        observer.disconnect();
+        logoObservers.delete(logo);
+      });
     }
+  };
+
+  // ---------- control center ------------------------------------------------------------
+  // The profile button opens a tvOS-style Control Center instead of Jellyfin's menu: who is
+  // signed in, the playback preferences people actually change, Quick Connect for signing in a
+  // TV, what is playing elsewhere, and (for admins) a library scan. "All options" opens the
+  // stock menu, so nothing Jellyfin or another plugin adds to it is lost.
+
+  const SUBTITLE_MODES = [
+    ["Smart", "Smart"],
+    ["Always", "Always on"],
+    ["OnlyForced", "Forced only"],
+    ["None", "Off"],
+    ["Default", "Default"],
+  ];
+
+  const isProfileButton = (target) =>
+    target.closest?.(".MuiAppBar-root > .MuiToolbar-root:first-child > .MuiBox-root:last-child button, .headerUserButton");
+
+  const controlCenter = {
+    dialog: null,
+    bypass: false,
+    user: null,
+
+    async open(trigger) {
+      this.trigger = trigger;
+      this.user = await api().getCurrentUser();
+      this.dialog?.remove();
+      this.dialog = this.render();
+      document.body.append(this.dialog);
+      this.dialog.showModal();
+      this.refreshSessions().catch(console.error);
+    },
+
+    close() {
+      if (!this.dialog) return;
+      this.dialog.close();
+    },
+
+    async saveConfig(change) {
+      const user = await api().getCurrentUser();
+      const config = { ...user.Configuration, ...change };
+      await api().updateUserConfiguration(user.Id, config);
+      this.user = { ...user, Configuration: config };
+    },
+
+    tile({ icon: name, label, value, pressed, onclick }) {
+      const valueNode = el("span", { class: "hera-cc__tile-value", text: value });
+      const button = el(
+        "button",
+        {
+          type: "button",
+          class: "hera-cc__tile",
+          "aria-pressed": pressed === undefined ? undefined : String(pressed),
+        },
+        [icon(name), el("span", { class: "hera-cc__tile-label", text: label }), valueNode],
+      );
+      button.addEventListener("click", () => onclick(button, valueNode));
+      return button;
+    },
+
+    render() {
+      const user = this.user;
+      const config = user.Configuration || {};
+      const admin = !!user.Policy?.IsAdministrator;
+
+      const avatar = user.PrimaryImageTag
+        ? el("img", {
+            class: "hera-cc__avatar",
+            alt: "",
+            src: api().getUrl(`Users/${user.Id}/Images/Primary`, { tag: user.PrimaryImageTag, maxWidth: 160, quality: 90 }),
+          })
+        : el("span", { class: "hera-cc__avatar", "aria-hidden": "true", text: (user.Name || "?").slice(0, 1).toUpperCase() });
+
+      const subtitleIndex = Math.max(0, SUBTITLE_MODES.findIndex(([mode]) => mode === config.SubtitleMode));
+      const tiles = [
+        this.tile({
+          icon: "closed_caption",
+          label: "Subtitles",
+          value: SUBTITLE_MODES[subtitleIndex][1],
+          pressed: config.SubtitleMode !== "None",
+          onclick: async (button, value) => {
+            const current = SUBTITLE_MODES.findIndex(([mode]) => mode === this.user.Configuration.SubtitleMode);
+            const [mode, text] = SUBTITLE_MODES[(Math.max(0, current) + 1) % SUBTITLE_MODES.length];
+            await this.saveConfig({ SubtitleMode: mode });
+            value.textContent = text;
+            button.setAttribute("aria-pressed", String(mode !== "None"));
+          },
+        }),
+        this.tile({
+          icon: "skip_next",
+          label: "Autoplay",
+          value: config.EnableNextEpisodeAutoPlay ? "Next episode" : "Off",
+          pressed: !!config.EnableNextEpisodeAutoPlay,
+          onclick: async (button, value) => {
+            const next = !this.user.Configuration.EnableNextEpisodeAutoPlay;
+            await this.saveConfig({ EnableNextEpisodeAutoPlay: next });
+            value.textContent = next ? "Next episode" : "Off";
+            button.setAttribute("aria-pressed", String(next));
+          },
+        }),
+        this.tile({
+          icon: "new_releases",
+          label: "Recently Added",
+          value: config.HidePlayedInLatest ? "Unwatched only" : "Everything",
+          pressed: !!config.HidePlayedInLatest,
+          onclick: async (button, value) => {
+            const next = !this.user.Configuration.HidePlayedInLatest;
+            await this.saveConfig({ HidePlayedInLatest: next });
+            value.textContent = next ? "Unwatched only" : "Everything";
+            button.setAttribute("aria-pressed", String(next));
+          },
+        }),
+        admin
+          ? this.tile({
+              icon: "sync",
+              label: "Libraries",
+              value: "Scan for new media",
+              onclick: async (button, value) => {
+                button.disabled = true;
+                value.textContent = "Scanning…";
+                await api().ajax({ type: "POST", url: api().getUrl("Library/Refresh") });
+                value.textContent = "Scan started";
+              },
+            })
+          : null,
+      ];
+
+      // Quick Connect: a TV or phone app shows a six-digit code; entering it here signs that
+      // device in as this user, which is how SSO accounts reach native apps.
+      const codeInput = el("input", {
+        class: "hera-cc__code",
+        type: "text",
+        inputmode: "numeric",
+        autocomplete: "one-time-code",
+        maxlength: "6",
+        pattern: "[0-9]{6}",
+        placeholder: "000000",
+        "aria-label": "Quick Connect code",
+        "aria-describedby": "hera-cc-qc-status",
+      });
+      const qcStatus = el("p", {
+        class: "hera-cc__status",
+        id: "hera-cc-qc-status",
+        role: "status",
+        text: "Enter the code a TV or phone shows to sign it in as you.",
+      });
+      const qcForm = el("form", { class: "hera-cc__qc" }, [
+        codeInput,
+        el("button", { type: "submit", class: "hera-btn hera-btn--primary hera-cc__qc-submit", text: "Sign In" }),
+      ]);
+      qcForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const code = codeInput.value.trim();
+        if (!/^\d{6}$/.test(code)) {
+          qcStatus.textContent = "The code is six digits.";
+          codeInput.focus();
+          return;
+        }
+        try {
+          await api().ajax({ type: "POST", url: api().getUrl("QuickConnect/Authorize", { code }) });
+          qcStatus.textContent = "Signed in. The device continues on its own.";
+          codeInput.value = "";
+        } catch {
+          qcStatus.textContent = "That code has expired or was mistyped. Ask the device for a new one.";
+        }
+      });
+
+      this.sessionList = el("ul", { class: "hera-cc__sessions", "aria-live": "polite" });
+
+      const link = (href, name, text) =>
+        el("a", { class: "hera-cc__link", href, onclick: () => this.close() }, [icon(name), el("span", { text })]);
+      const links = el("nav", { class: "hera-cc__links", "aria-label": "Account" }, [
+        link(`#/userprofile?userId=${user.Id}`, "person", "Profile"),
+        link("#/mypreferencesmenu", "settings", "Settings"),
+        admin ? link("#/dashboard", "dashboard", "Dashboard") : null,
+        el(
+          "button",
+          {
+            type: "button",
+            class: "hera-cc__link",
+            onclick: () => {
+              this.close();
+              // Open Jellyfin's own menu once, for anything a plugin adds there.
+              this.bypass = true;
+              this.trigger?.click();
+              this.bypass = false;
+            },
+          },
+          [icon("more_horiz"), el("span", { text: "All options" })],
+        ),
+      ]);
+
+      const dialog = el("dialog", { class: "hera-cc", "aria-label": "Control Center" }, [
+        el("div", { class: "hera-cc__panel" }, [
+          el("header", { class: "hera-cc__profile" }, [
+            avatar,
+            el("div", { class: "hera-cc__who" }, [
+              el("p", { class: "hera-cc__name", text: user.Name }),
+              el("p", { class: "hera-cc__role", text: admin ? "Administrator" : "Member" }),
+            ]),
+            el(
+              "button",
+              {
+                type: "button",
+                class: "hera-btn hera-btn--glass hera-cc__signout",
+                "aria-label": "Sign out",
+                title: "Sign out",
+                onclick: () => {
+                  this.close();
+                  window.Dashboard?.logout?.();
+                },
+              },
+              icon("logout"),
+            ),
+          ]),
+          el("div", { class: "hera-cc__tiles" }, tiles),
+          el("section", { class: "hera-cc__group", "aria-labelledby": "hera-cc-qc" }, [
+            el("h2", { class: "hera-cc__heading", id: "hera-cc-qc", text: "Quick Connect" }),
+            qcForm,
+            qcStatus,
+          ]),
+          el("section", { class: "hera-cc__group", "aria-labelledby": "hera-cc-now" }, [
+            el("h2", { class: "hera-cc__heading", id: "hera-cc-now", text: "Watching Now" }),
+            this.sessionList,
+          ]),
+          links,
+        ]),
+      ]);
+      dialog.addEventListener("click", (e) => {
+        if (e.target === dialog) this.close();
+      });
+      dialog.addEventListener("close", () => {
+        dialog.remove();
+        if (this.dialog === dialog) this.dialog = null;
+        this.trigger?.focus?.();
+      });
+      return dialog;
+    },
+
+    async refreshSessions() {
+      const list = this.sessionList;
+      const sessions = (await getJSON("Sessions", { activeWithinSeconds: 960 })) ?? [];
+      const own = api().deviceId();
+      const playing = sessions.filter((s) => s.NowPlayingItem && s.DeviceId !== own);
+      if (!list.isConnected) return;
+      if (!playing.length) {
+        list.replaceChildren(el("li", { class: "hera-cc__empty", text: "Nothing is playing on other devices." }));
+        return;
+      }
+      list.replaceChildren(
+        ...playing.map((s) => {
+          const item = s.NowPlayingItem;
+          const title = item.SeriesName ? `${item.SeriesName} · ${item.Name}` : item.Name;
+          const percent = item.RunTimeTicks ? Math.round(((s.PlayState?.PositionTicks || 0) / item.RunTimeTicks) * 100) : 0;
+          return el("li", { class: "hera-cc__session" }, [
+            el("span", { class: "hera-cc__session-title", text: title }),
+            el("span", {
+              class: "hera-cc__session-meta",
+              text: `${s.UserName || "Someone"} · ${s.DeviceName}${s.PlayState?.IsPaused ? " · Paused" : ""}`,
+            }),
+            el("span", { class: "hera-cc__session-progress" }, el("span", { style: `width:${percent}%` })),
+          ]);
+        }),
+      );
+    },
+  };
+
+  const onProfileClick = (e) => {
+    const button = isProfileButton(e.target);
+    if (!button || controlCenter.bypass || !api() || !userId()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    controlCenter.open(button).catch((error) => {
+      console.error("[Hera TV]", error);
+      controlCenter.bypass = true;
+      button.click();
+      controlCenter.bypass = false;
+    });
   };
 
   // ---------- routing --------------------------------------------------------------------
@@ -674,6 +1012,10 @@
       /* defaults stand */
     }
     document.addEventListener("viewshow", onViewShow);
+    // Capture phase, so the profile button's own menu never opens underneath.
+    document.addEventListener("click", onProfileClick, true);
+    state.cleanups.push(() => document.removeEventListener("click", onProfileClick, true));
+    state.cleanups.push(() => controlCenter.dialog?.remove());
     window.addEventListener("hashchange", onHash);
     state.cleanups.push(() => document.removeEventListener("viewshow", onViewShow));
     state.cleanups.push(() => window.removeEventListener("hashchange", onHash));

@@ -1,0 +1,6 @@
+bin/
+obj/
+.gitignore
+DESIGN.md
+PRODUCT.md
+.impeccable/

@@ -1,0 +1,110 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: jellyfin
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: jellyfin
+  interval: 1h
+  values:
+    controllers:
+      jellyfin:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/jellyfin/jellyfin
+              tag: 12.4@sha256:fea863d0cd9ec445985d9c75fc6ed64e38a1d2766cf0c250a33d553f4fc1b771
+            env:
+              TZ: Europe/London
+              JELLYFIN_PublishedServerUrl: https://jellyfin.hera.ac
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &port 8096
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              claims:
+                - name: gpu
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 8Gi
+    defaultPodOptions:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.kubernetes.io/gpu-tier
+                    operator: In
+                    values:
+                      - high
+      resourceClaims:
+        - name: gpu
+          resourceClaimTemplateName: jellyfin
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            path: /health
+        hostnames:
+          - "{{ .Release.Name }}.hera.ac"
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+        rules:
+          - backendRefs:
+              - port: *port
+    persistence:
+      config:
+        existingClaim: "{{ .Release.Name }}"
+      cache:
+        type: emptyDir
+      media:
+        type: nfs
+        server: expanse.internal
+        path: /var/nfs/shared/Media
+        globalMounts:
+          - readOnly: true
+      subtitles:
+        type: emptyDir
+        globalMounts:
+          - path: /config/data/subtitles
+      tmp:
+        type: emptyDir

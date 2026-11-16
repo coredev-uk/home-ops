@@ -25,7 +25,7 @@
   --hera-blur: blur(30px) saturate(170%);
   --hera-label: #fff;
   --hera-label-2: rgba(235, 235, 245, 0.64);
-  --hera-label-3: rgba(235, 235, 245, 0.48);
+  --hera-label-3: rgba(235, 235, 245, 0.52);
   --hera-separator: rgba(84, 84, 88, 0.55);
   --hera-focus: #fff;
 
@@ -86,7 +86,6 @@ body {
   color: var(--hera-label);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv11", "ss01";
 }
 
 .backgroundContainer,
@@ -173,16 +172,19 @@ html.hera-scrolled .MuiAppBar-root {
 
 .MuiAppBar-root > .MuiToolbar-root:first-child {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
+  box-sizing: border-box;
+  height: 64px;
   min-height: 64px !important;
   padding: 10px var(--hera-edge) !important;
   position: relative;
   border: 0 !important;
 }
 
-/* The left group is the capsule. Its first link (the server's home link) becomes the Home tab;
- * the server name itself is drawn by the toolbar, at the left edge, from --hera-server. */
+/* The capsule holds the tabs. Its first link (the server's home link) becomes the Home tab;
+ * the server name itself is drawn by the toolbar, at the left edge, from --hera-server.
+ * Children are placed by type, not position: Jellyfin Desktop adds a back button first. */
 .MuiAppBar-root > .MuiToolbar-root:first-child::before {
   content: var(--hera-server, "");
   position: absolute;
@@ -196,9 +198,18 @@ html.hera-scrolled .MuiAppBar-root {
   color: var(--hera-label);
   pointer-events: none;
 }
+.MuiAppBar-root > .MuiToolbar-root:first-child:has(> .MuiIconButton-root)::before {
+  left: calc(var(--hera-edge) + 52px);
+}
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiIconButton-root {
+  grid-column: 1;
+}
 
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child {
-  grid-column: 2;
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   gap: 2px;
   padding: 4px;
@@ -209,19 +220,19 @@ html.hera-scrolled .MuiAppBar-root {
   box-shadow: inset 0 1px 0 var(--hera-glass-edge), 0 8px 24px -10px rgba(0, 0, 0, 0.7);
 }
 
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a:first-child {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a:first-child {
   font-size: 0 !important;
 }
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a:first-child::after {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a:first-child::after {
   content: "Home";
   font-size: 15px;
 }
 /* The Jellyfin mark is violet and the tab says Home; neither icon shows. */
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a .MuiButton-startIcon {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a .MuiButton-startIcon {
   display: none !important;
 }
 
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a {
   min-height: 36px;
   min-width: 0 !important;
   padding: 6px 16px !important;
@@ -234,25 +245,25 @@ html.hera-scrolled .MuiAppBar-root {
   white-space: nowrap;
   transition: background-color var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
 }
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a:hover {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   color: var(--hera-label) !important;
 }
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a.MuiButton-colorPrimary,
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a[aria-current="page"],
-html[data-hera-view="indexPage"] .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a:first-child {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a.MuiButton-colorPrimary,
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a[aria-current="page"],
+html[data-hera-view="indexPage"] .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:not(:has(> a.MuiButton-colorPrimary)) > a:first-child {
   background: rgba(255, 255, 255, 0.92) !important;
   color: #000 !important;
 }
-.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child > a:active {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a:active {
   transform: scale(0.97);
 }
 
-.MuiAppBar-root > .MuiToolbar-root:first-child > :nth-child(2) {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiBox-root:not(:last-child) {
   grid-column: 3;
   justify-self: end;
 }
-.MuiAppBar-root > .MuiToolbar-root:first-child > :nth-child(3) {
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiBox-root:last-child {
   grid-column: 4;
   margin-left: 6px;
 }
@@ -376,11 +387,15 @@ h3 {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
-.padded-top-focusscale {
+.layout-desktop .padded-top-focusscale {
   padding-top: 12px !important;
 }
-.padded-bottom-focusscale {
+.layout-desktop .padded-bottom-focusscale {
   padding-bottom: 20px !important;
+}
+.layout-tv .sectionTitleContainer,
+.layout-tv .verticalSection > .sectionTitle {
+  margin-bottom: 14px !important;
 }
 
 /* Shelf paddles: hidden until the row is hovered, then a glass disc at each edge. */
@@ -421,6 +436,7 @@ h3 {
 }
 .emby-scrollbuttons-button[disabled] {
   opacity: 0;
+  pointer-events: none;
 }
 
 /* ---------- Cards ---------------------------------------------------------------- */
@@ -493,9 +509,13 @@ h3 {
   border: 0 !important;
   box-shadow: none !important;
 }
-/* Keyboard focus on desktop: the same ring on the artwork, never a box around the card. */
-.layout-desktop .card:focus-visible .cardScalable {
+/* Keyboard focus on desktop lands on the artwork link inside the clipped frame: ring the frame. */
+.layout-desktop .card:has(:focus-visible) .cardScalable {
   box-shadow: 0 0 0 3px #fff, var(--hera-shadow-lift);
+}
+.cardImageContainer:focus-visible,
+.cardContent:focus-visible {
+  outline: none !important;
 }
 
 /* Default artwork for items with none: a quiet tile, never a coloured block. */
@@ -699,9 +719,43 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   margin-bottom: 0 !important;
 }
 
-.layout-desktop .itemDetailPage .detailImageContainer,
-.layout-tv .itemDetailPage .detailImageContainer {
+.layout-desktop .itemDetailPage:not(.hera-no-backdrop) .detailImageContainer,
+.layout-tv .itemDetailPage:not(.hera-no-backdrop) .detailImageContainer {
   display: none !important;
+}
+
+/* People, books and bare collections have no backdrop: no banner, and their portrait or cover
+ * stands in the flow above the title instead. */
+.itemDetailPage.hera-no-backdrop {
+  --hera-detail-h: 64px;
+  --hera-detail-overlay: 0px;
+}
+.itemDetailPage.hera-no-backdrop .itemBackdrop {
+  min-height: 0 !important;
+}
+.itemDetailPage.hera-no-backdrop .detailPagePrimaryContainer > .detailImageContainer {
+  display: block !important;
+  position: static !important;
+  padding: 28px var(--hera-edge) 24px !important;
+}
+.layout-desktop .itemDetailPage .infoWrapper .detailImageContainer,
+.layout-tv .itemDetailPage .infoWrapper .detailImageContainer {
+  display: none !important;
+}
+.itemDetailPage.hera-no-backdrop .detailImageContainer .card {
+  position: static !important;
+  width: 220px !important;
+  margin: 0 !important;
+}
+.itemDetailPage.hera-no-backdrop .detailImageContainer .cardBox {
+  margin: 0 !important;
+}
+/* A person is a round portrait, as in Cast & Crew. */
+.itemDetailPage.hera-person .detailImageContainer .cardPadder {
+  padding-bottom: 100% !important;
+}
+.itemDetailPage.hera-person .detailImageContainer .cardScalable {
+  border-radius: 999px !important;
 }
 
 .detailPageWrapperContainer {
@@ -798,7 +852,7 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   font-size: 14px;
   font-weight: 500;
 }
-.itemMiscInfo .mediaInfoItem {
+.itemMiscInfo .mediaInfoItem:not(.mediaInfoCriticRating) {
   margin-right: 0 !important;
   padding: 0 !important;
   background: none !important;
@@ -981,8 +1035,8 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   font-size: 13px;
   font-weight: 500;
 }
-.detailTrackSelect,
-.emby-select-withcolor {
+.trackSelections .detailTrackSelect,
+.trackSelections .emby-select-withcolor {
   background: transparent !important;
   border: 0 !important;
   color: var(--hera-label-2) !important;
@@ -1052,6 +1106,13 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   padding-right: calc(var(--hera-edge) - var(--hera-gap) / 2) !important;
   row-gap: 28px;
 }
+/* Inside detail sections the container already sits on the edge; only the card margin offsets. */
+.detailPageSecondaryContainer .itemsContainer.vertical-wrap,
+.detailPagePrimaryContent .itemsContainer.vertical-wrap {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: calc(var(--hera-gap) / -2);
+}
 .alphaPicker-fixed-right .MuiToggleButton-root {
   color: var(--hera-label-3) !important;
   border: 0 !important;
@@ -1078,6 +1139,54 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
 .emby-tab-button:hover:not(.emby-tab-button-active) {
   color: #fff !important;
   background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* A library's own toolbar row: a large title on the grid's edge, Play All white, Shuffle glass. */
+.MuiAppBar-root > .MuiToolbar-root:not(:first-child) {
+  padding-left: var(--hera-edge) !important;
+  padding-right: var(--hera-edge) !important;
+}
+.MuiAppBar-root > .MuiToolbar-root:not(:first-child) > .MuiButton-root:first-child {
+  padding-left: 0 !important;
+  min-width: 0;
+  background: none !important;
+}
+.MuiAppBar-root > .MuiToolbar-root:not(:first-child) .MuiTypography-h2 {
+  font-family: var(--hera-font-display) !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+}
+.MuiAppBar-root .MuiChip-root {
+  background: var(--hera-fill) !important;
+  color: var(--hera-label-2) !important;
+  font-weight: 600;
+}
+.MuiButtonGroup-contained {
+  gap: 8px;
+  box-shadow: none !important;
+}
+.MuiButtonGroup-contained > .MuiButton-root {
+  border: 0 !important;
+  border-radius: 999px !important;
+  padding: 6px 16px !important;
+}
+.MuiButtonGroup-contained > .MuiButton-containedPrimary + .MuiButton-containedPrimary {
+  min-width: 40px;
+  padding: 6px 10px !important;
+  background: var(--hera-glass) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge) !important;
+}
+.MuiButtonGroup-text > .MuiButton-root {
+  border: 0 !important;
+  border-radius: 999px !important;
+  min-width: 40px;
+  color: var(--hera-label-2) !important;
+}
+.MuiButtonGroup-text > .MuiButton-root:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
 }
 
 .MuiToggleButtonGroup-root:not(.MuiToggleButtonGroup-vertical) {
@@ -1156,10 +1265,13 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
 
 /* ---------- Login ----------------------------------------------------------------- */
 
+/* The gradient sits on the page body so it runs under the bar without a seam. */
+body:has(#loginPage:not(.hide)) {
+  background: radial-gradient(120% 80% at 50% 0%, #1c1c20 0%, #000 60%) fixed !important;
+}
 #loginPage,
 .loginPage {
-  background:
-    radial-gradient(120% 80% at 50% 0%, #1c1c20 0%, #000 60%) !important;
+  background: transparent !important;
 }
 #loginPage .padded-left.padded-right,
 .manualLoginForm,
@@ -1238,8 +1350,7 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   background: rgba(118, 118, 128, 0.48) !important;
 }
 /* Signed out, the tabs and header actions lead nowhere. */
-body:has(#loginPage:not(.hide)) .MuiAppBar-root > .MuiToolbar-root:first-child > :not(:first-child),
-body:has(#loginPage:not(.hide)) .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child {
+body:has(#loginPage:not(.hide)) .MuiAppBar-root > .MuiToolbar-root:first-child > * {
   visibility: hidden;
 }
 
@@ -1513,8 +1624,12 @@ body:has(#loginPage:not(.hide)) .MuiAppBar-root > .MuiToolbar-root:first-child >
   transform: scale(0.95);
   transition-duration: 90ms;
 }
-.hera-btn[aria-pressed="true"] .material-icons {
-  color: #fff;
+.hera-btn--glass[aria-pressed="true"] {
+  background: #fff;
+  color: #000;
+}
+.hera-btn--glass[aria-pressed="true"]:hover {
+  background: rgba(255, 255, 255, 0.88);
 }
 
 /* Previous and next sit either side of the pager, clear of the title column. */
@@ -1671,6 +1786,9 @@ html.hera-home #homeTab {
   background: rgba(255, 255, 255, 0.9);
   color: #000;
 }
+.hera-seasons__tab:focus-visible {
+  outline-offset: -3px;
+}
 
 .hera-shelf {
   display: grid;
@@ -1802,6 +1920,272 @@ html.hera-home #homeTab {
   display: none !important;
 }
 
+/* ---------- Control Center (profile button) ------------------------------------------ */
+
+.hera-cc {
+  position: fixed;
+  inset: 72px var(--hera-edge) auto auto;
+  margin: 0;
+  padding: 0;
+  width: min(380px, calc(100vw - 2 * var(--hera-edge)));
+  max-height: calc(100vh - 96px);
+  border: 0;
+  border-radius: 28px;
+  background: transparent;
+  color: var(--hera-label);
+  overflow: visible;
+}
+.hera-cc::backdrop {
+  background: rgba(0, 0, 0, 0.3);
+}
+.hera-cc[open] {
+  animation: hera-cc-in var(--hera-slow) var(--hera-ease);
+}
+@keyframes hera-cc-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+.hera-cc__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: inherit;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: inherit;
+  background: rgba(30, 30, 34, 0.72);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), 0 30px 60px -20px rgba(0, 0, 0, 0.9);
+}
+
+.hera-cc__profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hera-cc__avatar {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hera-fill-strong);
+  font: 700 20px/1 var(--hera-font-display);
+}
+.hera-cc__who {
+  flex: 1;
+  min-width: 0;
+}
+.hera-cc__name {
+  margin: 0;
+  font: 700 17px/1.25 var(--hera-font-display);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hera-cc__role {
+  margin: 2px 0 0;
+  color: var(--hera-label-2);
+  font-size: 13px;
+}
+.hera-cc__signout {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+}
+
+.hera-cc__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.hera-cc__tile {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  min-height: 92px;
+  padding: 14px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+  color: var(--hera-label);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-family: var(--hera-font);
+  transition: background-color var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.hera-cc__tile:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+.hera-cc__tile:active {
+  transform: scale(0.97);
+}
+.hera-cc__tile[disabled] {
+  cursor: default;
+  opacity: 0.7;
+  transform: none;
+}
+.hera-cc__tile .material-icons {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.14);
+}
+/* On, as in Control Center: the tile turns white and its text black. */
+.hera-cc__tile[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+}
+.hera-cc__tile[aria-pressed="true"] .material-icons {
+  background: #000;
+  color: #fff;
+}
+.hera-cc__tile[aria-pressed="true"] .hera-cc__tile-value {
+  color: rgba(0, 0, 0, 0.62);
+}
+.hera-cc__tile-label {
+  font-size: 14px;
+  font-weight: 650;
+}
+.hera-cc__tile-value {
+  margin-top: -4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hera-label-2);
+}
+
+.hera-cc__group {
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+}
+.hera-cc__heading {
+  margin: 0 0 10px;
+  font: 650 13px/1.3 var(--hera-font);
+  color: var(--hera-label-2);
+  letter-spacing: 0;
+}
+.hera-cc__qc {
+  display: flex;
+  gap: 8px;
+}
+.hera-cc__code {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font: 600 20px/1 var(--hera-font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3em;
+}
+.hera-cc__code:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.hera-cc__qc-submit {
+  height: 44px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+.hera-cc__status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--hera-label-2);
+}
+
+.hera-cc__sessions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hera-cc__session {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hera-cc__session-title {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hera-cc__session-meta,
+.hera-cc__empty {
+  font-size: 12px;
+  color: var(--hera-label-2);
+}
+.hera-cc__session-progress {
+  height: 3px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.hera-cc__session-progress > span {
+  display: block;
+  height: 100%;
+  background: #fff;
+}
+
+.hera-cc__links {
+  display: flex;
+  flex-direction: column;
+}
+.hera-cc__link {
+  appearance: none;
+  border: 0;
+  background: none;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 12px;
+  color: var(--hera-label);
+  font: 500 15px/1 var(--hera-font);
+  text-decoration: none;
+  cursor: pointer;
+}
+.hera-cc__link .material-icons {
+  font-size: 20px;
+  color: var(--hera-label-2);
+}
+.hera-cc__link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.layout-tv .hera-cc__tile:focus,
+.layout-tv .hera-cc__link:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px #fff;
+}
+
 /* ---------- TV layout (10-foot): larger type, ring focus ------------------------- */
 
 .layout-tv {
@@ -1826,6 +2210,26 @@ html.hera-home #homeTab {
   color: #000 !important;
   transform: scale(1.08);
   box-shadow: 0 18px 36px -12px rgba(0, 0, 0, 0.9);
+}
+/* tvOS lights one control at a time: while a row holds focus, its resting white controls
+ * step back to glass so only the focused one is white. Listed separately for older webOS. */
+.layout-tv .hera-hero__actions:focus-within .hera-btn--primary:not(:focus),
+.layout-tv .hera-hero__actions:focus-within .hera-btn--glass[aria-pressed="true"]:not(:focus) {
+  background: var(--hera-glass) !important;
+  color: #fff !important;
+}
+.layout-tv .mainDetailButtons:focus-within .btnPlay:not(:focus),
+.layout-tv .mainDetailButtons:focus-within .btnResume:not(:focus),
+.layout-tv .mainDetailButtons:focus-within .btnUserRating:not(:focus) {
+  background: var(--hera-glass) !important;
+  color: #fff !important;
+}
+.layout-tv .mainDetailButtons:focus-within .btnUserRating:not(:focus) .ratingbutton-icon-withrating {
+  color: #fff !important;
+}
+.layout-tv .hera-seasons__tabs:focus-within .hera-seasons__tab[aria-selected="true"]:not(:focus) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 .layout-tv .hera-hero__overview {
   font-size: 19px;
@@ -1863,7 +2267,9 @@ html.hera-home #homeTab {
   *::before,
   *::after {
     transition-duration: 1ms !important;
+    transition-delay: 0s !important;
     animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
   }
   .hera-hero__backdrop,
   .hera-hero__slide.is-active .hera-hero__backdrop {
@@ -1884,7 +2290,7 @@ html.hera-home #homeTab {
   .hera-hero__content {
     bottom: 76px;
   }
-  .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:first-child {
+  .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root {
     overflow-x: auto;
     max-width: 60vw;
   }

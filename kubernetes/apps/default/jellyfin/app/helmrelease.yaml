@@ -38,6 +38,15 @@ spec:
             env:
               TZ: Europe/London
               JELLYFIN_PublishedServerUrl: https://jellyfin.hera.ac
+              # Hera TV's Seerr and Maintainerr integrations; the API key comes from jellyfin-secret.
+              HERATV_SEERR_URL: http://seerr.default.svc.cluster.local
+              HERATV_SEERR_PUBLIC_URL: https://seerr.hera.ac
+              # Jellyfin username=Seerr user id: requests are made as that Seerr user.
+              HERATV_SEERR_USERS: pthompson=1,bthompson=3,kthompson=5
+              HERATV_MAINTAINERR_URL: http://maintainerr.default.svc.cluster.local
+            envFrom:
+              - secretRef:
+                  name: jellyfin-secret
             probes:
               liveness:
                 enabled: true

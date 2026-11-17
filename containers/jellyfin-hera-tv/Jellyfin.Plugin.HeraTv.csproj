@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.HeraTv</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.HeraTv</AssemblyName>
-    <Version>1.1.0.0</Version>
+    <Version>1.2.0.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -20,8 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="web/hera-tv.css" LogicalName="hera-tv.css" />
-    <EmbeddedResource Include="web/hera-tv.js" LogicalName="hera-tv.js" />
+    <EmbeddedResource Include="web/*.css;web/*.js" LogicalName="%(Filename)%(Extension)" />
     <EmbeddedResource Include="web/InterVariable.woff2" LogicalName="InterVariable.woff2" />
   </ItemGroup>
 

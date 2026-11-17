@@ -114,22 +114,131 @@
     button.setAttribute("aria-label", next ? "Remove from Favourites" : "Add to Favourites");
   };
 
+  // ---------- shared kit for modules ----------------------------------------------------
+  // hera-home.js and hera-discover.js load after this file and build on these pieces, so every
+  // row, card and request in the client looks and behaves the same.
+
+  /** Calls the plugin's own API as the signed-in user. */
+  const hera = (path, { method = "GET", query, body } = {}) =>
+    api().ajax({
+      type: method,
+      url: api().getUrl(`HeraTV/${path}`, query),
+      data: body === undefined ? undefined : JSON.stringify(body),
+      contentType: body === undefined ? undefined : "application/json",
+      dataType: "json",
+    });
+
+  // Which integrations the server has, and whether this user is linked to Seerr; one fetch per user.
+  let integrationsFor = null;
+  let integrationsLoad = null;
+  const integrations = () => {
+    if (integrationsFor !== userId()) {
+      integrationsFor = userId();
+      integrationsLoad = hera("integrations").catch(() => ({ seerr: false, seerrLinked: false, maintainerr: false }));
+    }
+    return integrationsLoad;
+  };
+
+  /**
+   * One card for every row: poster (2:3) or wide (16:9) artwork with an optional badge and
+   * progress bar, title and subtitle below. `href` makes it a link; `onClick` a button.
+   */
+  const card = ({ href, onClick, image, shape = "poster", title, subtitle, badge, badgeTone, progress, label }) => {
+    const art = el("span", { class: "hera-card__art" }, [
+      image
+        ? el("img", { src: image, alt: "", loading: "lazy", decoding: "async" })
+        : el("span", { class: "hera-card__fallback", text: title }),
+      badge ? el("span", { class: `hera-card__badge${badgeTone ? ` hera-card__badge--${badgeTone}` : ""}`, text: badge }) : null,
+      progress > 0
+        ? el("span", { class: "hera-card__progress" }, el("span", { style: `width:${Math.min(100, Math.max(3, progress))}%` }))
+        : null,
+    ]);
+    const text = [
+      title ? el("span", { class: "hera-card__title", text: title }) : null,
+      subtitle ? el("span", { class: "hera-card__subtitle", text: subtitle }) : null,
+    ];
+    const attrs = { class: `hera-card hera-card--${shape}`, "aria-label": label || [title, subtitle].filter(Boolean).join(", ") };
+    if (href) return el("a", { ...attrs, href }, [art, ...text]);
+    const button = el("button", { ...attrs, type: "button" }, [art, ...text]);
+    if (onClick) button.addEventListener("click", onClick);
+    return button;
+  };
+
+  /**
+   * A titled horizontal row of cards with tv.apple.com's hover paddles. `id` makes it
+   * replaceable: mounting a row with the same id swaps the old one in place.
+   */
+  const shelf = ({ id, title, href, cards, shape = "poster" }) => {
+    const track = el("div", { class: `hera-shelf hera-shelf--${shape}` }, cards);
+    const paddle = (dir) =>
+      el(
+        "button",
+        {
+          type: "button",
+          tabindex: "-1",
+          class: `hera-row__paddle hera-row__paddle--${dir}`,
+          "aria-label": dir === "prev" ? `Scroll ${title} back` : `Scroll ${title} on`,
+          onclick: () =>
+            track.scrollBy({
+              left: (dir === "prev" ? -1 : 1) * track.clientWidth * 0.85,
+              behavior: reduceMotion.matches ? "auto" : "smooth",
+            }),
+        },
+        icon(dir === "prev" ? "chevron_left" : "chevron_right"),
+      );
+    const prev = paddle("prev");
+    const next = paddle("next");
+    const sync = () => {
+      prev.hidden = track.scrollLeft <= 4;
+      next.hidden = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
+    };
+    track.addEventListener("scroll", sync, { passive: true });
+    requestAnimationFrame(sync);
+    const heading = el("h2", { class: "sectionTitle sectionTitle-cards hera-row__title", text: title });
+    return el("section", { class: "hera-row verticalSection", "data-hera-row": id || null, "aria-label": title }, [
+      el("div", { class: "hera-row__head" }, [
+        href
+          ? el("a", { class: "hera-row__link", href }, [heading, icon("chevron_right")])
+          : heading,
+      ]),
+      el("div", { class: "hera-row__viewport" }, [track, prev, next]),
+    ]);
+  };
+
+  /** Puts a row where `place` says, replacing a previous row with the same id. */
+  const mountRow = (row, place) => {
+    const id = row.dataset.heraRow;
+    const old = id ? document.querySelector(`[data-hera-row="${CSS.escape(id)}"]`) : null;
+    if (old) old.replaceWith(row);
+    else place(row);
+    return row;
+  };
+
+  /** A short date, as tvOS writes them: "9 Dec". */
+  const shortDate = (iso) => new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+  const modules = [];
+
   // ---------- stylesheet order ---------------------------------------------------------
   // Jellyfin appends its theme and plugin styles after ours at runtime; keep ours last so
   // equal-specificity rules resolve in our favour without !important everywhere.
 
   const keepStylesheetLast = () => {
-    const link = document.querySelector('link[data-hera-tv][rel="stylesheet"]');
-    if (!link) return;
+    const links = () => [...document.querySelectorAll('link[data-hera-tv][rel="stylesheet"]')];
+    if (!links().length) return;
     let queued = false;
     const move = () => {
       queued = false;
       const custom = document.getElementById("cssBranding");
       const anchor = custom && custom.parentNode === document.head ? custom : null;
-      if (anchor) {
-        if (link.nextElementSibling !== anchor) document.head.insertBefore(link, anchor);
-      } else if (document.head.lastElementChild !== link) {
-        document.head.append(link);
+      const ours = links();
+      const last = ours[ours.length - 1];
+      // Already in place: ours are contiguous, in order, and last (or just before branding).
+      const inPlace = anchor ? last.nextElementSibling === anchor : document.head.lastElementChild === last;
+      if (inPlace && ours.every((link, i) => i === 0 || ours[i - 1].nextElementSibling === link)) return;
+      for (const link of ours) {
+        if (anchor) document.head.insertBefore(link, anchor);
+        else document.head.append(link);
       }
     };
     const observer = new MutationObserver(() => {
@@ -361,7 +470,11 @@
         // otherwise stays among the stacked slides.
         if (e.key === "ArrowDown") {
           const page = this.node.closest(".page");
-          const card = page?.querySelector(".homeSectionsContainer .verticalSection:not(.hide) .card");
+          // A comma list, not :is(): older webOS Chromium lacks :is, and querySelector returns the
+          // first match in document order either way.
+          const card = page?.querySelector(
+            ".homeSectionsContainer .verticalSection:not(.hide) .card, .homeSectionsContainer .verticalSection:not(.hide) .hera-card",
+          );
           if (card) {
             e.preventDefault();
             e.stopPropagation();
@@ -984,6 +1097,15 @@
     } catch (error) {
       console.error("[Hera TV]", error);
     }
+    // Modules see every page after the built-ins; one failing never stops the others.
+    const context = { itemId: itemIdFromHash(), params: new URLSearchParams(window.location.hash.split("?")[1] || "") };
+    for (const module of modules) {
+      try {
+        await module.onView?.(page, context);
+      } catch (error) {
+        console.error(`[Hera TV:${module.name}]`, error);
+      }
+    }
   };
 
   const onViewShow = (event) => {
@@ -1033,9 +1155,42 @@
   };
 
   window.HeraTV = {
+    kit: {
+      api,
+      userId,
+      el,
+      icon,
+      getJSON,
+      imageUrl,
+      runtime,
+      shuffle,
+      go,
+      play,
+      hera,
+      integrations,
+      card,
+      shelf,
+      mountRow,
+      shortDate,
+      itemIdFromHash,
+      reduceMotion,
+      isTv: () => root.classList.contains("layout-tv"),
+    },
+    /** Adds a module: `{ name, onView(page, { itemId, params }), teardown() }`. */
+    register(module) {
+      modules.push(module);
+      // A module that arrives after the first page still sees it.
+      const page = document.querySelector(".page:not(.hide)");
+      if (page && api() && userId()) {
+        Promise.resolve()
+          .then(() => module.onView?.(page, { itemId: itemIdFromHash(), params: new URLSearchParams(window.location.hash.split("?")[1] || "") }))
+          .catch((error) => console.error(`[Hera TV:${module.name}]`, error));
+      }
+    },
     teardown() {
       state.hero?.destroy();
       state.cleanups.splice(0).forEach((fn) => fn());
+      modules.splice(0).forEach((module) => module.teardown?.());
       document.querySelectorAll(".hera-seasons").forEach((n) => n.remove());
       root.classList.remove("hera-home");
     },

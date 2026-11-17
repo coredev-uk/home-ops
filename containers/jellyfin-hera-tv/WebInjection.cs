@@ -12,7 +12,11 @@ namespace Jellyfin.Plugin.HeraTv;
 public class PluginServiceRegistrator : IPluginServiceRegistrator
 {
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
-        => serviceCollection.AddSingleton<IStartupFilter, WebInjection>();
+    {
+        serviceCollection.AddSingleton<IStartupFilter, WebInjection>();
+        serviceCollection.AddSingleton<Integrations.UpstreamClient>();
+        serviceCollection.AddSingleton<Integrations.LibraryLookup>();
+    }
 }
 
 /// <summary>
@@ -90,8 +94,8 @@ public sealed class WebInjection(ILogger<WebInjection> logger) : IStartupFilter
         // The stylesheet asks for the font by a bare relative URL, so the preload must match it.
         var head =
             $"<link {Marker} rel=\"preload\" as=\"font\" type=\"font/woff2\" crossorigin href=\"../HeraTV/InterVariable.woff2\">" +
-            $"<link {Marker} rel=\"stylesheet\" href=\"../HeraTV/hera-tv.css?v={v}\">";
-        var body = $"<script {Marker} src=\"../HeraTV/hera-tv.js?v={v}\" defer></script>";
+            string.Concat(WebAssets.Stylesheets.Select(name => $"<link {Marker} rel=\"stylesheet\" href=\"../HeraTV/{name}?v={v}\">"));
+        var body = string.Concat(WebAssets.Scripts.Select(name => $"<script {Marker} src=\"../HeraTV/{name}?v={v}\" defer></script>"));
 
         html = new StringBuilder(html.Length + head.Length + body.Length)
             .Append(html, 0, headEnd).Append(head)

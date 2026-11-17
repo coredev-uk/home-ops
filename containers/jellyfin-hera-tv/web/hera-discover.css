@@ -1,0 +1,632 @@
+/* Hera TV: discover module. Loaded after hera-tv.css. */
+
+/* ---------- Discover tab and view ---------------------------------------------------- */
+
+/* While Discover shows it takes the tab; Home steps back. */
+html.hera-discover-on[data-hera-view] .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:not(:has(> a.MuiButton-colorPrimary)) > a:first-child:not(.hera-discover-tab),
+html.hera-discover-on .headerTabs .emby-tab-button.emby-tab-button-active:not(.hera-discover-tab):not(:focus) {
+  background: transparent !important;
+  color: var(--hera-label-2) !important;
+}
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a.hera-discover-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+html.hera-discover-on #homeTab > .hera-hero,
+html.hera-discover-on #indexPage .homeSectionsContainer {
+  display: none !important;
+}
+html.hera-discover-on .backdropContainer,
+html.hera-discover-on #slides-container {
+  display: none !important;
+}
+
+.hera-discover {
+  padding: 84px 0 64px;
+}
+.layout-tv .hera-discover {
+  padding-top: 24px;
+}
+
+.hera-discover__search {
+  padding: 0 var(--hera-edge);
+  margin-bottom: 28px;
+}
+.hera-discover__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 560px;
+  height: 48px;
+  padding: 0 8px 0 16px;
+  border-radius: 999px;
+  background: var(--hera-fill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: background-color var(--hera-fast) var(--hera-ease), box-shadow var(--hera-fast) var(--hera-ease);
+}
+.hera-discover__field:focus-within {
+  background: var(--hera-fill-strong);
+  box-shadow: 0 0 0 2px #fff;
+}
+.hera-discover__field > .material-icons {
+  font-size: 22px;
+  color: var(--hera-label-2);
+}
+.hera-discover__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--hera-label);
+  font: 500 17px/1 var(--hera-font) !important;
+  letter-spacing: -0.01em;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.hera-discover__input::placeholder {
+  color: var(--hera-label-3);
+}
+.hera-discover__input::-webkit-search-cancel-button {
+  display: none;
+}
+.hera-discover__clear {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  transition: transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.hera-discover__clear[hidden] {
+  display: none;
+}
+.hera-discover__clear .material-icons {
+  font-size: 18px;
+}
+.hera-discover__clear:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.hera-discover__clear:active {
+  transform: scale(0.92);
+}
+.hera-discover__clear:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.layout-tv .hera-discover__field {
+  height: 60px;
+  max-width: 720px;
+}
+.layout-tv .hera-discover__input {
+  font-size: 22px !important;
+}
+
+/* The feature: a rounded backdrop card, as the Apple TV app's featured titles are. */
+.hera-discover__feature-slot {
+  padding: 0 var(--hera-edge);
+  margin-bottom: 36px;
+}
+.hera-discover__feature-slot[hidden],
+.hera-discover__rows[hidden],
+.hera-discover__results[hidden] {
+  display: none;
+}
+.hera-discover__feature {
+  position: relative;
+  overflow: hidden;
+  min-height: clamp(300px, 36vw, 480px);
+  display: flex;
+  align-items: flex-end;
+  border-radius: 24px;
+  background: var(--hera-surface-2);
+  box-shadow: var(--hera-shadow-lift);
+}
+.hera-discover__feature-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+}
+.hera-discover__feature::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.5) 42%, rgba(0, 0, 0, 0) 75%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 55%);
+}
+.hera-discover__feature-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(560px, 100%);
+  padding: clamp(24px, 3vw, 44px);
+}
+.hera-discover__feature-title {
+  margin: 0;
+  font-family: var(--hera-font-display);
+  font-size: clamp(30px, 3.4vw, 48px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.hera-discover__feature-body .hera-hero__meta {
+  margin: 0;
+}
+.hera-discover__feature-overview {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(235, 235, 245, 0.82);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.layout-tv .hera-discover__feature-overview {
+  font-size: 19px;
+}
+
+/* A button with a label: the core's round glass button, widened. */
+.hera-btn--text {
+  width: auto;
+  padding: 0 22px 0 16px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.hera-btn[disabled] {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
+.hera-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+.hera-discover .hera-btn--primary,
+.hera-sheet .hera-btn--primary {
+  text-decoration: none;
+}
+
+.hera-discover__slot:empty {
+  display: none;
+}
+.hera-discover__empty {
+  margin: 24px var(--hera-edge);
+  color: var(--hera-label-2);
+  font-size: 16px;
+}
+
+.hera-discover__results {
+  padding: 0 var(--hera-edge);
+}
+.hera-discover__results-title {
+  margin-bottom: 14px !important;
+}
+.hera-discover__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(132px, 11.5vw, 196px), 1fr));
+  gap: 28px var(--hera-gap);
+  padding: 8px 0 20px;
+}
+.hera-discover__more {
+  margin: 16px 0;
+}
+.hera-discover__more[hidden] {
+  display: none;
+}
+
+/* ---------- Title sheet ---------------------------------------------------------------- */
+
+.hera-sheet {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(880px, calc(100vw - 32px));
+  max-width: none;
+  max-height: min(860px, calc(100vh - 48px));
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  overflow: hidden;
+  color: var(--hera-label);
+  background: var(--hera-surface);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), 0 40px 120px -20px rgba(0, 0, 0, 0.95);
+}
+.hera-sheet[open] {
+  display: flex;
+  flex-direction: column;
+  animation: hera-sheet-in 320ms var(--hera-ease);
+}
+.hera-sheet::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: hera-sheet-fade 280ms var(--hera-ease);
+}
+@keyframes hera-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+}
+@keyframes hera-sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+.hera-sheet__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+.hera-sheet__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+}
+.hera-sheet__head {
+  position: relative;
+  height: clamp(200px, 30vw, 300px);
+  background: var(--hera-surface-2);
+}
+.hera-sheet__head::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(18, 18, 20, 0) 35%, var(--hera-surface) 100%);
+}
+.hera-sheet__backdrop {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  display: block;
+}
+.hera-sheet__body {
+  position: relative;
+  z-index: 1;
+  margin-top: -72px;
+  padding: 0 clamp(20px, 4vw, 40px) 36px;
+}
+.hera-sheet__title {
+  margin: 0 0 8px;
+  font-family: var(--hera-font-display);
+  font-size: clamp(28px, 3.4vw, 40px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+.hera-sheet__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hera-label-2);
+}
+.hera-sheet__meta > span + span:not(.hera-badge)::before {
+  content: "·";
+  margin-right: 10px;
+  color: var(--hera-label-3);
+}
+.hera-sheet__tagline {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--hera-label-2);
+}
+.hera-sheet__overview {
+  margin: 0 0 22px;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(235, 235, 245, 0.82);
+}
+.hera-sheet__loading {
+  margin: 12px 0;
+  color: var(--hera-label-2);
+}
+.hera-sheet__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.hera-sheet__buttons:empty {
+  display: none;
+}
+.hera-sheet__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 48px;
+}
+.hera-sheet__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px 0 16px;
+  border-radius: 999px;
+  background: var(--hera-fill-strong);
+  font: 600 16px/1 var(--hera-font);
+  letter-spacing: -0.01em;
+}
+.hera-sheet__status .material-icons {
+  font-size: 22px;
+}
+.hera-sheet__result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.hera-sheet__result .material-icons {
+  font-size: 20px;
+}
+.hera-sheet__result--ok {
+  color: var(--hera-label);
+}
+.hera-sheet__result--error {
+  color: var(--hera-label);
+}
+.hera-sheet__note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--hera-fill);
+}
+.hera-sheet__note p {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(235, 235, 245, 0.82);
+}
+
+.hera-sheet__heading {
+  margin: 0;
+  font-family: var(--hera-font-display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.hera-sheet__seasons {
+  margin-top: 28px;
+}
+.hera-sheet__seasons:empty {
+  display: none;
+}
+.hera-sheet__heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.hera-season-list {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--hera-fill);
+}
+.hera-season {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hera-label);
+  font: 600 15px/1.2 var(--hera-font);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.hera-season + .hera-season {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.hera-season .material-icons {
+  font-size: 24px;
+}
+.hera-season:hover:not([disabled]) {
+  background: rgba(255, 255, 255, 0.08);
+}
+.hera-season:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+.hera-season[disabled] {
+  cursor: default;
+  color: var(--hera-label-2);
+}
+.hera-season[disabled][aria-checked="false"] .material-icons {
+  opacity: 0.4;
+}
+.hera-season__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hera-season__count {
+  color: var(--hera-label-2);
+  font-weight: 500;
+  font-size: 14px;
+}
+.hera-season__status {
+  min-width: 7em;
+  text-align: right;
+  color: var(--hera-label-2);
+  font-size: 14px;
+}
+.hera-season__status:empty {
+  display: none;
+}
+.hera-season--all {
+  width: auto;
+  min-height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: 999px;
+  background: var(--hera-fill);
+}
+
+.hera-sheet__cast-wrap {
+  margin-top: 28px;
+}
+.hera-sheet__cast-wrap:empty {
+  display: none;
+}
+.hera-sheet__cast {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 96px;
+  gap: 16px;
+  margin: 12px -4px 0;
+  padding: 4px 4px 8px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hera-sheet__cast::-webkit-scrollbar {
+  display: none;
+}
+.hera-sheet__person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  min-width: 0;
+}
+.hera-sheet__person img,
+.hera-sheet__person-fallback {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--hera-surface-2);
+  box-shadow: var(--hera-shadow);
+}
+.hera-sheet__person-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hera-label-3);
+}
+.hera-sheet__person-fallback .material-icons {
+  font-size: 36px;
+}
+.hera-sheet__person-name,
+.hera-sheet__person-role {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+}
+.hera-sheet__person-role {
+  font-weight: 500;
+  color: var(--hera-label-2);
+}
+
+.layout-tv .hera-sheet {
+  width: min(1080px, calc(100vw - 96px));
+}
+.layout-tv .hera-sheet__overview,
+.layout-tv .hera-sheet__tagline,
+.layout-tv .hera-sheet__note p {
+  font-size: 19px;
+}
+.layout-tv .hera-sheet__meta {
+  font-size: 17px;
+}
+.layout-tv .hera-season {
+  min-height: 64px;
+  font-size: 19px;
+}
+.layout-tv .hera-season:focus {
+  outline: none;
+  background: #fff;
+  color: #000;
+}
+.layout-tv .hera-season:focus .hera-season__count,
+.layout-tv .hera-season:focus .hera-season__status {
+  color: rgba(0, 0, 0, 0.7);
+}
+.layout-tv .hera-sheet__person-name,
+.layout-tv .hera-sheet__person-role {
+  font-size: 15px;
+}
+
+/* ---------- Request seasons, beside a series' Episodes -------------------------------- */
+
+.hera-discover-missing {
+  height: 36px;
+  margin-left: auto;
+  padding: 0 16px 0 10px;
+  font-size: 14px;
+}
+.hera-discover-missing .material-icons {
+  font-size: 20px;
+}
+.layout-tv .hera-discover-missing {
+  height: 48px;
+  font-size: 18px;
+}
+
+@media (max-width: 700px) {
+  .hera-sheet {
+    border-radius: 22px;
+  }
+  .hera-season__count {
+    display: none;
+  }
+}
+
+/* One more tab: tighten the capsule so it never runs into the header buttons. */
+@media (max-width: 1440px) {
+  .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a {
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+    font-size: 14px !important;
+  }
+}

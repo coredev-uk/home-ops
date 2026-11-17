@@ -28,6 +28,17 @@ Each departure follows one of the rules this theme is built under.
 - **No eyebrow labels.** tvOS sets "EPISODE 3" in small caps above an episode's title. Here the number leads the title on the same line, set in tertiary grey.
 - **The violet Jellyfin mark is gone.** The server's name stands in white at the left.
 
+## Beyond Apple TV: what Plex does that Jellyfin didn't
+
+The household came from Plex. These parts fill the gaps, in the same visual language. They live in separate files that register with the core (`HeraTV.register`) and share its card and row components (`HeraTV.kit.card`, `kit.shelf`).
+
+| Surface      | What it does                                                                                                                                                                                                                                                                                | Files                                  |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| Home         | Up Next merges Continue Watching and Next Up, one per series. Then Jellyfin's Recently Added rows, Because You Watched / More Like rows, Leaving Soon, Your Requests and Trending to Request. Jellyfin Tweaks hides the stock Continue Watching, Next Up and library rows on the web client | `web/hera-home.*`                      |
+| Leaving Soon | Maintainerr's active collections, matched to the user's library by TMDB id: a home row and a "Leaving 9 Dec" chip on the item's page                                                                                                                                                        | `web/hera-home.*`, `Integrations/`     |
+| Discover     | A Discover tab (`#/home?hera=discover`) with trending, popular and upcoming titles and search. A title sheet with cast, trailer and Request, plus per-series picking for TV. Seerr results on Jellyfin's search page, and a "Request Series 6–8" control on show pages missing series       | `web/hera-discover.*`, `Integrations/` |
+| Server side  | `/HeraTV/discover/*` and `/HeraTV/leaving` call Seerr and Maintainerr from the server. The Seerr API key never reaches a browser, and requests are made as the user's own Seerr account (`HERATV_SEERR_USERS`). Users without a linked account can browse but not request                   | `Integrations/`                        |
+
 ## Tokens
 
 The tokens are custom properties on `:root` in `web/hera-tv.css`. The theme also sets Jellyfin 12's own `--jf-palette-*` and `--mui-palette-*` variables, so stock components it doesn't style directly still pick up the palette.

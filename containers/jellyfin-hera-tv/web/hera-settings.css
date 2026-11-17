@@ -1549,3 +1549,252 @@
   color: var(--hera-label-2);
   fill: currentColor;
 }
+
+/* ---- Hera TV's own page in the Dashboard (Plugins > Hera TV) ----
+ * Drawn by Configuration/heratv-settings.js from the Settings app's components above: grouped
+ * lists, switch rows, fields and pill buttons. Only what a form needs is added here. */
+
+.hera-cfg {
+  max-width: 760px;
+  color: var(--hera-label);
+}
+.hera-cfg .hera-set-title {
+  margin-bottom: 10px;
+}
+.hera-cfg-lede {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 64ch;
+  margin: 0 0 10px;
+  color: var(--hera-label-2);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.hera-cfg-lede .material-icons {
+  flex: none;
+  margin-top: 2px;
+  font-size: 18px;
+}
+.hera-cfg .hera-set-group:first-of-type {
+  margin-top: 30px;
+}
+.hera-cfg .hera-set-group__title {
+  margin: 0 0 10px 4px;
+  color: var(--hera-label);
+  font: 700 20px/1.2 var(--hera-font-display);
+  letter-spacing: -0.02em;
+}
+.hera-cfg .hera-set-group__foot {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 4px 0;
+}
+.hera-cfg .hera-set-group__foot .material-icons {
+  flex: none;
+  margin-top: 1px;
+  font-size: 16px;
+}
+
+.hera-cfg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 20px;
+}
+.hera-cfg-field__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  margin-bottom: 8px;
+}
+.hera-cfg-field__head .hera-set-field__label {
+  margin: 0;
+}
+.hera-cfg-field__head .hera-set-btn {
+  margin-left: auto;
+}
+.hera-cfg-field__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 2px 0;
+  color: var(--hera-label-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.hera-cfg-field__note .material-icons {
+  flex: none;
+  margin-top: 1px;
+  font-size: 16px;
+}
+.hera-cfg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 7px;
+  border-radius: 999px;
+  background: var(--hera-fill-strong);
+  color: var(--hera-label-2);
+  font: 600 12px/1.2 var(--hera-font);
+  white-space: nowrap;
+}
+.hera-cfg-pill .material-icons {
+  font-size: 14px;
+}
+.hera-cfg .hera-set-input[readonly] {
+  background: transparent;
+  border-color: var(--hera-separator);
+  cursor: default;
+}
+.hera-cfg .hera-set-input[readonly]:focus {
+  border-color: var(--hera-label-2);
+}
+
+.hera-cfg-test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.hera-cfg-verdict {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.hera-cfg-verdict:empty {
+  display: none;
+}
+.hera-cfg-verdict .material-icons {
+  flex: none;
+  font-size: 20px;
+}
+
+.hera-cfg .hera-set-btn:focus-visible {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+.hera-cfg .hera-set-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.hera-cfg .hera-set-btn:disabled:active {
+  transform: none;
+}
+.hera-cfg .hera-set-btn[hidden] {
+  display: none;
+}
+.hera-set-btn--small {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.hera-cfg-number {
+  flex: none;
+  width: 92px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.hera-cfg-number::-webkit-inner-spin-button,
+.hera-cfg-number::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+.hera-cfg .hera-set-row__text[for] {
+  cursor: pointer;
+}
+
+/* The select's caret is two gradients in a label token, as on the stock forms above. */
+.hera-cfg-select {
+  flex: none;
+  width: min(300px, 48%);
+  padding-right: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--hera-label-2) 50%), linear-gradient(135deg, var(--hera-label-2) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.hera-cfg-select:focus-visible {
+  outline: 3px solid var(--hera-focus) !important;
+  outline-offset: 2px;
+}
+.hera-cfg-avatar {
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+}
+.hera-cfg-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  border-bottom: 1px solid var(--hera-separator);
+}
+.hera-cfg-empty .material-icons {
+  flex: none;
+  font-size: 20px;
+}
+
+/* The save bar: a glass capsule at the foot of the screen while there is something to save, then
+ * a confirmation and gone. Fixed, because the Dashboard's page sits in an overflow-hidden
+ * ancestor that stops `sticky` working; the script sets --hera-cfg-center to the middle of the
+ * form column. */
+.hera-cfg-bar {
+  position: fixed;
+  bottom: 28px;
+  left: var(--hera-cfg-center, 50%);
+  z-index: 5;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 8px 8px 8px 22px;
+  border-radius: 999px;
+  background: var(--hera-glass-hover);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift);
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 12px);
+  transition: opacity var(--hera-fast) var(--hera-ease), transform var(--hera-slow) var(--hera-ease), visibility 0s linear var(--hera-fast);
+}
+.hera-cfg-bar.is-on {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+.hera-cfg-bar__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+  color: var(--hera-label);
+  font-size: 15px;
+  font-weight: 600;
+}
+.hera-cfg-bar__text .material-icons {
+  font-size: 20px;
+}
+.hera-cfg-bar .hera-set-btn {
+  min-height: 40px;
+}

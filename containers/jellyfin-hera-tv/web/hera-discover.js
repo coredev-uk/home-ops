@@ -2,7 +2,7 @@
  * Hera TV: discover module. Registers with window.HeraTV (hera-tv.js).
  *  - A Discover tab beside Home: Seerr's trending, popular and upcoming titles, with search.
  *  - A title sheet: backdrop, details, cast, trailer, and Request (films) or a season checklist (TV).
- *  - A Discover row on Jellyfin's search page, and "Request seasons" beside a series' Episodes.
+ *  - "Request seasons" beside a series' Episodes. Seerr results on the search page live in hera-search.js.
  * Requests are made by the plugin as the viewer's own Seerr account; a viewer who isn't linked
  * can browse but is pointed at Seerr instead.
  */
@@ -34,7 +34,7 @@
   const LISTS = [
     { id: "trending", name: "trending", title: "Trending" },
     { id: "films", name: "movies", title: "Popular Films" },
-    { id: "tv", name: "tv", title: "Popular TV Programmes" },
+    { id: "tv", name: "tv", title: "Popular TV Shows" },
     { id: "upcoming-films", name: "upcoming-movies", title: "Upcoming Films", dates: true },
     { id: "upcoming-tv", name: "upcoming-tv", title: "Upcoming TV", dates: true },
   ];
@@ -76,9 +76,9 @@
     return BADGES[status] ?? null;
   };
 
-  const kindOf = (item) => (item.mediaType === "tv" ? "TV Programme" : "Film");
+  const kindOf = (item) => (item.mediaType === "tv" ? "TV Show" : "Film");
 
-  const itemCard = (item, { dates = false } = {}) => {
+  const itemCard = (item, { dates = false, subtitle = null } = {}) => {
     const link = item.jellyfinId ? `#/details?id=${item.jellyfinId}` : null;
     const when = dates && item.releaseDate ? kit.shortDate(item.releaseDate) : item.year;
     const card = kit.card({
@@ -86,7 +86,7 @@
       onClick: link ? null : (event) => openTitle(item, { opener: event.currentTarget }),
       image: item.poster,
       title: item.title,
-      subtitle: [when, kindOf(item)].filter(Boolean).join(" · "),
+      subtitle: subtitle ?? [when, kindOf(item)].filter(Boolean).join(" · "),
       badge: badgeOf(item),
       badgeTone: statusOf(item) === "available" ? "light" : undefined,
     });
@@ -250,7 +250,8 @@
       body.replaceChildren(
         el("h2", { class: "hera-sheet__title", text: current.title || "" }),
         meta.length ? el("p", { class: "hera-sheet__meta" }, meta) : null,
-        d?.tagline ? el("p", { class: "hera-sheet__tagline", text: d.tagline }) : null,
+        // TMDB sometimes stores the word "null" as a title's tagline.
+        d?.tagline && d.tagline !== "null" ? el("p", { class: "hera-sheet__tagline", text: d.tagline }) : null,
         current.overview ? el("p", { class: "hera-sheet__overview", text: current.overview }) : null,
         actions,
         seasonsBox,
@@ -268,15 +269,23 @@
         el(
           "ul",
           { class: "hera-sheet__cast" },
-          cast.map((person) =>
-            el("li", { class: "hera-sheet__person" }, [
+          cast.map((person) => {
+            const face = [
               person.photo
                 ? el("img", { src: person.photo, alt: "", loading: "lazy", decoding: "async" })
                 : el("span", { class: "hera-sheet__person-fallback" }, icon("person")),
               el("span", { class: "hera-sheet__person-name", text: person.name }),
               person.character ? el("span", { class: "hera-sheet__person-role", text: person.character }) : null,
-            ]),
-          ),
+            ];
+            // The person's page (Jellyfin's if the library has them, else Seerr's filmography) is in hera-seerr.js.
+            return el(
+              "li",
+              { class: "hera-sheet__person" },
+              person.id
+                ? el("a", { class: "hera-sheet__person-link", href: `#/home?hera=person&tmdb=${person.id}`, onclick: () => close() }, face)
+                : face,
+            );
+          }),
         ),
       );
     };
@@ -658,10 +667,10 @@
     const input = el("input", {
       class: "hera-discover__input",
       type: "search",
-      placeholder: "Search films and TV programmes",
+      placeholder: "Search films and TV shows",
       autocomplete: "off",
       spellcheck: "false",
-      "aria-label": "Search films and TV programmes",
+      "aria-label": "Search films and TV shows",
       enterkeyhint: "search",
     });
     const clear = el("button", { type: "button", class: "hera-discover__clear", hidden: true, "aria-label": "Clear search" }, icon("close"));
@@ -829,13 +838,16 @@
     return path.startsWith("#/home") && new URLSearchParams(query).get("hera") === "discover";
   };
 
+  // The tab needs Seerr and the admin's Discover switch (Hera TV settings in the Dashboard).
+  const discoverOn = (ints) => Boolean(ints.seerr) && ints.features?.discover !== false;
+
   const currentPage = () => document.querySelector(".page:not(.hide)");
 
   // `page` is the page that is, or is about to be, showing.
   const sync = (page = currentPage()) => {
     if (wantsDiscover() && page?.id === "indexPage" && kit.userId()) {
       kit.integrations().then((ints) => {
-        if (ints.seerr && wantsDiscover()) mountView(page);
+        if (discoverOn(ints) && wantsDiscover()) mountView(page);
         updateTabs();
       });
     } else {
@@ -918,64 +930,6 @@
     });
     observer.observe(document.body, { childList: true, subtree: true });
     cleanups.push(() => observer.disconnect());
-  };
-
-  // ---------- search page ---------------------------------------------------------------
-
-  const searchPage = { input: null, handler: null, timer: 0, seq: 0 };
-
-  const clearSearchRow = () => document.querySelector('[data-hera-row="discover-search"]')?.remove();
-
-  const runPageSearch = async (page, text) => {
-    const mine = ++searchPage.seq;
-    clearSearchRow();
-    if (text.trim().length < SEARCH_MIN) return;
-    try {
-      const data = await searchTitles(text.trim());
-      if (mine !== searchPage.seq || !page.isConnected) return;
-      const found = (data?.results ?? []).filter((item) => !item.jellyfinId);
-      if (!found.length) return;
-      const row = kit.shelf({ id: "discover-search", title: "Discover", cards: found.map((item) => itemCard(item)) });
-      kit.mountRow(row, (node) => {
-        const results = page.querySelector(".searchResults");
-        if (results) results.after(node);
-        else page.append(node);
-      });
-    } catch {
-      /* Discover is an extra here; a failure leaves Jellyfin's own results alone */
-    }
-  };
-
-  const mountSearchPage = (page, params) => {
-    const input = page.querySelector("#searchTextInput");
-    if (!input || searchPage.input === input) return;
-    unbindSearchPage();
-    searchPage.input = input;
-    searchPage.handler = () => {
-      clearTimeout(searchPage.timer);
-      if (input.value.trim().length < SEARCH_MIN) {
-        searchPage.seq++;
-        clearSearchRow();
-        return;
-      }
-      searchPage.timer = setTimeout(() => runPageSearch(page, input.value), 450);
-    };
-    input.addEventListener("input", searchPage.handler);
-    // Jellyfin fills the field from the address a moment after the page shows.
-    setTimeout(() => {
-      if (searchPage.input === input && (input.value || params.get("query"))) {
-        runPageSearch(page, input.value || params.get("query") || "");
-      }
-    }, 600);
-  };
-
-  const unbindSearchPage = () => {
-    clearTimeout(searchPage.timer);
-    searchPage.seq++;
-    if (searchPage.input && searchPage.handler) searchPage.input.removeEventListener("input", searchPage.handler);
-    searchPage.input = null;
-    searchPage.handler = null;
-    clearSearchRow();
   };
 
   // ---------- series pages --------------------------------------------------------------
@@ -1077,7 +1031,7 @@
       if (!kit.api() || !kit.userId()) return;
       clearInterval(wait);
       const ints = await kit.integrations();
-      seerrOn = Boolean(ints.seerr);
+      seerrOn = discoverOn(ints);
       updateTabs();
       sync();
     }, 250);
@@ -1090,25 +1044,22 @@
 
   HT.register({
     name: "discover",
-    async onView(page, { itemId, params }) {
+    async onView(page, { itemId }) {
       if (!kit.userId()) return;
       const ints = await kit.integrations();
-      seerrOn = Boolean(ints.seerr);
+      seerrOn = discoverOn(ints);
       sync(page);
       if (!ints.seerr) return;
-      if (page.id !== "searchPage") unbindSearchPage();
       if (page.id !== "itemDetailPage") {
         stopSeriesWatch();
         removeMissingControls();
       }
-      if (page.id === "searchPage") mountSearchPage(page, params);
       if (page.id === "itemDetailPage" && itemId) await mountMissing(page, itemId);
     },
     teardown() {
       closeSheet();
       stopSeriesWatch();
       removeMissingControls();
-      unbindSearchPage();
       unmountView();
       desktopTab?.remove();
       tvTab?.remove();
@@ -1118,6 +1069,6 @@
     },
   });
 
-  HT.discover = { openTitle };
+  HT.discover = { openTitle, itemCard };
   start();
 })();

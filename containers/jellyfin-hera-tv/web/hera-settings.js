@@ -815,6 +815,18 @@
             },
           });
         const admin = extras.filter((item) => item.admin).map(mirror);
+        // Hera TV's own page in the Dashboard: Seerr and Maintainerr setup, and the home switches.
+        if (isAdmin()) {
+          admin.push(
+            row({
+              icon: "tv",
+              label: "Hera TV",
+              description: "Seerr, Maintainerr, and what Home and Discover show",
+              chevron: true,
+              href: "#/configurationpage?name=HeraTV",
+            }),
+          );
+        }
         const plugins = extras.filter((item) => !item.admin).map(mirror);
         return [
           group({ title: "Settings", rows: own }),

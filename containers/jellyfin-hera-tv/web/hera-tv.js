@@ -1159,9 +1159,19 @@
 
   const itemIdFromHash = () => new URLSearchParams(window.location.hash.split("?")[1] || "").get("id");
 
+  // The scroll-edge layer under the bar (body::after in hera-tv.css) is as tall as the bar that
+  // is showing: 64px, more with a library page's toolbar, or the TV layout's own header.
+  const measureBar = () => {
+    const bar = [...document.querySelectorAll(".MuiAppBar-root, .skinHeader")].find((node) => node.offsetHeight > 0);
+    if (bar) root.style.setProperty("--hera-bar-h", `${Math.round(bar.offsetHeight)}px`);
+  };
+
   const onView = async (page) => {
     if (!api() || !userId()) return;
     root.dataset.heraView = page.id || "";
+    // The page's toolbar renders a moment after the page shows.
+    requestAnimationFrame(measureBar);
+    setTimeout(measureBar, 400);
     const isHome = page.id === "indexPage";
     if (!isHome) root.classList.remove("hera-home");
     if (page.id !== "itemDetailPage") root.classList.remove("hera-art-top");
@@ -1209,7 +1219,11 @@
     const onDeviceScheme = () => appearance.pref === "auto" && appearance.apply();
     lightQuery?.addEventListener?.("change", onDeviceScheme);
     state.cleanups.push(() => lightQuery?.removeEventListener?.("change", onDeviceScheme));
-    const onScroll = () => root.classList.toggle("hera-scrolled", window.scrollY > 24);
+    const onScroll = () => {
+      const scrolled = window.scrollY > 24;
+      if (scrolled && !root.classList.contains("hera-scrolled")) measureBar();
+      root.classList.toggle("hera-scrolled", scrolled);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     state.cleanups.push(() => window.removeEventListener("scroll", onScroll));
     onScroll();

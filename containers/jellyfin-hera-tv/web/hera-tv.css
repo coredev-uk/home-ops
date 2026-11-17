@@ -276,17 +276,48 @@ html.hera-home:not(.hera-discover-on) .MuiAppBar-root,
 html.hera-art-top .MuiAppBar-root {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.35) 60%, transparent 100%) !important;
 }
-/* Once the page scrolls, the bar behind the tabs frosts so titles never run under the name. */
+/* Once the page scrolls, content passing under the bar softens rather than meeting a frosted
+ * slab: tvOS 26's scroll-edge effect. A layer under the bar (and a little below it) blurs and
+ * dims what is underneath, strongest at the top, and fades out through a mask, so there is no
+ * edge for the eye to catch. Saturation stays near neutral so posters don't smear into colour.
+ * It hangs off <body> rather than the bar: Chromium drops a masked backdrop blur inside the
+ * MUI app bar. hera-tv.js keeps --hera-bar-h at the visible bar's height. */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--hera-bar-h, 64px) + 40px);
+  z-index: 998;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--hera-glass) 0%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hera-bg) 72%, transparent) 0%,
+    color-mix(in srgb, var(--hera-bg) 50%, transparent) 60%,
+    transparent 100%
+  );
+  backdrop-filter: blur(18px) saturate(115%);
+  -webkit-backdrop-filter: blur(18px) saturate(115%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--hera-fast) var(--hera-ease);
+}
+html.hera-scrolled body::after {
+  opacity: 1;
+  transition-duration: var(--hera-slow);
+}
+/* The player and the login page have no page to scroll under a bar. */
+html[data-hera-view="videoOsdPage"] body::after,
+body:has(#loginPage:not(.hide))::after {
+  display: none;
+}
 html.hera-scrolled .MuiAppBar-root,
 html.hera-scrolled.hera-home:not(.hera-discover-on) .MuiAppBar-root,
 html.hera-scrolled.hera-art-top .MuiAppBar-root {
-  background: var(--hera-glass) !important;
-  backdrop-filter: blur(30px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(160%) !important;
-  box-shadow: 0 1px 0 var(--hera-hover) !important;
-}
-.MuiAppBar-root {
-  transition: background-color var(--hera-slow) var(--hera-ease), backdrop-filter var(--hera-slow) var(--hera-ease);
+  background: transparent !important;
 }
 
 .MuiAppBar-root > .MuiToolbar-root:first-child {
@@ -441,9 +472,7 @@ html.hera-art-top .skinHeader {
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent) !important;
 }
 html.hera-scrolled .skinHeader {
-  background: var(--hera-glass) !important;
-  backdrop-filter: var(--hera-blur) !important;
-  -webkit-backdrop-filter: var(--hera-blur) !important;
+  background: transparent !important;
 }
 .pageTitleWithDefaultLogo {
   background-image: none !important;

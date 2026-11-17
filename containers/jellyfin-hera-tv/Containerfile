@@ -13,7 +13,7 @@ RUN dotnet restore Jellyfin.Plugin.HeraTv.csproj
 COPY . .
 RUN dotnet publish Jellyfin.Plugin.HeraTv.csproj --no-restore -c Release -o /out -p:DebugType=none
 
-FROM docker.io/library/busybox:1.37@sha256:a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec
+FROM docker.io/library/busybox:1.38@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4
 
 LABEL org.opencontainers.image.source="https://github.com/coredev-uk/home-ops"
 

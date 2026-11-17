@@ -359,7 +359,7 @@
       : el("h2", { class: "hera-hero__title", text: item.Name });
 
     const meta = el("p", { class: "hera-hero__meta" }, [
-      el("span", { text: isSeries ? "TV Programme" : "Film" }),
+      el("span", { text: isSeries ? "TV Show" : "Film" }),
       item.Genres?.length ? el("span", { text: item.Genres.slice(0, 2).join(", ") }) : null,
       item.ProductionYear ? el("span", { text: String(item.ProductionYear) }) : null,
       isSeries
@@ -625,6 +625,7 @@
     }
 
     destroy() {
+      this.guard?.disconnect();
       cancelAnimationFrame(this.frame);
       this.visibility.disconnect();
       document.removeEventListener("visibilitychange", this.onVisibility);
@@ -654,8 +655,15 @@
       return;
     }
     state.hero?.destroy();
-    state.hero = new Hero(items);
-    tab.insertBefore(state.hero.node, tab.firstChild);
+    const hero = (state.hero = new Hero(items));
+    tab.insertBefore(hero.node, tab.firstChild);
+    // Jellyfin redraws the home tab when it comes back to it, which can sweep the hero out of
+    // the tab after it was mounted; put it back at the top.
+    hero.guard = new MutationObserver(() => {
+      if (hero.node.parentNode === tab || !tab.isConnected || page.classList.contains("hide")) return;
+      tab.insertBefore(hero.node, tab.firstChild);
+    });
+    hero.guard.observe(tab, { childList: true });
     // On a TV the remote starts on Play, as tvOS starts on the hero's primary action.
     if (root.classList.contains("layout-tv") && window.scrollY < 80) {
       const focusPlay = () => state.hero?.node.querySelector(".hera-hero__slide.is-active .hera-btn--primary")?.focus();
@@ -1166,6 +1174,26 @@
     if (bar) root.style.setProperty("--hera-bar-h", `${Math.round(bar.offsetHeight)}px`);
   };
 
+  // Jellyfin can show the home page before its home tab has drawn the sections container (coming
+  // back from another page through the header's Home link, or from Favourites). The hero and
+  // every home row hang off that container, so the page runs again once it exists.
+  const homeWait = { observer: null, timer: 0 };
+  const stopHomeWait = () => {
+    homeWait.observer?.disconnect();
+    homeWait.observer = null;
+    clearTimeout(homeWait.timer);
+  };
+  const waitForHomeSections = (page) => {
+    stopHomeWait();
+    homeWait.observer = new MutationObserver(() => {
+      if (!page.querySelector("#homeTab .homeSectionsContainer")) return;
+      stopHomeWait();
+      if (!page.classList.contains("hide")) onView(page);
+    });
+    homeWait.observer.observe(page, { childList: true, subtree: true });
+    homeWait.timer = setTimeout(stopHomeWait, 10000);
+  };
+
   const onView = async (page) => {
     if (!api() || !userId()) return;
     root.dataset.heraView = page.id || "";
@@ -1173,6 +1201,8 @@
     requestAnimationFrame(measureBar);
     setTimeout(measureBar, 400);
     const isHome = page.id === "indexPage";
+    stopHomeWait();
+    if (isHome && !page.querySelector("#homeTab .homeSectionsContainer")) waitForHomeSections(page);
     if (!isHome) root.classList.remove("hera-home");
     if (page.id !== "itemDetailPage") root.classList.remove("hera-art-top");
     try {
@@ -1292,6 +1322,7 @@
     },
     teardown() {
       state.hero?.destroy();
+      stopHomeWait();
       state.cleanups.splice(0).forEach((fn) => fn());
       modules.splice(0).forEach((module) => module.teardown?.());
       document.querySelectorAll(".hera-seasons").forEach((n) => n.remove());

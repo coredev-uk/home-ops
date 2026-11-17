@@ -54,8 +54,8 @@
 
   const leavingList = () =>
     load("leaving", 5 * 60 * 1000, async () => {
-      const { maintainerr } = await kit.integrations();
-      if (!maintainerr) return [];
+      const { maintainerr, features } = await kit.integrations();
+      if (!maintainerr || features?.leavingSoon === false) return [];
       const list = (await kit.hera("leaving")) || [];
       return list.filter((entry) => entry.jellyfinId && entry.leavesOn).sort((a, b) => a.leavesOn.localeCompare(b.leavesOn));
     });
@@ -337,8 +337,8 @@
   };
 
   const requestsRow = async () => {
-    const { seerrLinked } = await kit.integrations();
-    if (!seerrLinked) return null;
+    const { seerrLinked, features } = await kit.integrations();
+    if (!seerrLinked || features?.requests === false) return null;
     const requests = await load("requests", 60 * 1000, async () => (await kit.hera("discover/requests")) || []);
     const entries = (requests ?? [])
       .filter((request) => request.item?.title)
@@ -375,8 +375,8 @@
   };
 
   const trendingRow = async () => {
-    const { seerr } = await kit.integrations();
-    if (!seerr) return null;
+    const { seerr, features } = await kit.integrations();
+    if (!seerr || features?.trending === false) return null;
     const items = await load("trending", 10 * 60 * 1000, async () => {
       const pages = await Promise.all([1, 2].map((page) => kit.hera("discover/lists/trending", { query: { page } }).catch(() => null)));
       const seen = new Set();
@@ -388,7 +388,7 @@
     const entries = (items ?? []).map((item) => ({
       item,
       title: item.title,
-      subtitle: [item.mediaType === "tv" ? "TV Programme" : "Film", item.year].filter(Boolean).join(" · "),
+      subtitle: [item.mediaType === "tv" ? "TV Show" : "Film", item.year].filter(Boolean).join(" · "),
       image: item.poster,
     }));
     return entries.length

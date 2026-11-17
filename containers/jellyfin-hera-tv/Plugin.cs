@@ -6,7 +6,7 @@ using MediaBrowser.Model.Serialization;
 namespace Jellyfin.Plugin.HeraTv;
 
 /// <summary>Hera TV: an Apple TV-style look and home hero for Jellyfin's web client.</summary>
-public class Plugin : BasePlugin<PluginConfiguration>
+public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer)
         : base(applicationPaths, xmlSerializer)
@@ -19,6 +19,28 @@ public class Plugin : BasePlugin<PluginConfiguration>
     public override string Name => "Hera TV";
 
     public override Guid Id => Guid.Parse("9718b214-55d6-4828-84c8-677f2a4a131b");
+
+    /// <summary>The name the dashboard page is addressed by: <c>#/configurationpage?name=HeraTV</c>.</summary>
+    public const string SettingsPage = "HeraTV";
+
+    /// <summary>Gets the dashboard's settings page (HTML plus its script) and its place in the sidebar.</summary>
+    public IEnumerable<PluginPageInfo> GetPages()
+    {
+        yield return new PluginPageInfo
+        {
+            Name = SettingsPage,
+            DisplayName = "Hera TV",
+            EmbeddedResourcePath = "heratv-settings.html",
+            EnableInMainMenu = true,
+            MenuSection = "server",
+            MenuIcon = "tv",
+        };
+        yield return new PluginPageInfo
+        {
+            Name = "heratv-settings.js",
+            EmbeddedResourcePath = "heratv-settings.js",
+        };
+    }
 
     public override string Description => "Apple TV-style theme, personalised home, Discover with Seerr requests and Maintainerr's Leaving Soon for the web client.";
 }
@@ -34,6 +56,18 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>Gets or sets how long each hero title stays before the next, in seconds.</summary>
     public int HeroIntervalSeconds { get; set; } = 8;
+
+    /// <summary>Gets or sets a value indicating whether the Discover tab shows.</summary>
+    public bool DiscoverEnabled { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether Maintainerr's Leaving Soon row and chip show.</summary>
+    public bool LeavingSoonEnabled { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether the Your Requests row shows on the home page.</summary>
+    public bool RequestsRowEnabled { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether the Trending to Request row shows on the home page.</summary>
+    public bool TrendingRowEnabled { get; set; } = true;
 
     // Integrations. HERATV_* environment variables take precedence over these.
 

@@ -178,37 +178,48 @@ button {
   font-family: var(--hera-font) !important;
 }
 
+/* The ground is painted by <html> (the canvas) only. Page backdrops sit at z-index -1, which
+ * paints above the canvas but beneath any in-flow block background, so a painted <body> or
+ * Jellyfin's viewport-tall background container would black them out at the top of the page and
+ * leave them showing below once scrolled. Both stay clear; the backdrop's own scrim dims it. */
+html {
+  background: var(--hera-bg) !important;
+}
 html,
 body {
-  background: var(--hera-bg) !important;
   color: var(--hera-label);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+body,
 .backgroundContainer,
 .backgroundContainer.withBackdrop {
-  background: var(--hera-bg) !important;
+  background: transparent !important;
 }
 
-/* Page backdrops sit behind everything, dimmed and fading into the black ground. */
+/* Page backdrops sit behind everything as ambient light at the top of the page, dimmed and
+ * fading into the ground. The scrim must sit above the image layers, which Jellyfin positions
+ * with z-index 1 while it crossfades between them. */
 .backdropContainer .backdropImage {
   filter: saturate(110%);
 }
 .backdropContainer::after {
   content: "";
   position: absolute;
+  z-index: 2;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.75) 45%, var(--hera-bg) 85%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.55) 0%, transparent 60%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.82) 38%, var(--hera-bg) 72%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, transparent 60%);
 }
-/* Light ground: the page's backdrop is a faint wash that dissolves into white, not a black veil. */
-:root[data-hera-scheme="light"] .backdropContainer .backdropImage {
-  opacity: 0.14;
-}
+/* Light ground: the backdrop is a faint wash that dissolves into white, not a black veil. */
 :root[data-hera-scheme="light"] .backdropContainer::after {
-  background: linear-gradient(180deg, transparent 0%, var(--hera-bg) 85%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hera-bg) 80%, transparent) 0%,
+    color-mix(in srgb, var(--hera-bg) 92%, transparent) 38%,
+    var(--hera-bg) 72%
+  );
 }
 
 ::selection {
@@ -1396,7 +1407,7 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   animation: hera-empty-in var(--hera-slow) var(--hera-ease) 600ms both;
 }
 #indexPage .tabContent[data-index="1"] .sections:not(:has(.verticalSection:not(.hide)))::after {
-  content: "Nothing in Favourites yet.\A Select the heart on a film, programme or episode to keep it here.";
+  content: "Nothing in Favourites yet.\A Select the heart on a film, show or episode to keep it here.";
   white-space: pre-line;
   max-width: 32em;
   font-size: 17px;
@@ -1478,64 +1489,8 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   color: var(--hera-select) !important;
 }
 
-/* ---------- Login ----------------------------------------------------------------- */
+/* ---------- Checkboxes (the sign-in page is web/hera-login.css) ------------------- */
 
-/* The gradient sits on the page body so it runs under the bar without a seam. */
-body:has(#loginPage:not(.hide)) {
-  background: radial-gradient(120% 80% at 50% 0%, var(--hera-surface-2) 0%, var(--hera-bg) 60%) fixed !important;
-}
-#loginPage,
-.loginPage {
-  background: transparent !important;
-}
-#loginPage .padded-left.padded-right,
-.manualLoginForm,
-.visualLoginForm {
-  max-width: 420px;
-  margin: 0 auto;
-}
-#loginPage h1,
-#loginPage .sectionTitle {
-  font-family: var(--hera-font-display) !important;
-  font-size: 34px !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.025em;
-  text-align: center;
-}
-/* The household signs in with the identity provider: that button is the white primary; the
- * local form (break-glass accounts) steps back to glass. */
-#loginPage .padded-bottom-page.margin-auto-y {
-  display: flex;
-  flex-direction: column;
-  width: min(420px, 100%);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  gap: 10px;
-}
-#loginPage .manualLoginForm,
-#loginPage .readOnlyContent {
-  display: contents;
-}
-#loginPage .manualLoginForm > :first-child {
-  order: -2;
-  margin-bottom: 12px;
-}
-#loginPage .loginDisclaimerContainer {
-  order: -1;
-  display: block !important;
-  margin: 0 0 22px !important;
-  padding-bottom: 26px;
-  border-bottom: 1px solid var(--hera-separator);
-}
-#loginPage .loginDisclaimer {
-  width: 100%;
-}
-#loginPage .emby-input {
-  min-height: 46px;
-  padding: 0 14px !important;
-}
 .checkboxOutline {
   border: 2px solid var(--hera-label-3) !important;
   border-radius: 7px !important;
@@ -1547,26 +1502,6 @@ body:has(#loginPage:not(.hide)) {
 }
 .emby-checkbox:checked + span + .checkboxOutline .checkboxIcon-checked {
   color: var(--hera-on-select) !important;
-}
-.sso-login button,
-.sso-login .button-submit {
-  width: 100% !important;
-  min-height: 50px;
-  margin: 0 !important;
-  font-size: 17px !important;
-  background: var(--hera-select) !important;
-  color: var(--hera-on-select) !important;
-}
-#loginPage .manualLoginForm .button-submit {
-  background: var(--hera-fill-strong) !important;
-  color: var(--hera-label) !important;
-}
-#loginPage .manualLoginForm .button-submit:hover {
-  background: rgba(118, 118, 128, 0.48) !important;
-}
-/* Signed out, the tabs and header actions lead nowhere. */
-body:has(#loginPage:not(.hide)) .MuiAppBar-root > .MuiToolbar-root:first-child > * {
-  visibility: hidden;
 }
 
 /* ---------- Hera hero (home) ------------------------------------------------------ */
@@ -2714,26 +2649,6 @@ progress[aria-valuenow]:before,
   border-radius: 999px !important;
 }
 
-/* Search: a large glass field, then suggestions as a plain left-aligned list. */
-.searchFields {
-  padding-top: 8px;
-}
-.searchFieldsInner {
-  max-width: 720px;
-  margin: 0 auto;
-  gap: 12px;
-}
-.searchfields-icon {
-  color: var(--hera-label-3);
-  align-self: center;
-  margin: 0 !important;
-}
-.searchFieldsInner .inputContainer {
-  margin: 0 !important;
-}
-.searchFieldsInner .inputLabel {
-  display: none;
-}
 /* The settings menu: rounded rows, as in the Apple TV app's Settings. */
 .userPreferencesPage a.listItem-border {
   display: block;
@@ -2960,30 +2875,6 @@ progress[aria-valuenow]:before,
   outline: none !important;
   transform: scale(1.1);
 }
-/* TV search keyboard: round keys, the focused one white. */
-#searchPage .alphaPickerButton-tv {
-  min-width: 44px;
-  height: 44px;
-  margin: 2px;
-  border-radius: 999px;
-  color: var(--hera-label-2);
-  font-size: 19px;
-  font-weight: 600;
-  transition: transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
-}
-#searchPage .alphaPickerButton-tv:focus,
-#searchPage .alphaPickerButton-tv:focus-visible {
-  background: var(--hera-select) !important;
-  color: var(--hera-on-select) !important;
-  outline: none !important;
-  transform: scale(1.12);
-}
-#searchPage .alphaPickerRow {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 2px;
-}
 #jellyfin-enhanced-panel .je-panel-search,
 #jellyfin-enhanced-panel .je-panel-search:focus {
   border-radius: 999px;
@@ -3009,44 +2900,6 @@ progress[aria-valuenow]:before,
 /* A collection's own shelf already sits on the page edge. */
 .collectionItems .sectionTitleContainer.padded-left {
   padding-left: 0 !important;
-}
-.searchFields .emby-input {
-  min-height: 52px;
-  padding: 0 22px !important;
-  border-radius: 999px !important;
-  font-size: 17px !important;
-}
-.searchSuggestions {
-  max-width: 720px;
-  margin: 28px auto 0;
-  text-align: left !important;
-}
-.searchSuggestions .sectionTitle {
-  padding: 0 !important;
-  font-size: 22px !important;
-  font-weight: 700 !important;
-  text-align: left;
-}
-.searchSuggestionsList {
-  padding: 0 !important;
-}
-.searchSuggestionsList .button-link {
-  display: block !important;
-  padding: 12px 4px !important;
-  border-bottom: 1px solid var(--hera-separator);
-  border-radius: 0;
-  color: var(--hera-label) !important;
-  font-size: 17px;
-  font-weight: 500;
-  text-align: left;
-}
-.searchSuggestionsList .button-link:hover {
-  color: var(--hera-label-2) !important;
-}
-/* People found by a search are portraits, as in Cast & Crew. */
-#searchPage .personCard .cardScalable,
-#searchPage .personCard .cardImageContainer {
-  border-radius: 999px !important;
 }
 
 /* Settings and account pages: one centred column, a bold page title, grouped sections. */

@@ -18,8 +18,6 @@ namespace Jellyfin.Plugin.HeraTv.Integrations;
 [Route("HeraTV")]
 public class DiscoverController(UpstreamClient upstream, LibraryLookup library, IUserManager userManager) : ControllerBase
 {
-    private const string TmdbImage = "https://image.tmdb.org/t/p/";
-
     private static readonly Dictionary<string, string> Lists = new(StringComparer.OrdinalIgnoreCase)
     {
         ["trending"] = "api/v1/discover/trending",
@@ -33,6 +31,7 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
     public IActionResult GetIntegrations()
     {
         var settings = IntegrationSettings.Current;
+        var config = Plugin.Instance?.Configuration ?? new PluginConfiguration();
         var user = CurrentUser();
         return Ok(new
         {
@@ -40,6 +39,13 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
             seerrLinked = settings.SeerrEnabled && user is not null && settings.SeerrUserFor(user.Username) is not null,
             seerrUrl = settings.SeerrPublicUrl,
             maintainerr = settings.MaintainerrEnabled,
+            features = new
+            {
+                discover = config.DiscoverEnabled,
+                leavingSoon = config.LeavingSoonEnabled,
+                requests = config.RequestsRowEnabled,
+                trending = config.TrendingRowEnabled,
+            },
         });
     }
 
@@ -86,7 +92,7 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
         }
 
         node["mediaType"] = type;
-        var item = Item(node, user);
+        var item = SeerrMapper.Item(node, user, library);
         var seasons = node["seasons"]?.AsArray()
             .Where(s => (s?["seasonNumber"]?.GetValue<int>() ?? 0) > 0)
             .Select(s => new
@@ -94,7 +100,7 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
                 seasonNumber = s!["seasonNumber"]!.GetValue<int>(),
                 name = (string?)s["name"],
                 episodeCount = s["episodeCount"]?.GetValue<int>() ?? 0,
-                status = SeasonStatus(node, s["seasonNumber"]!.GetValue<int>()),
+                status = SeerrMapper.SeasonStatus(node, s["seasonNumber"]!.GetValue<int>()),
             })
             .ToArray();
         var trailer = node["relatedVideos"]?.AsArray()
@@ -103,7 +109,8 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
         {
             name = (string?)c?["name"],
             character = (string?)c?["character"],
-            photo = Image((string?)c?["profilePath"], "w185"),
+            id = c?["id"]?.GetValue<int?>(),
+            photo = SeerrMapper.Image((string?)c?["profilePath"], "w185"),
         }).ToArray();
 
         return Ok(new
@@ -152,8 +159,8 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
             title["mediaType"] = type;
             items.Add(new
             {
-                item = Item(title, user),
-                requestStatus = RequestStatus(request!["status"]?.GetValue<int>() ?? 0),
+                item = SeerrMapper.Item(title, user, library),
+                requestStatus = SeerrMapper.RequestStatus(request!["status"]?.GetValue<int>() ?? 0),
                 requestedAt = (string?)request["createdAt"],
             });
         }
@@ -189,7 +196,7 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
         var (status, response) = await upstream.SeerrPostAsync("api/v1/request", payload, seerrUser.Value).ConfigureAwait(false);
         if (status is >= 200 and < 300)
         {
-            return Ok(new { requestStatus = RequestStatus(response?["status"]?.GetValue<int>() ?? 1) });
+            return Ok(new { requestStatus = SeerrMapper.RequestStatus(response?["status"]?.GetValue<int>() ?? 1) });
         }
 
         return StatusCode(status >= 400 && status < 500 ? status : StatusCodes.Status502BadGateway, new
@@ -205,6 +212,11 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
         if (user is null)
         {
             return Unauthorized();
+        }
+
+        if (Plugin.Instance?.Configuration.LeavingSoonEnabled == false)
+        {
+            return Ok(Array.Empty<object>());
         }
 
         var collections = await upstream.MaintainerrGetAsync("api/collections", TimeSpan.FromMinutes(10)).ConfigureAwait(false);
@@ -257,7 +269,7 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
         var node = await upstream.SeerrGetAsync(pathAndQuery, TimeSpan.FromMinutes(10)).ConfigureAwait(false);
         var results = node?["results"]?.AsArray()
             .Where(r => (string?)r?["mediaType"] is "movie" or "tv")
-            .Select(r => Item(r!, user))
+            .Select(r => SeerrMapper.Item(r!, user, library))
             .ToArray() ?? [];
         return Ok(new
         {
@@ -265,67 +277,6 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
             totalPages = node?["totalPages"]?.GetValue<int>() ?? 0,
             results,
         });
-    }
-
-    private object Item(JsonNode node, User user)
-    {
-        var type = (string?)node["mediaType"] == "tv" ? "tv" : "movie";
-        var tmdbId = node["id"]?.ToString();
-        var inLibrary = library.Find(user, type, tmdbId);
-        var date = (string?)node["releaseDate"] ?? (string?)node["firstAirDate"];
-        return new
-        {
-            tmdbId = node["id"]?.GetValue<int>(),
-            mediaType = type,
-            title = (string?)node["title"] ?? (string?)node["name"],
-            year = date is { Length: >= 4 } ? date[..4] : null,
-            releaseDate = date,
-            overview = (string?)node["overview"],
-            poster = Image((string?)node["posterPath"], "w342"),
-            backdrop = Image((string?)node["backdropPath"], "w1280"),
-            rating = node["voteAverage"]?.GetValue<double?>(),
-            status = inLibrary is not null ? "available" : MediaStatus(node["mediaInfo"]?["status"]?.GetValue<int>() ?? 0),
-            jellyfinId = inLibrary?.Id.ToString("N", CultureInfo.InvariantCulture),
-        };
-    }
-
-    private static string? Image(string? path, string size) => string.IsNullOrEmpty(path) ? null : TmdbImage + size + path;
-
-    // Seerr media status: 2 pending, 3 processing, 4 partly available, 5 available.
-    private static string MediaStatus(int status) => status switch
-    {
-        2 => "pending",
-        3 => "processing",
-        4 => "partial",
-        5 => "available",
-        _ => "none",
-    };
-
-    // Seerr request status: 1 pending approval, 2 approved, 3 declined, 4 failed, 5 completed.
-    private static string RequestStatus(int status) => status switch
-    {
-        1 => "pending",
-        2 => "approved",
-        3 => "declined",
-        4 => "failed",
-        5 => "available",
-        _ => "pending",
-    };
-
-    private static string SeasonStatus(JsonNode title, int seasonNumber)
-    {
-        var season = title["mediaInfo"]?["seasons"]?.AsArray()
-            .FirstOrDefault(s => s?["seasonNumber"]?.GetValue<int>() == seasonNumber);
-        if (season is not null)
-        {
-            return MediaStatus(season["status"]?.GetValue<int>() ?? 0);
-        }
-
-        var requested = title["mediaInfo"]?["requests"]?.AsArray()
-            .Where(r => r?["status"]?.GetValue<int>() is 1 or 2)
-            .SelectMany(r => r?["seasons"]?.AsArray() ?? [])
-            .Any(s => s?["seasonNumber"]?.GetValue<int>() == seasonNumber) ?? false;
-        return requested ? "pending" : "none";
     }
 
     private static string? Certification(JsonNode title, string type)

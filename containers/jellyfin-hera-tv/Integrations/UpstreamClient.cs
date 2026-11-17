@@ -111,4 +111,46 @@ public sealed class UpstreamClient(ILogger<UpstreamClient> logger)
             return null;
         }
     }
+
+    /// <summary>What a connection test saw: the HTTP status and JSON body, or why nothing answered.</summary>
+    public sealed record Probe(int? Status, JsonNode? Body, string? Failure);
+
+    /// <summary>Drops cached reads, so a changed URL or key never serves the old server's answers.</summary>
+    public void ClearCache() => _cache.Clear();
+
+    /// <summary>One uncached GET against a base URL that may not be saved yet: the settings page's Test connection.</summary>
+    public async Task<Probe> ProbeAsync(Uri baseUri, string path, string? apiKey)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, path));
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            request.Headers.Add("X-Api-Key", apiKey);
+        }
+
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+        try
+        {
+            using var response = await Http.SendAsync(request, timeout.Token).ConfigureAwait(false);
+            var text = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
+            JsonNode? body = null;
+            try
+            {
+                body = string.IsNullOrWhiteSpace(text) ? null : JsonNode.Parse(text);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // An HTML page or plain text: the status alone says what it was.
+            }
+
+            return new Probe((int)response.StatusCode, body, null);
+        }
+        catch (OperationCanceledException)
+        {
+            return new Probe(null, null, "No answer within 8 seconds.");
+        }
+        catch (HttpRequestException ex)
+        {
+            return new Probe(null, null, ex.InnerException?.Message ?? ex.Message);
+        }
+    }
 }

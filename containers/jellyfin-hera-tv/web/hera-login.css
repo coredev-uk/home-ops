@@ -1,0 +1,606 @@
+/*
+ * Hera TV: sign-in page. Loaded after hera-tv.css; colours are the scheme tokens.
+ *
+ * The household signs in with HyperionID, so that button is the page's one white pill. Quick
+ * Connect is glass beneath it; the local password form (the break-glass admin) hides behind a
+ * quiet text control and opens in place. hera-login.js adds the server's name, the control, and
+ * reorders Jellyfin's own elements (it keeps their handlers); everything else is here.
+ */
+
+/* ---------- Ground, and the chrome that leads nowhere ----------------------------- */
+
+html.hera-signed-out body {
+  background: radial-gradient(90% 70% at 50% 0%, var(--hera-surface-2) 0%, var(--hera-bg) 72%) fixed !important;
+}
+html.hera-signed-out .MuiAppBar-root,
+html.hera-signed-out .skinHeader {
+  display: none !important;
+}
+html.hera-signed-out .backgroundContainer,
+html.hera-signed-out .backdropContainer {
+  display: none;
+}
+#loginPage,
+.hera-auth {
+  background: transparent !important;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ---------- Sign in --------------------------------------------------------------- */
+
+#loginPage:not(.hide) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  /* The closed block (about 340px tall) centres at 45% of the height; opening the form grows it downward. */
+  padding-top: max(40px, calc(45vh - 170px)) !important;
+  box-sizing: border-box;
+}
+#loginPage .hera-login__stack {
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 0 0 48px !important;
+  box-sizing: border-box;
+}
+#loginPage .hera-login__stack > * {
+  animation: hera-login-in 640ms var(--hera-ease) backwards;
+}
+#loginPage .hera-login__stack > .readOnlyContent {
+  animation-delay: 90ms;
+}
+@keyframes hera-login-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #loginPage .hera-login__stack > *,
+  #loginPage .manualLoginForm {
+    animation: none !important;
+  }
+}
+
+/* The server's name is the page's heading: this is where you are signing in. */
+.hera-login__brand {
+  margin: 0 0 clamp(32px, 5vh, 48px);
+  text-align: center;
+}
+#loginPage .hera-login__name {
+  margin: 0;
+  font-family: var(--hera-font-display) !important;
+  font-size: clamp(52px, 5vw, 80px) !important;
+  font-weight: 700 !important;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-align: center;
+  color: var(--hera-label);
+}
+/* The first visit has no cached name yet: keep the line's height so nothing jumps when it arrives. */
+.hera-login__name:empty::before {
+  content: "\00a0";
+}
+.hera-login__lede {
+  margin: 14px 0 0;
+  font-size: 19px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--hera-label-2);
+}
+/* Until we know whether there is a single sign-on button, show the name and nothing that would jump. */
+.hera-login--pending .readOnlyContent,
+.hera-login--pending .manualLoginForm {
+  visibility: hidden;
+}
+/* Jellyfin's own headings are replaced by the name above. */
+#loginPage .manualLoginForm > :first-child,
+#loginPage .visualLoginForm > h1 {
+  display: none;
+}
+
+/* The actions: HyperionID, Quick Connect, the password control. */
+#loginPage .readOnlyContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 !important;
+}
+#loginPage .loginDisclaimerContainer {
+  display: block !important;
+  margin: 0 !important;
+}
+#loginPage .loginDisclaimer,
+#loginPage .sso-login {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+#loginPage .readOnlyContent .raised,
+#loginPage .manualLoginForm .raised,
+#loginPage .sso-login button {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-height: 52px;
+  margin: 0 !important;
+  padding: 0 1.25em;
+  font-size: 17px !important;
+  cursor: pointer;
+}
+#loginPage .sso-login button {
+  border-radius: 999px !important;
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+  box-shadow: none !important;
+  transition: transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+#loginPage .sso-login button:hover {
+  background: var(--hera-select-hover) !important;
+}
+#loginPage .sso-login button:active {
+  transform: scale(0.95);
+}
+#loginPage .raised:active {
+  transform: scale(0.95);
+}
+
+/* The password route: text, not a button. */
+.hera-login__toggle,
+#loginPage .hera-login__quiet:not(.hide) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  gap: 2px;
+  width: auto !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 16px 0 18px !important;
+  border: 0;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--hera-label-2) !important;
+  font: inherit;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.005em !important;
+  cursor: pointer;
+  transition: transform var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.hera-login__toggle:hover,
+#loginPage .hera-login__quiet:hover {
+  background: var(--hera-hover) !important;
+  color: var(--hera-label) !important;
+}
+.hera-login__toggle:active,
+#loginPage .hera-login__quiet:active {
+  transform: scale(0.95);
+}
+.hera-login__toggle .material-icons {
+  font-size: 20px;
+  transition: transform var(--hera-slow) var(--hera-ease);
+}
+.hera-login__toggle[aria-expanded="true"] .material-icons {
+  transform: rotate(180deg);
+}
+.hera-login--users .hera-login__toggle {
+  display: none !important;
+}
+
+/* The password form, opened in place beneath its control. */
+#loginPage .manualLoginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: none;
+  margin: 10px 0 0;
+}
+#loginPage.hera-login:not(.hera-login--form) .manualLoginForm {
+  display: none;
+}
+#loginPage .manualLoginForm:not(.hide) {
+  animation: hera-login-reveal var(--hera-slow) var(--hera-ease) backwards;
+}
+@keyframes hera-login-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+/* HyperionID stays the way in; once the password form is open its own button leads. */
+#loginPage.hera-login--sso.hera-login--open:not(.hera-login--users) .sso-login button {
+  background: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+}
+#loginPage.hera-login--sso.hera-login--open:not(.hera-login--users) .sso-login button:hover {
+  background: var(--hera-glass-hover) !important;
+}
+
+/* The two fields read as one grouped list, as in tvOS settings. */
+#loginPage .inputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  min-height: 54px;
+  margin: 0 !important;
+  padding: 0 16px;
+  background: var(--hera-fill);
+  transition: box-shadow var(--hera-fast) var(--hera-ease);
+}
+#loginPage .manualLoginForm > .inputContainer:nth-child(2) {
+  margin-bottom: -12px !important;
+  border-radius: 14px 14px 4px 4px;
+}
+#loginPage .manualLoginForm > .inputContainer:nth-child(3) {
+  border-radius: 4px 4px 14px 14px;
+}
+#loginPage .inputContainer:focus-within {
+  box-shadow: inset 0 0 0 2px var(--hera-focus);
+}
+#loginPage .inputContainer .inputLabel {
+  position: static;
+  flex: 0 0 84px;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  color: var(--hera-label-2) !important;
+}
+#loginPage .inputContainer .emby-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 54px;
+  min-height: 0;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  caret-color: var(--hera-label);
+  font-size: 17px !important;
+}
+#loginPage .inputContainer .emby-input:focus,
+#loginPage .inputContainer .emby-input:focus-visible {
+  outline: none !important;
+}
+/* Browser autofill would paint its own blue. */
+#loginPage .emby-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--hera-label);
+  transition: background-color 600000s 0s;
+}
+
+#loginPage .checkboxContainer {
+  min-height: 40px;
+  margin: 2px 0 0 !important;
+}
+#loginPage .checkboxLabel {
+  font-size: 15px;
+}
+.emby-checkbox:focus-visible + span + .checkboxOutline {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 2px;
+}
+
+#loginPage .manualLoginForm .button-submit {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+  margin-top: 2px !important;
+}
+#loginPage .manualLoginForm .button-submit:hover {
+  background: var(--hera-select-hover) !important;
+}
+#loginPage .manualLoginForm > div:last-child {
+  margin: 0 !important;
+}
+
+/* Server users, when the server lists them: Jellyfin's cards, on the same ground. */
+#loginPage .visualLoginForm {
+  max-width: none;
+  margin: 0 0 12px;
+}
+
+/* ---------- Quick Connect dialog -------------------------------------------------- */
+
+/* Jellyfin makes its alerts full-screen below 1280px; here every dialog shown signed out (Quick
+ * Connect, a wrong-password alert) is a card at every size. hera-login.js marks them. */
+.hera-auth-dialog,
+.hera-auth-dialog.dialog-fullscreen-lowres {
+  --hera-qc-width: 380px;
+  position: relative !important;
+  inset: auto !important;
+  width: min(var(--hera-qc-width), calc(100vw - 48px)) !important;
+  height: auto !important;
+  max-width: none;
+  margin: auto !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift) !important;
+}
+.hera-auth-dialog .formDialogHeader {
+  padding: 28px 24px 0;
+}
+.hera-auth-dialog .formDialogHeaderTitle {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: var(--hera-font-display) !important;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--hera-label);
+}
+.hera-auth-dialog .formDialogContent {
+  max-width: none !important;
+}
+.hera-auth-dialog .dialogContentInner {
+  padding: 18px 24px 8px !important;
+}
+.hera-qc__code {
+  font-family: var(--hera-font-display);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--hera-label);
+}
+.hera-qc__hint {
+  max-width: 28ch;
+  margin: 14px auto 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--hera-label-2);
+}
+.hera-auth-dialog .formDialogFooter {
+  margin: 12px 24px 24px !important;
+}
+.hera-auth-dialog .formDialogFooter .raised {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 100%;
+  width: 100%;
+  margin: 0 !important;
+  min-height: 50px;
+  font-size: 17px;
+  box-shadow: none !important;
+}
+
+/* ---------- Forgot password, reset PIN, add server, select server ------------------ */
+
+/* hera-login.js marks every signed-out standalone page except the sign-in page. They start at
+ * the same height as the sign-in page's name, so moving between them does not jump. */
+.hera-auth:not(.hide) {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: max(40px, calc(45vh - 170px)) !important;
+}
+.hera-auth > .padded-bottom-page {
+  width: min(380px, calc(100% - 48px));
+  padding: 0 0 48px !important;
+  box-sizing: border-box;
+}
+.hera-auth form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: none;
+  margin: 0 !important;
+}
+.hera-auth form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hera-auth form > div > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hera-auth form br {
+  display: none;
+}
+.hera-auth h1,
+.hera-auth h2,
+.hera-auth .sectionTitle.sectionTitle-cards {
+  margin: 0 0 12px;
+  font-family: var(--hera-font-display) !important;
+  font-size: 34px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em;
+  text-align: center;
+  color: var(--hera-label);
+}
+.hera-auth .inputContainer {
+  margin: 0 !important;
+}
+.hera-auth .inputLabel {
+  display: block;
+  position: static;
+  margin: 0 0 8px;
+  padding: 0;
+  transform: none;
+  font-size: 15px;
+}
+.hera-auth .emby-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 54px;
+  padding: 0 16px !important;
+  font-size: 17px !important;
+  caret-color: var(--hera-label);
+}
+.hera-auth .fieldDescription {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.hera-auth form .raised {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-height: 52px;
+  margin: 0 !important;
+  font-size: 17px !important;
+  cursor: pointer;
+}
+.hera-auth form .raised:active {
+  transform: scale(0.95);
+}
+.hera-auth form .raised.submit,
+.hera-auth form .raised.button-submit {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+}
+.hera-auth form .raised.submit:hover,
+.hera-auth form .raised.button-submit:hover {
+  background: var(--hera-select-hover) !important;
+}
+
+#selectServerPage > .margin-auto-y {
+  width: 100%;
+  padding-bottom: 48px;
+}
+#selectServerPage .loginSquareCard {
+  width: 168px;
+  margin: 0 12px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--hera-r-wide);
+  color: var(--hera-label);
+  cursor: pointer;
+}
+#selectServerPage .loginSquareCard .cardScalable,
+#selectServerPage .loginSquareCard .cardImageContainer {
+  border-radius: var(--hera-r-wide);
+  background: var(--hera-fill) !important;
+  color: var(--hera-label-2);
+}
+#selectServerPage .loginSquareCard .cardFooter,
+#selectServerPage .loginSquareCard .cardText {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 0 0 !important;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center !important;
+  color: var(--hera-label);
+}
+#selectServerPage .btnAddServer {
+  min-height: 48px;
+  padding: 0 1.4em;
+}
+
+
+/* ---------- TV layout: the remote moves between the pills ------------------------- */
+
+.layout-tv #loginPage:not(.hide),
+.layout-tv .hera-auth:not(.hide) {
+  padding-top: max(24px, calc(45vh - 192px)) !important;
+}
+.layout-tv #loginPage .hera-login__stack {
+  width: min(520px, calc(100% - 96px));
+}
+.layout-tv .hera-login__brand {
+  margin-bottom: 32px;
+}
+.layout-tv #loginPage .hera-login__name {
+  font-size: 84px !important;
+}
+.layout-tv .hera-login__lede {
+  font-size: 24px;
+}
+.layout-tv #loginPage .readOnlyContent .raised,
+.layout-tv #loginPage .manualLoginForm .raised,
+.layout-tv #loginPage .sso-login button {
+  min-height: 68px;
+  font-size: 22px !important;
+}
+.layout-tv .hera-login__toggle,
+.layout-tv #loginPage .hera-login__quiet {
+  min-height: 60px !important;
+  font-size: 20px !important;
+}
+.layout-tv #loginPage .inputContainer {
+  min-height: 68px;
+}
+.layout-tv #loginPage .inputContainer .inputLabel {
+  flex-basis: 120px;
+  font-size: 19px;
+}
+.layout-tv #loginPage .inputContainer .emby-input {
+  height: 68px;
+  font-size: 22px !important;
+}
+.layout-tv #loginPage .checkboxLabel {
+  font-size: 19px;
+}
+.layout-tv .hera-auth-dialog {
+  --hera-qc-width: 520px;
+}
+.layout-tv .hera-qc__code {
+  font-size: 72px;
+}
+.layout-tv .hera-qc__hint {
+  font-size: 20px;
+}
+/* tvOS lights one control at a time: the focused pill turns white, the rest step back. */
+.layout-tv #loginPage .raised:focus,
+.layout-tv #loginPage .sso-login button:focus,
+.layout-tv #loginPage .hera-login__toggle:focus,
+.layout-tv #loginPage .hera-login__quiet:focus,
+.layout-tv .hera-auth-dialog .raised:focus {
+  outline: none !important;
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+  transform: scale(1.05);
+  box-shadow: var(--hera-shadow-lift) !important;
+}
+.layout-tv #loginPage .hera-login__stack:focus-within .sso-login button:not(:focus),
+.layout-tv #loginPage .hera-login__stack:focus-within .manualLoginForm .button-submit:not(:focus) {
+  background: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+}
+.layout-tv #loginPage .checkboxContainer:focus-within .checkboxOutline {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 2px;
+}
+.layout-tv .hera-auth > .padded-bottom-page {
+  width: min(520px, calc(100% - 96px));
+}
+.layout-tv .hera-auth form .raised {
+  min-height: 68px;
+  font-size: 22px !important;
+}
+.layout-tv .hera-auth .emby-input {
+  height: 68px;
+  font-size: 22px !important;
+}
+.layout-tv .hera-auth .inputLabel,
+.layout-tv .hera-auth .fieldDescription {
+  font-size: 19px;
+}
+.layout-tv .hera-auth form .raised:focus,
+.layout-tv #selectServerPage .btnAddServer:focus {
+  outline: none !important;
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+  transform: scale(1.05);
+  box-shadow: var(--hera-shadow-lift) !important;
+}
+.layout-tv #selectServerPage .loginSquareCard:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px var(--hera-focus);
+}
+.layout-tv .hera-auth-dialog .formDialogHeaderTitle {
+  font-size: 28px;
+}
+.layout-tv .hera-auth-dialog .formDialogFooter .raised {
+  min-height: 64px;
+  font-size: 22px;
+}

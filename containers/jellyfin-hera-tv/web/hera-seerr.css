@@ -1,0 +1,292 @@
+/* Hera TV: Seerr as an extension of the library (people, recommendations, collections). Loaded after hera-tv.css. */
+
+/* ---------- Shared: what these modules add to Jellyfin's pages -------------------------- */
+
+/* Jellyfin's own section, once ours stands in for it. */
+.hera-seerr-covered {
+  display: none !important;
+}
+
+/* Rows on a detail page sit inside a column that already has the page's edge. */
+.detailPagePrimaryContent .hera-seerr .hera-row,
+.detailPagePrimaryContent .hera-seerr.hera-row,
+.detailPageSecondaryContainer .hera-seerr.hera-row {
+  padding-left: 0;
+  padding-right: 0;
+}
+.hera-films,
+.hera-collection {
+  margin: 8px 0 12px;
+}
+.detailPageSecondaryContainer .hera-seerr.hera-row {
+  margin-top: 8px;
+}
+.hera-collection[hidden] {
+  display: none;
+}
+
+/* Sort sits beside the first row's title, as the season tabs sit by Episodes. */
+.hera-films__sort {
+  display: flex;
+  gap: 2px;
+  margin-left: 12px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--hera-fill);
+}
+.hera-films__sort-button {
+  flex: none;
+  margin: 0;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--hera-label-2);
+  font: 600 13px/1 var(--hera-font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.hera-films__sort-button:hover {
+  color: var(--hera-label);
+  background: var(--hera-hover);
+}
+.hera-films__sort-button[aria-pressed="true"] {
+  background: var(--hera-select);
+  color: var(--hera-on-select);
+}
+.hera-films__sort-button:active {
+  transform: scale(0.95);
+}
+.hera-films__sort-button:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: -3px;
+}
+.layout-tv .hera-films__sort-button {
+  padding: 10px 20px;
+  font-size: 18px;
+}
+
+/* "Request Missing", beside the row's title. */
+.hera-seerr__action {
+  height: 36px;
+  margin-left: auto;
+  padding: 0 16px 0 10px;
+  font-size: 14px;
+}
+.hera-seerr__action .material-icons {
+  font-size: 20px;
+}
+.hera-seerr__action[disabled] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.layout-tv .hera-seerr__action {
+  height: 48px;
+  font-size: 18px;
+}
+.hera-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--hera-label);
+  font-size: 15px;
+  font-weight: 600;
+}
+.hera-note .material-icons {
+  font-size: 20px;
+}
+
+/* ---------- Person header additions (Jellyfin's own header, plus the role and More) ----- */
+
+.hera-person-role {
+  margin: -2px 0 0;
+  color: var(--hera-label-2);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.layout-tv .hera-person-role {
+  font-size: 22px;
+}
+.hera-more {
+  display: inline-block;
+  margin: 6px 0 0;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--hera-label);
+  font: 600 15px/1.3 var(--hera-font);
+  cursor: pointer;
+}
+.hera-more:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.hera-more:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+.layout-tv .hera-more {
+  font-size: 19px;
+}
+.hera-detail-overview.is-open {
+  display: block;
+  overflow: visible;
+  white-space: pre-line;
+  -webkit-line-clamp: unset;
+}
+
+/* ---------- A person only Seerr knows: #/home?hera=person&tmdb=<id> --------------------- */
+
+/* The page takes the place of the home tab, as Discover does: no hero, no home rows, and Home steps back. */
+html.hera-person-on[data-hera-view] .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:not(:has(> a.MuiButton-colorPrimary)) > a:first-child,
+html.hera-person-on .headerTabs .emby-tab-button.emby-tab-button-active:not(:focus) {
+  background: transparent !important;
+  color: var(--hera-label-2) !important;
+}
+html.hera-person-on #homeTab > .hera-hero,
+html.hera-person-on #indexPage .homeSectionsContainer,
+html.hera-person-on .backdropContainer,
+html.hera-person-on #slides-container {
+  display: none !important;
+}
+
+.hera-pv {
+  padding: 84px 0 64px;
+}
+.layout-tv .hera-pv {
+  padding-top: 24px;
+}
+.hera-pv__head {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(20px, 3vw, 40px);
+  padding: 20px var(--hera-edge) 36px;
+}
+.hera-pv__portrait {
+  flex: none;
+  width: clamp(120px, 12vw, 200px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--hera-surface-2);
+  box-shadow: var(--hera-shadow);
+}
+.hera-pv__portrait--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hera-label-3);
+}
+.hera-pv__portrait--empty .material-icons {
+  font-size: clamp(56px, 6vw, 96px);
+}
+.hera-pv__who {
+  min-width: 0;
+  padding-top: 8px;
+}
+.hera-pv__name {
+  margin: 0;
+  font-family: var(--hera-font-display);
+  font-size: clamp(30px, 3.4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.hera-pv__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin: 10px 0 0;
+  color: var(--hera-label-2);
+  font-size: 15px;
+  font-weight: 600;
+}
+.hera-pv__meta span + span::before {
+  content: "·";
+  margin-right: 10px;
+  color: var(--hera-label-3);
+}
+.hera-pv__bio {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 64ch;
+  margin: 14px 0 0;
+  color: var(--hera-label-2);
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.hera-pv__bio.is-open {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+.hera-pv__status {
+  margin: 0;
+  padding: 24px var(--hera-edge);
+  color: var(--hera-label-2);
+  font-size: 17px;
+  font-weight: 500;
+}
+.layout-tv .hera-pv__meta,
+.layout-tv .hera-pv__bio {
+  font-size: 19px;
+}
+.layout-tv .hera-pv__name {
+  font-size: 52px;
+}
+@media (max-width: 720px) {
+  .hera-pv__head {
+    flex-direction: column;
+  }
+}
+
+/* ---------- Cast in the title sheet, now links to the person ----------------------------- */
+
+.hera-sheet__person-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 14px;
+  color: inherit;
+  text-decoration: none;
+}
+.hera-sheet__person-link:hover .hera-sheet__person-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.hera-sheet__person-link:active img,
+.hera-sheet__person-link:active .hera-sheet__person-fallback {
+  transform: scale(0.95);
+}
+.hera-sheet__person-link img,
+.hera-sheet__person-link .hera-sheet__person-fallback {
+  transition: transform var(--hera-fast) var(--hera-ease);
+}
+.hera-sheet__person-link:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hera-films__sort-button,
+  .hera-sheet__person-link img,
+  .hera-sheet__person-link .hera-sheet__person-fallback {
+    transition: none;
+  }
+  .hera-films__sort-button:active,
+  .hera-sheet__person-link:active img,
+  .hera-sheet__person-link:active .hera-sheet__person-fallback {
+    transform: none;
+  }
+}

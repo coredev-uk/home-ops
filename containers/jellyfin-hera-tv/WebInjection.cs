@@ -28,6 +28,10 @@ public sealed class WebInjection(ILogger<WebInjection> logger) : IStartupFilter
 {
     private const string Marker = "data-hera-tv";
 
+    /// <summary>Sets html[data-hera-scheme] from the saved appearance (hera-tv.js, `appearance`).</summary>
+    private const string SchemeScript =
+        """(function(){try{var p=localStorage.getItem("hera-appearance");var l=p==="light"||(p!=="dark"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches);document.documentElement.setAttribute("data-hera-scheme",l?"light":"dark");}catch(e){}})();""";
+
     public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
     {
         app.Use(InvokeAsync);
@@ -92,8 +96,12 @@ public sealed class WebInjection(ILogger<WebInjection> logger) : IStartupFilter
 
         var v = WebAssets.Version;
         // The stylesheet asks for the font by a bare relative URL, so the preload must match it.
+        // The inline script paints the saved appearance before first render; hera-tv.js keeps it
+        // in step afterwards (see `appearance` there). Without it a dark choice on a light-mode
+        // device would flash white on every load.
         var head =
             $"<link {Marker} rel=\"preload\" as=\"font\" type=\"font/woff2\" crossorigin href=\"../HeraTV/InterVariable.woff2\">" +
+            $"<script {Marker}>{SchemeScript}</script>" +
             string.Concat(WebAssets.Stylesheets.Select(name => $"<link {Marker} rel=\"stylesheet\" href=\"../HeraTV/{name}?v={v}\">"));
         var body = string.Concat(WebAssets.Scripts.Select(name => $"<script {Marker} src=\"../HeraTV/{name}?v={v}\" defer></script>"));
 

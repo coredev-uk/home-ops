@@ -45,12 +45,12 @@ html.hera-discover-on #slides-container {
   padding: 0 8px 0 16px;
   border-radius: 999px;
   background: var(--hera-fill);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 var(--hera-hover);
   transition: background-color var(--hera-fast) var(--hera-ease), box-shadow var(--hera-fast) var(--hera-ease);
 }
 .hera-discover__field:focus-within {
   background: var(--hera-fill-strong);
-  box-shadow: 0 0 0 2px #fff;
+  box-shadow: 0 0 0 2px var(--hera-focus);
 }
 .hera-discover__field > .material-icons {
   font-size: 22px;
@@ -87,8 +87,8 @@ html.hera-discover-on #slides-container {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
+  background: var(--hera-fill);
+  color: var(--hera-label);
   cursor: pointer;
   transition: transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
 }
@@ -99,13 +99,13 @@ html.hera-discover-on #slides-container {
   font-size: 18px;
 }
 .hera-discover__clear:hover {
-  background: rgba(255, 255, 255, 0.24);
+  background: var(--hera-fill-strong);
 }
 .hera-discover__clear:active {
   transform: scale(0.92);
 }
 .hera-discover__clear:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--hera-focus);
   outline-offset: 2px;
 }
 .layout-tv .hera-discover__field {
@@ -128,6 +128,7 @@ html.hera-discover-on #slides-container {
 }
 .hera-discover__feature {
   position: relative;
+  color: var(--hera-label);
   overflow: hidden;
   min-height: clamp(300px, 36vw, 480px);
   display: flex;
@@ -176,7 +177,7 @@ html.hera-discover-on #slides-container {
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
-  color: rgba(235, 235, 245, 0.82);
+  color: var(--hera-label-2);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -199,7 +200,7 @@ html.hera-discover-on #slides-container {
   pointer-events: none;
 }
 .hera-btn:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--hera-focus);
   outline-offset: 3px;
 }
 .hera-discover .hera-btn--primary,
@@ -250,7 +251,7 @@ html.hera-discover-on #slides-container {
   overflow: hidden;
   color: var(--hera-label);
   background: var(--hera-surface);
-  box-shadow: inset 0 1px 0 var(--hera-glass-edge), 0 40px 120px -20px rgba(0, 0, 0, 0.95);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift);
 }
 .hera-sheet[open] {
   display: flex;
@@ -280,7 +281,7 @@ html.hera-discover-on #slides-container {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-color: var(--hera-track) transparent;
 }
 .hera-sheet__close {
   position: absolute;
@@ -297,7 +298,7 @@ html.hera-discover-on #slides-container {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(18, 18, 20, 0) 35%, var(--hera-surface) 100%);
+  background: linear-gradient(180deg, transparent 35%, var(--hera-surface) 100%);
 }
 .hera-sheet__backdrop {
   width: 100%;
@@ -311,6 +312,10 @@ html.hera-discover-on #slides-container {
   z-index: 1;
   margin-top: -72px;
   padding: 0 clamp(20px, 4vw, 40px) 36px;
+}
+/* Light sheet: the title sits on the clean surface just under the artwork's fade, not over it. */
+:root[data-hera-scheme="light"] .hera-sheet__body {
+  margin-top: -20px;
 }
 .hera-sheet__title {
   margin: 0 0 8px;
@@ -346,7 +351,7 @@ html.hera-discover-on #slides-container {
   max-width: 68ch;
   font-size: 15px;
   line-height: 1.55;
-  color: rgba(235, 235, 245, 0.82);
+  color: var(--hera-label-2);
 }
 .hera-sheet__loading {
   margin: 12px 0;
@@ -411,7 +416,7 @@ html.hera-discover-on #slides-container {
   max-width: 60ch;
   font-size: 15px;
   line-height: 1.5;
-  color: rgba(235, 235, 245, 0.82);
+  color: var(--hera-label-2);
 }
 
 .hera-sheet__heading {
@@ -459,16 +464,16 @@ html.hera-discover-on #slides-container {
   transition: background-color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
 }
 .hera-season + .hera-season {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 var(--hera-hover);
 }
 .hera-season .material-icons {
   font-size: 24px;
 }
 .hera-season:hover:not([disabled]) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hera-hover);
 }
 .hera-season:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid var(--hera-focus);
   outline-offset: -2px;
 }
 .hera-season[disabled] {
@@ -585,12 +590,13 @@ html.hera-discover-on #slides-container {
 }
 .layout-tv .hera-season:focus {
   outline: none;
-  background: #fff;
-  color: #000;
+  background: var(--hera-select);
+  color: var(--hera-on-select);
 }
 .layout-tv .hera-season:focus .hera-season__count,
 .layout-tv .hera-season:focus .hera-season__status {
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--hera-on-select);
+  opacity: 0.72;
 }
 .layout-tv .hera-sheet__person-name,
 .layout-tv .hera-sheet__person-role {

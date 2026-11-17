@@ -30,7 +30,7 @@ ARG CLAUDE_CODE_VERSION=2.1.322
 # The design skills, each a tag and its commit (the build fetches the commit; Renovate moves both:
 # .renovaterc.json5). impeccable's engine binary is the release its VERSION names, checked
 # against the engine-checksums.txt of the same commit.
-ARG IMPECCABLE_REF=skill-v4.8.2@035c8f319edd019936525a062fe99e83ca8d12c6
+ARG IMPECCABLE_REF=skill-v4.9.1@acb4cfe14470b1fdf51e855431af618d936b7db8
 ARG TASTE_SKILL_REF=v2.5.1@f6b76575f949707b4e3c37cd86cb44b0b98643e8
 
 # build-essential and pkg-config: native modules and cgo/cc-rs builds link against the system

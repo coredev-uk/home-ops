@@ -1,6 +1,6 @@
 {
   "category": "General",
-  "changelog": "Apple TV-style theme, home hero and season shelves.",
+  "changelog": "Light and dark appearance, a Settings app, a restyled Dashboard, and a tvOS player with a pause screen.",
   "description": "Apple TV-style theme, home hero and season shelves for the web client.",
   "guid": "9718b214-55d6-4828-84c8-677f2a4a131b",
   "name": "Hera TV",
@@ -8,7 +8,7 @@
   "owner": "coredev-uk",
   "targetAbi": "12.4.0.0",
   "timestamp": "2026-11-16T00:00:00.0000000Z",
-  "version": "1.2.0.0",
+  "version": "1.3.0.0",
   "status": "Active",
   "autoUpdate": false,
   "assemblies": ["Jellyfin.Plugin.HeraTv.dll"]

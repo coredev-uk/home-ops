@@ -1,0 +1,709 @@
+/* Hera TV: player module (OSD layout, pause screen). Loaded after hera-tv.css. */
+
+/* The player is always dark: hera-player.js puts .hera-dark on the page, on the header while it
+ * is the player's, and on every sheet or menu opened from it, so light mode never reaches them.
+ * The page is transparent over the video; its text takes the scoped label colour. */
+#videoOsdPage,
+.skinHeader.osdHeader {
+  color: var(--hera-label);
+}
+
+/* ---------- Player ---------------------------------------------------------------- */
+
+/* tv.apple.com's player: the title and a capsule of controls over the scrubber at the foot,
+ * times under the scrubber's ends, and the transport (back, play/pause, forward) as large glass
+ * discs in the middle of the picture. Everything sits in Jellyfin's OSD, so it hides with it. */
+.videoOsdBottom {
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 42%, transparent 100%) !important;
+  padding: 140px var(--hera-edge) 32px !important;
+}
+.osdControls {
+  max-width: none;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title buttons"
+    "status status"
+    "slider slider";
+  align-items: end;
+  row-gap: 14px;
+  column-gap: 24px;
+}
+.osdControls > .osdMainTextContainer {
+  grid-area: status;
+}
+.osdControls > .osdMainTextContainer:empty,
+.osdControls > .osdMainTextContainer:not(:has(:not(.hide))) {
+  display: none;
+}
+.hera-osd-title {
+  grid-area: title;
+  min-width: 0;
+}
+.hera-osd-title__name {
+  margin: 0;
+  font: 700 28px/1.15 var(--hera-font-display);
+  letter-spacing: -0.02em;
+  color: var(--hera-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hera-osd-title__line {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--hera-label-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scrubber row: the bar across the full width, elapsed and remaining under its ends. */
+.osdControls > .flex.flex-direction-row {
+  grid-area: slider;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "bar bar bar"
+    "start . end";
+  row-gap: 6px;
+}
+.osdControls > .flex.flex-direction-row > .sliderContainer {
+  grid-area: bar;
+  margin: 0 !important;
+}
+.osdControls > .flex.flex-direction-row > .osdPositionText {
+  grid-area: start;
+}
+.osdControls > .flex.flex-direction-row > .osdDurationText {
+  grid-area: end;
+}
+.videoOsdBottom .osdTextContainer,
+.osdTimeText,
+.osdPositionText,
+.osdDurationText {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hera-label-2);
+  margin: 0 !important;
+}
+
+/* The controls capsule: icon buttons inside, "Ends at" leading it. The glass is a pseudo-element
+ * behind the buttons rather than the capsule's own backdrop-filter, which would trap the
+ * transport discs (lifted out below) in a containing block of its own. */
+.videoOsdBottom .buttons {
+  grid-area: buttons;
+  position: relative;
+  isolation: isolate;
+  display: flex !important;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px 4px 14px !important;
+}
+.videoOsdBottom .buttons::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 999px;
+  background: var(--hera-glass);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge);
+  pointer-events: none;
+}
+.videoOsdBottom .buttons > .osdTimeText {
+  order: -1;
+  margin-right: 8px !important;
+  white-space: nowrap;
+}
+.videoOsdBottom .paper-icon-button-light {
+  width: 40px;
+  height: 40px;
+  margin: 0 !important;
+  border-radius: 999px;
+  color: var(--hera-label);
+  transition: background-color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.videoOsdBottom .paper-icon-button-light .material-icons {
+  font-size: 22px;
+}
+.videoOsdBottom .paper-icon-button-light:hover {
+  background: var(--hera-glass-light);
+}
+.videoOsdBottom .paper-icon-button-light:active {
+  transform: scale(0.92);
+}
+/* Focus is the selection colour, as everywhere else: a white disc with a dark glyph. */
+.videoOsdBottom .paper-icon-button-light:focus-visible,
+.videoOsdBottom .buttons > div:first-child .paper-icon-button-light:focus-visible,
+.osdHeader .headerButton:focus-visible {
+  color: var(--hera-on-select) !important;
+  background: var(--hera-select) !important;
+  outline: none !important;
+}
+.videoOsdBottom .osdVolumeSliderContainer {
+  width: 96px;
+}
+
+/* Transport: lifted out of the capsule to the middle of the picture (fixed, so it is placed
+ * against the viewport whatever the OSD's layout does). */
+.videoOsdBottom .buttons > div:first-child {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.videoOsdBottom .buttons > div:first-child .paper-icon-button-light {
+  width: 60px;
+  height: 60px;
+  background: var(--hera-glass);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), 0 12px 30px -12px rgba(0, 0, 0, 0.8);
+}
+.videoOsdBottom .buttons > div:first-child .paper-icon-button-light .material-icons {
+  font-size: 30px;
+}
+.videoOsdBottom .buttons > div:first-child .btnPause {
+  width: 84px;
+  height: 84px;
+}
+.videoOsdBottom .buttons > div:first-child .btnPause .material-icons {
+  font-size: 44px;
+}
+.videoOsdBottom .buttons > div:first-child .btnPreviousTrack,
+.videoOsdBottom .buttons > div:first-child .btnNextTrack {
+  width: 46px;
+  height: 46px;
+}
+.videoOsdBottom .buttons > div:first-child .btnPreviousTrack .material-icons,
+.videoOsdBottom .buttons > div:first-child .btnNextTrack .material-icons {
+  font-size: 24px;
+}
+.videoOsdBottom .buttons > div:first-child .paper-icon-button-light:hover {
+  background: var(--hera-glass-hover);
+}
+
+/* Scrubber: a thin line that thickens on hover, rounded, no blue. */
+.mdl-slider-background-flex {
+  height: 5px !important;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--hera-track) !important;
+  transition: height var(--hera-fast) var(--hera-ease);
+}
+.sliderContainer:hover .mdl-slider-background-flex,
+.sliderContainer:focus-within .mdl-slider-background-flex {
+  height: 8px !important;
+}
+.mdl-slider-background-lower {
+  background: var(--hera-select) !important;
+}
+.mdl-slider-background-upper {
+  background: var(--hera-glass-light) !important;
+}
+.mdl-slider::-webkit-slider-thumb {
+  background: var(--hera-select) !important;
+  border: 0;
+  transform: scale(0);
+  transition: transform var(--hera-fast) var(--hera-ease);
+}
+.sliderContainer:hover .mdl-slider::-webkit-slider-thumb,
+.sliderContainer:focus-within .mdl-slider::-webkit-slider-thumb {
+  transform: scale(1);
+}
+/* Focus is the thickened bar and its thumb, not a box around the whole scrubber. */
+.sliderContainer:focus-within,
+.mdl-slider:focus,
+.mdl-slider:focus-visible {
+  outline: none !important;
+  box-shadow: none;
+}
+.mdl-slider::-moz-range-thumb {
+  background: var(--hera-select) !important;
+  border: 0;
+}
+.sliderBubble {
+  background: var(--hera-glass) !important;
+  color: var(--hera-label) !important;
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  border-radius: 10px !important;
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge);
+}
+
+/* Top of the player: a glass back disc at the left and the cast/SyncPlay discs at the right;
+ * the title moves to the foot with the scrubber, as tv.apple.com places it. */
+.osdHeader,
+.skinHeader.osdHeader {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent) !important;
+  padding: 12px var(--hera-edge) 0 !important;
+}
+.osdHeader .MuiTypography-root,
+.osdHeader .pageTitle {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.osdHeader .MuiIconButton-root,
+.osdHeader .headerButton {
+  width: 44px;
+  height: 44px;
+  margin: 0 4px;
+  border-radius: 999px !important;
+  color: var(--hera-label) !important;
+  /* Not backdrop glass: the header sits outside the video's layer, and its blur sampled the page
+   * ground behind the picture, so the discs came out pale grey in light mode. */
+  background: var(--hera-surface-2) !important;
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge);
+}
+.osdHeader .MuiIconButton-root:hover,
+.osdHeader .headerButton:hover {
+  background: var(--hera-glass-hover) !important;
+}
+/* Scrub preview: the trickplay frame in a rounded card with its time laid over the foot. */
+.sliderBubble:not(.hide) {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.sliderBubble:has(.chapterThumbContainer) {
+  padding: 0;
+  background: none !important;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.chapterThumbContainer {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--hera-glass-edge), var(--hera-shadow-lift);
+}
+.chapterThumbTextContainer {
+  padding: 28px 12px 10px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), transparent);
+  text-align: center;
+}
+h2.chapterThumbText,
+.chapterThumbText {
+  margin: 0;
+  font: 700 15px/1.2 var(--hera-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--hera-label);
+}
+.chapterThumbText-dim {
+  font-weight: 500;
+  color: var(--hera-label-2);
+}
+
+/* Skip Intro / Skip Credits (Intro Skipper): a glass pill above the controls that turns into the
+ * white selection capsule on hover or focus. */
+.skip-button {
+  /* A block-level flex box so the auto margin pushes it to the container's right edge. */
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 6px;
+  margin: 0 var(--hera-edge) 0 auto;
+  padding: 13px 22px 13px 26px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--hera-label);
+  background: var(--hera-glass);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow);
+  transition: opacity var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease);
+}
+.skip-button .material-icons {
+  font-size: 22px;
+}
+.skip-button:hover,
+.skip-button:focus-visible {
+  background: var(--hera-select);
+  color: var(--hera-on-select);
+  outline: none !important;
+}
+.skip-button:active {
+  transform: scale(0.95);
+}
+
+/* Up Next: the card that offers the next episode as one ends. */
+.upNextContainer.upNextDialog {
+  right: var(--hera-edge) !important;
+  bottom: 140px !important;
+  width: min(460px, 42vw);
+  padding: 22px 24px !important;
+  color: var(--hera-label);
+  background: var(--hera-glass) !important;
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  border-radius: 20px !important;
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift);
+}
+.upNextDialog-nextVideoText {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em;
+}
+.upNextDialog-countdownText {
+  font-weight: 700 !important;
+}
+.upNextDialog-title {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  color: var(--hera-label-2);
+}
+.upNextDialog-mediainfo {
+  color: var(--hera-label-2);
+  gap: 14px;
+}
+.upNextDialog-buttons {
+  gap: 10px;
+  justify-content: flex-end;
+}
+.upNextDialog-button {
+  border-radius: 999px !important;
+  padding: 9px 20px !important;
+  color: var(--hera-label) !important;
+  background: var(--hera-glass-light) !important;
+  transition: background-color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.upNextDialog-button.btnStartNow {
+  color: var(--hera-on-select) !important;
+  background: var(--hera-select) !important;
+}
+.upNextDialog-button:active {
+  transform: scale(0.95);
+}
+.upNextDialog-button:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+
+/* Menus opened from the player (subtitles, audio, quality, settings): glass over the picture.
+ * On a desktop they are floating menus; in the TV layout Jellyfin makes them full-screen
+ * lists, which here become a panel at the right with the picture left showing. */
+.dialogContainer.hera-dark .dialog.actionSheet,
+.dialogContainer.hera-dark .dialog.formDialog {
+  color: var(--hera-label);
+}
+.dialogContainer.hera-dark .actionSheetMenuItem {
+  color: var(--hera-label);
+}
+.dialogContainer.hera-dark .actionSheetMenuItem:hover {
+  background: var(--hera-hover) !important;
+}
+.dialogContainer.hera-dark .actionSheetMenuItem:focus-visible,
+.dialogContainer.hera-dark .actionSheetMenuItem:focus {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select);
+  outline: none !important;
+  transform: none;
+}
+.dialogContainer.hera-dark .actionSheetMenuItem:focus .listItemBodyText,
+.dialogContainer.hera-dark .actionSheetMenuItem:focus .secondary,
+.dialogContainer.hera-dark .actionSheetMenuItem:focus .actionsheetMenuItemIcon {
+  color: var(--hera-on-select);
+}
+.dialogContainer.hera-dark .actionSheetTitle {
+  color: var(--hera-label);
+}
+.dialogContainer.hera-dark .listItemBodyText.secondary,
+.dialogContainer.hera-dark .actionSheetItemText + .listItemBodyText {
+  color: var(--hera-label-2);
+}
+.dialogContainer.hera-dark .dialog.dialog-fullscreen.actionSheet {
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 100%) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none !important;
+  justify-content: flex-end;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetContent {
+  align-self: center;
+  justify-content: flex-start;
+  flex: 0 0 auto !important;
+  width: min(480px, 42vw) !important;
+  max-width: none !important;
+  max-height: min(72vh, 680px) !important;
+  margin: 0 var(--hera-edge) 0 0 !important;
+  padding: 14px 10px !important;
+  border-radius: 26px;
+  background: var(--hera-glass);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift);
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetTitle {
+  align-self: flex-start;
+  margin: 4px 0 8px;
+  padding: 0 18px;
+  font-size: 22px;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetScroller {
+  width: 100% !important;
+  text-align: left;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetMenuItem {
+  width: 100%;
+  margin: 2px 0 !important;
+  padding: 12px 18px;
+  border-radius: 16px !important;
+  font-size: 19px;
+  text-align: left;
+  outline: none !important;
+  box-shadow: none;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetMenuItem {
+  align-items: center;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetMenuItem .listItemBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 !important;
+  justify-content: flex-start;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetMenuItem .listItemBodyText {
+  padding: 0;
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetMenuItem .listItemAside {
+  margin-left: 24px !important;
+  color: var(--hera-label-2);
+}
+.dialogContainer.hera-dark .dialog-fullscreen .actionSheetMenuItem:focus .listItemAside {
+  color: var(--hera-on-select);
+}
+.dialogContainer.hera-dark .btnCloseActionSheet {
+  color: var(--hera-label);
+  background: var(--hera-glass);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  border-radius: 999px;
+}
+
+/* ---------- Pause screen ---------------------------------------------------------- */
+
+/* tvOS dims the picture, with more of the dim where the text sits, and settles the title's
+ * logo, synopsis and a Resume / Restart pair at the lower left. In at 420ms, out at 180ms; with
+ * reduced motion only the opacity moves. */
+.hera-pause {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--hera-label);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.hera-pause.is-on {
+  opacity: 1;
+  transition: opacity var(--hera-slow) var(--hera-ease);
+}
+.hera-pause__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.5) 0%, transparent 38%),
+    radial-gradient(130% 95% at 0% 100%, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.42) 45%, transparent 78%),
+    rgba(0, 0, 0, 0.28);
+}
+.hera-pause__info {
+  position: absolute;
+  left: var(--hera-edge);
+  bottom: clamp(48px, 9vh, 96px);
+  width: min(620px, 56vw);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transform: translateY(14px);
+  transition: transform 180ms var(--hera-ease);
+}
+.hera-pause.is-on .hera-pause__info {
+  transform: none;
+  transition: transform var(--hera-slow) var(--hera-ease);
+}
+.hera-pause__logo {
+  display: block;
+  max-width: min(420px, 100%);
+  height: clamp(72px, 11vh, 112px);
+  object-fit: contain;
+  object-position: left bottom;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.5));
+}
+.hera-pause__name {
+  margin: 0 0 14px;
+  font: 700 clamp(32px, 3.4vw, 48px) / 1.08 var(--hera-font-display);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.hera-pause__line {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--hera-label-2);
+}
+.hera-pause__overview {
+  margin: 0;
+  max-width: 58ch;
+  font-size: 17px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+.hera-pause__time {
+  margin: 14px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--hera-label-2);
+}
+.hera-pause__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  pointer-events: auto;
+}
+.hera-pause__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 26px 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 17px/1 var(--hera-font);
+  color: var(--hera-label);
+  background: var(--hera-glass);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge);
+  cursor: pointer;
+  transition: background-color var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.hera-pause__button .material-icons {
+  font-size: 24px;
+}
+/* The cursor shows while it moves over the pause screen (Jellyfin hid it with the OSD and
+ * doesn't hear the movement; hera-player.js sets has-pointer and clears it once it rests). */
+body.mouseIdle:has(.hera-pause.has-pointer),
+body.mouseIdle:has(.hera-pause.has-pointer) * {
+  cursor: default !important;
+}
+body.mouseIdle .hera-pause.has-pointer .hera-pause__button {
+  cursor: pointer !important;
+}
+.hera-pause__button:hover {
+  background: var(--hera-glass-hover);
+}
+.hera-pause__button--primary {
+  color: var(--hera-on-select);
+  background: var(--hera-select);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+.hera-pause__button--primary:hover {
+  background: var(--hera-select-hover);
+}
+.hera-pause__button:active {
+  transform: scale(0.95);
+}
+.hera-pause__button:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+
+/* Cast: round portraits at the lower right, as on the show page. */
+.hera-pause__cast {
+  position: absolute;
+  right: var(--hera-edge);
+  bottom: clamp(48px, 9vh, 96px);
+  display: flex;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hera-pause__person {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.hera-pause__portrait {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--hera-fill-strong);
+  color: var(--hera-label-2);
+}
+.hera-pause__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hera-pause__portrait .material-icons {
+  font-size: 34px;
+}
+.hera-pause__person-name {
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--hera-label-2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+@media (max-width: 1400px) {
+  .hera-pause__person:nth-child(n + 5) {
+    display: none;
+  }
+}
+@media (max-width: 1100px) {
+  .hera-pause__cast {
+    display: none;
+  }
+}
+html.layout-tv .hera-pause__info {
+  width: min(760px, 60vw);
+}
+html.layout-tv .hera-pause__overview,
+html.layout-tv .hera-pause__line {
+  font-size: 22px;
+}
+html.layout-tv .hera-pause__time {
+  font-size: 19px;
+}
+html.layout-tv .hera-pause__button {
+  height: 60px;
+  font-size: 21px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hera-pause__info,
+  .hera-pause.is-on .hera-pause__info {
+    transform: none;
+  }
+}

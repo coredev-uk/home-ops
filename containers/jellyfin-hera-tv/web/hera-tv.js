@@ -114,6 +114,72 @@
     button.setAttribute("aria-label", next ? "Remove from Favourites" : "Add to Favourites");
   };
 
+  // ---------- appearance ----------------------------------------------------------------
+  // Automatic follows the device; Light and Dark pin it. The choice is saved in a display-
+  // preferences record of its own (so it follows the user between browsers, and Jellyfin's own
+  // settings saves never overwrite it) and in localStorage, so the next load paints in the
+  // right scheme before the server answers. hera-tv.css keys every colour off data-hera-scheme.
+
+  const APPEARANCES = [
+    ["auto", "Automatic"],
+    ["light", "Light"],
+    ["dark", "Dark"],
+  ];
+  const APPEARANCE_KEY = "hera-appearance";
+  const lightQuery = window.matchMedia?.("(prefers-color-scheme: light)");
+  const storedAppearance = () => {
+    try {
+      return localStorage.getItem(APPEARANCE_KEY);
+    } catch {
+      return null;
+    }
+  };
+  const prefsUrl = () => api().getUrl("DisplayPreferences/hera", { userId: userId(), client: "heratv" });
+
+  const appearance = {
+    pref: APPEARANCES.some(([key]) => key === storedAppearance()) ? storedAppearance() : "auto",
+    listeners: new Set(),
+    scheme() {
+      if (this.pref === "light" || this.pref === "dark") return this.pref;
+      return lightQuery?.matches ? "light" : "dark";
+    },
+    label(pref = this.pref) {
+      return APPEARANCES.find(([key]) => key === pref)?.[1] || "Automatic";
+    },
+    apply() {
+      const scheme = this.scheme();
+      root.dataset.heraScheme = scheme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", scheme === "light" ? "#ffffff" : "#000000");
+      this.listeners.forEach((fn) => fn(this.pref, scheme));
+    },
+    remember(pref) {
+      this.pref = pref;
+      try {
+        localStorage.setItem(APPEARANCE_KEY, pref);
+      } catch {
+        /* private mode: the server copy still holds it */
+      }
+      this.apply();
+    },
+    async load() {
+      const prefs = await api().getJSON(prefsUrl()).catch(() => null);
+      const pref = prefs?.CustomPrefs?.[APPEARANCE_KEY];
+      if (APPEARANCES.some(([key]) => key === pref) && pref !== this.pref) this.remember(pref);
+    },
+    async set(pref) {
+      if (!APPEARANCES.some(([key]) => key === pref)) return;
+      this.remember(pref);
+      const prefs = (await api().getJSON(prefsUrl()).catch(() => null)) || { Id: "hera", Client: "heratv" };
+      prefs.CustomPrefs = { ...prefs.CustomPrefs, [APPEARANCE_KEY]: pref };
+      await api().ajax({ type: "POST", url: prefsUrl(), data: JSON.stringify(prefs), contentType: "application/json" });
+    },
+    /** Calls `fn(pref, scheme)` on every change; returns the unsubscribe. */
+    subscribe(fn) {
+      this.listeners.add(fn);
+      return () => this.listeners.delete(fn);
+    },
+  };
+
   // ---------- shared kit for modules ----------------------------------------------------
   // hera-home.js and hera-discover.js load after this file and build on these pieces, so every
   // row, card and request in the client looks and behaves the same.
@@ -732,6 +798,7 @@
     // Jellyfin drew its own banner (the user's setting is on): leave it.
     if (!banner.dataset.heraFilled && /url\(/.test(getComputedStyle(banner).backgroundImage)) {
       page.classList.remove("hera-no-backdrop");
+      root.classList.add("hera-art-top");
       return;
     }
     const item = await api().getItem(userId(), itemId);
@@ -748,6 +815,8 @@
     }
     // No artwork (people, books, bare collections): no banner; the portrait or cover shows.
     page.classList.toggle("hera-no-backdrop", !id);
+    // Artwork under the header at the top of the page keeps the header's dark (on-art) tokens.
+    root.classList.toggle("hera-art-top", !!id);
     banner.dataset.heraFilled = itemId;
     if (!id) {
       banner.style.backgroundImage = "";
@@ -892,6 +961,18 @@
             await this.saveConfig({ EnableNextEpisodeAutoPlay: next });
             value.textContent = next ? "Next episode" : "Off";
             button.setAttribute("aria-pressed", String(next));
+          },
+        }),
+        this.tile({
+          icon: appearance.scheme() === "light" ? "light_mode" : "dark_mode",
+          label: "Appearance",
+          value: appearance.label(),
+          onclick: async (button, value) => {
+            const index = APPEARANCES.findIndex(([key]) => key === appearance.pref);
+            const [next] = APPEARANCES[(index + 1) % APPEARANCES.length];
+            await appearance.set(next);
+            value.textContent = appearance.label();
+            button.querySelector(".material-icons").textContent = appearance.scheme() === "light" ? "light_mode" : "dark_mode";
           },
         }),
         this.tile({
@@ -1083,6 +1164,7 @@
     root.dataset.heraView = page.id || "";
     const isHome = page.id === "indexPage";
     if (!isHome) root.classList.remove("hera-home");
+    if (page.id !== "itemDetailPage") root.classList.remove("hera-art-top");
     try {
       if (isHome) await mountHero(page);
       if (page.id === "itemDetailPage") {
@@ -1123,6 +1205,10 @@
 
   const start = async () => {
     keepStylesheetLast();
+    appearance.apply();
+    const onDeviceScheme = () => appearance.pref === "auto" && appearance.apply();
+    lightQuery?.addEventListener?.("change", onDeviceScheme);
+    state.cleanups.push(() => lightQuery?.removeEventListener?.("change", onDeviceScheme));
     const onScroll = () => root.classList.toggle("hera-scrolled", window.scrollY > 24);
     window.addEventListener("scroll", onScroll, { passive: true });
     state.cleanups.push(() => window.removeEventListener("scroll", onScroll));
@@ -1145,6 +1231,7 @@
     // The first page may already be showing when we arrive.
     const waitForApi = setInterval(() => {
       if (!api() || !userId()) return;
+      appearance.load().catch(() => {});
       getJSON("System/Info/Public")
         .then((info) => info?.ServerName && root.style.setProperty("--hera-server", JSON.stringify(info.ServerName)))
         .catch(() => {});
@@ -1174,6 +1261,8 @@
       shortDate,
       itemIdFromHash,
       reduceMotion,
+      appearance,
+      appearances: APPEARANCES,
       isTv: () => root.classList.contains("layout-tv"),
     },
     /** Adds a module: `{ name, onView(page, { itemId, params }), teardown() }`. */

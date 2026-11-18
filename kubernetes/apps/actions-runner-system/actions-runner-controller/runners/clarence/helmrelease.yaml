@@ -1,0 +1,45 @@
+---
+# GitHub Actions runners for coredev-uk/clarence (`runs-on: clarence-runner`): its Go test job
+# runs here instead of on GitHub's runners, whose minutes a private repository pays for. The
+# image job stays on GitHub (it needs a Docker daemon). Steps run in the runner container itself;
+# the job needs no cluster access, so the pod gets no service account token.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &name clarence-runner
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: clarence-runner
+  interval: 1h
+  values:
+    githubConfigUrl: https://github.com/coredev-uk/clarence
+    githubConfigSecret: clarence-runner-secret
+    runnerScaleSetName: *name
+    minRunners: 0
+    maxRunners: 2
+    controllerServiceAccount:
+      name: actions-runner-controller
+      namespace: actions-runner-system
+    template:
+      metadata:
+        labels:
+          runner: *name
+      spec:
+        automountServiceAccountToken: false
+        enableServiceLinks: false
+        securityContext:
+          fsGroup: 1001
+          fsGroupChangePolicy: OnRootMismatch
+        containers:
+          - name: runner
+            image: ghcr.io/home-operations/actions-runner:2.338.2@sha256:2dd7caa094a425c041539447cb0e6ae63cda10b5242773764683b695b8fa5613
+            command:
+              - /home/runner/run.sh
+            resources:
+              requests:
+                cpu: 500m
+                memory: 1Gi
+              limits:
+                memory: 4Gi

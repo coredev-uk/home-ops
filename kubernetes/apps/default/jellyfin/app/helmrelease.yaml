@@ -15,7 +15,7 @@ spec:
         annotations:
           reloader.stakater.com/auto: "true"
         initContainers:
-          # Hera TV (containers/jellyfin-hera-tv): copies the plugin into /config/plugins/HeraTV,
+          # Hera TV (coredev-uk/jellyfin-hera-tv): copies the plugin into /config/plugins/HeraTV,
           # replacing whatever build was there, before the server loads its plugins.
           hera-tv:
             image:

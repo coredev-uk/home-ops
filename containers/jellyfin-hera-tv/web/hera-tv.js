@@ -779,22 +779,31 @@
     );
   };
 
+  // The same Episodes section, in the same place (first after the banner), on a series, a season
+  // and an episode page, as the Apple TV app has one episode shelf with series tabs wherever you
+  // are in a show. A series opens on the series it's up to; a season on itself; an episode on its
+  // own series, scrolled to it and marked as the one you're on. Jellyfin's own lists (a season's
+  // vertical list, an episode's "More from Series N" carousel) step aside for it.
   const mountSeasons = async (page, itemId) => {
     const existing = page.querySelector(".hera-seasons");
     if (existing?.dataset.item === itemId) return;
     existing?.remove();
     page.classList.remove("hera-has-seasons");
     const item = await api().getItem(userId(), itemId);
-    if (item?.Type !== "Series") return;
+    if (!item || !["Series", "Season", "Episode"].includes(item.Type)) return;
+    const seriesId = item.Type === "Series" ? item.Id : item.SeriesId;
+    if (!seriesId) return;
     const [seasonsResult, nextUp] = await Promise.all([
-      getJSON(`Shows/${itemId}/Seasons`, { userId: userId() }),
-      getJSON("Shows/NextUp", { seriesId: itemId, userId: userId(), limit: 1 }),
+      getJSON(`Shows/${seriesId}/Seasons`, { userId: userId() }),
+      getJSON("Shows/NextUp", { seriesId, userId: userId(), limit: 1 }),
     ]);
     const seasons = seasonsResult?.Items ?? [];
     if (!seasons.length || page.querySelector(".hera-seasons") || itemIdFromHash() !== itemId) return;
 
-    const nextSeasonId = nextUp?.Items?.[0]?.SeasonId;
-    const startIndex = Math.max(0, seasons.findIndex((s) => s.Id === nextSeasonId));
+    const nextEpisode = nextUp?.Items?.[0];
+    const openSeasonId = item.Type === "Season" ? item.Id : item.Type === "Episode" ? item.SeasonId : nextEpisode?.SeasonId;
+    const focusEpisodeId = item.Type === "Episode" ? item.Id : nextEpisode?.Id;
+    const startIndex = Math.max(0, seasons.findIndex((s) => s.Id === openSeasonId));
     const shelf = el("div", { class: "hera-shelf", role: "tabpanel" });
     const tabs = seasons.map((season, i) =>
       el("button", {
@@ -815,7 +824,7 @@
       if (!cache.has(season.Id)) {
         cache.set(
           season.Id,
-          getJSON(`Shows/${itemId}/Episodes`, {
+          getJSON(`Shows/${seriesId}/Episodes`, {
             seasonId: season.Id,
             userId: userId(),
             Fields: "Overview,PremiereDate",
@@ -825,9 +834,12 @@
       const result = await cache.get(season.Id);
       if (tabs[i].getAttribute("aria-selected") !== "true") return;
       shelf.replaceChildren(...(result?.Items ?? []).map(episodeCard));
-      const nextId = nextUp?.Items?.[0]?.Id;
-      const target = nextId && shelf.querySelector(`a[href$="${nextId}"]`);
-      shelf.scrollTo({ left: target ? target.offsetLeft - shelf.offsetLeft - 0 : 0, behavior: "instant" });
+      const target = focusEpisodeId && shelf.querySelector(`a[href$="${focusEpisodeId}"]`);
+      if (target && item.Type === "Episode") {
+        target.classList.add("is-current");
+        target.setAttribute("aria-current", "page");
+      }
+      shelf.scrollTo({ left: target ? target.offsetLeft - shelf.offsetLeft : 0, behavior: "instant" });
     };
 
     const section = el("section", { class: "hera-seasons verticalSection", "aria-label": "Episodes", "data-item": itemId }, [

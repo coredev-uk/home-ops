@@ -883,32 +883,24 @@ h3 {
 
 /* ---------- Detail pages: full-bleed artwork, content on its lower left ----------- */
 
+/* Every detail page (film, series, season, episode) places its buttons the same distance above
+ * the banner's foot: hera-tv.js measures the ribbon (title, meta, overview, buttons) into
+ * --hera-ribbon-h, and the ribbon is pulled up by that height plus a fixed gap, so a longer
+ * overview grows upwards rather than pushing the buttons down. The fallback covers the moment
+ * before the first measurement. */
 .itemDetailPage {
   --hera-detail-h: clamp(440px, min(80vh, 56.25vw), 1100px);
   --hera-detail-foot: 0px;
-  --hera-detail-overlay: calc(210px + var(--hera-detail-foot));
+  --hera-detail-gap: 48px;
+  --hera-detail-overlay: calc(var(--hera-ribbon-h, 162px) + var(--hera-detail-gap) + var(--hera-detail-foot));
 }
 
-/* The banner carries the art at full strength; with Backdrops on, the page below it rests on the
- * same art, heavily blurred and dimmed, as the Apple TV app continues a title's key art down the
- * page. It is fixed, so it stays put while the credits and shelves scroll over it. */
-html[data-hera-view="itemDetailPage"] .backdropContainer .backdropImage {
-  filter: blur(56px) saturate(140%);
-  transform: scale(1.15);
-}
-html[data-hera-view="itemDetailPage"] .backdropContainer::after {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.72) 60%, rgba(0, 0, 0, 0.8) 100%);
-}
-:root[data-hera-scheme="light"][data-hera-view="itemDetailPage"] .backdropContainer .backdropImage {
-  filter: blur(56px) saturate(160%) brightness(1.2);
-}
-:root[data-hera-scheme="light"][data-hera-view="itemDetailPage"] .backdropContainer::after {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--hera-bg) 62%, transparent) 0%,
-    color-mix(in srgb, var(--hera-bg) 74%, transparent) 60%,
-    color-mix(in srgb, var(--hera-bg) 82%, transparent) 100%
-  );
+/* The banner carries the art at full strength; the page below it rests on the same art, heavily
+ * blurred and dimmed (.hera-ambient, fed by hera-tv.js from the banner's own image), as the Apple
+ * TV app continues a title's key art down the page. Jellyfin's page backdrop would follow a
+ * season's key art instead, so series, season and episode pages each looked different. */
+html[data-hera-view="itemDetailPage"] .backdropContainer {
+  display: none !important;
 }
 
 .itemBackdrop {
@@ -2004,9 +1996,10 @@ html.hera-home .backdropContainer,
 html.hera-home #slides-container {
   display: none !important;
 }
-/* Below the hero, the rows rest on the current title's art: heavily blurred, dimmed into the
- * ground towards the foot, crossfading with the hero (hera-tv.js, Hero.paintAmbient). It is
- * fixed and filtered once, not a backdrop-filter, so scrolling never re-blurs it. Home tab only. */
+/* The ambient ground (hera-tv.js, `ambient`): under the home rows, the current hero title's art;
+ * under a detail page's banner, the banner's own art. Heavily blurred and dimmed into the ground,
+ * crossfading when the title changes. It is fixed and filtered once, not a backdrop-filter, so
+ * scrolling never re-blurs it. */
 .hera-ambient {
   position: fixed;
   inset: 0;
@@ -2015,7 +2008,8 @@ html.hera-home #slides-container {
   overflow: hidden;
   display: none;
 }
-html.hera-home:not(.hera-discover-on) .hera-ambient {
+html.hera-home:not(.hera-discover-on) .hera-ambient,
+html.hera-art-top[data-hera-view="itemDetailPage"] .hera-ambient {
   display: block;
 }
 .hera-ambient__layer {
@@ -3095,9 +3089,10 @@ progress[aria-valuenow]:before,
   filter: none;
 }
 
-/* Without a logo there is more text to lift: the banner gives up more of its foot. */
+/* Without a logo the title sits in the ribbon; the fallback before the first measurement is
+ * taller to match. */
 .itemDetailPage:not(.hera-has-logo):not(.hera-no-backdrop) {
-  --hera-detail-overlay: calc(270px + var(--hera-detail-foot));
+  --hera-detail-overlay: calc(var(--hera-ribbon-h, 222px) + var(--hera-detail-gap) + var(--hera-detail-foot));
 }
 .itemDetailPage:not(.hera-has-logo) .detailLogo.hide {
   display: block !important;

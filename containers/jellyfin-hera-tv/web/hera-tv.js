@@ -428,6 +428,39 @@
     );
   };
 
+  // The ambient ground: the current title's art, blurred and dimmed, fixed behind the page (see
+  // .hera-ambient in hera-tv.css). The home hero and every detail page feed it, so the rows under
+  // a hero and the credits under a banner sit in the same light on every kind of page. Two layers
+  // crossfade so a change of title never flashes the ground.
+  const ambient = {
+    node: null,
+    show(src) {
+      if (!src) return;
+      if (!this.node?.isConnected) {
+        this.node = el("div", { class: "hera-ambient", "aria-hidden": "true" }, [
+          el("div", { class: "hera-ambient__layer" }),
+          el("div", { class: "hera-ambient__layer" }),
+        ]);
+        document.body.prepend(this.node);
+      }
+      const [a, b] = this.node.children;
+      const shown = a.classList.contains("is-on") ? a : b.classList.contains("is-on") ? b : null;
+      if (shown?.dataset.src === src) return;
+      const incoming = shown === a ? b : a;
+      incoming.dataset.src = src;
+      incoming.style.backgroundImage = `url("${src.replace(/"/g, "%22")}")`;
+      incoming.classList.add("is-on");
+      shown?.classList.remove("is-on");
+    },
+    hide() {
+      this.node?.querySelectorAll(".is-on").forEach((layer) => layer.classList.remove("is-on"));
+    },
+    remove() {
+      this.node?.remove();
+      this.node = null;
+    },
+  };
+
   class Hero {
     constructor(items) {
       this.items = items;
@@ -610,28 +643,9 @@
       this.paintAmbient();
     }
 
-    // Below the hero the home page rests on the current title's art, blurred and dimmed (see
-    // .hera-ambient in hera-tv.css), so the rows sit in its light rather than on flat black. Two
-    // layers crossfade so a change of title never flashes the ground.
     paintAmbient() {
-      const src = this.slides[this.index]?.querySelector(".hera-hero__backdrop")?.currentSrc
-        || this.slides[this.index]?.querySelector(".hera-hero__backdrop")?.src;
-      if (!src) return;
-      if (!this.ambient) {
-        this.ambient = el("div", { class: "hera-ambient", "aria-hidden": "true" }, [
-          el("div", { class: "hera-ambient__layer" }),
-          el("div", { class: "hera-ambient__layer" }),
-        ]);
-        document.body.prepend(this.ambient);
-      }
-      const [a, b] = this.ambient.children;
-      const shown = a.classList.contains("is-on") ? a : b.classList.contains("is-on") ? b : null;
-      if (shown?.dataset.src === src) return;
-      const incoming = shown === a ? b : a;
-      incoming.dataset.src = src;
-      incoming.style.backgroundImage = `url("${src.replace(/"/g, "%22")}")`;
-      incoming.classList.add("is-on");
-      shown?.classList.remove("is-on");
+      const img = this.slides[this.index]?.querySelector(".hera-hero__backdrop");
+      ambient.show(img?.currentSrc || img?.src);
     }
 
     paint(progress) {
@@ -656,7 +670,6 @@
       document.removeEventListener("visibilitychange", this.onVisibility);
       document.removeEventListener("keydown", this.onKeyUp, true);
       this.node.remove();
-      this.ambient?.remove();
     }
   }
 
@@ -850,7 +863,12 @@
 
   const fillBanner = async (page, itemId) => {
     const banner = page.querySelector("#itemBackdrop");
-    if (!banner || banner.dataset.heraFilled === itemId) return;
+    if (!banner) return;
+    if (banner.dataset.heraFilled === itemId) {
+      // Back on a page already drawn: the ambient may be showing another title's art.
+      if (banner.dataset.heraAmbient) ambient.show(banner.dataset.heraAmbient);
+      return;
+    }
     // Jellyfin drew its own banner (mobile layout): leave it.
     if (!banner.dataset.heraFilled && /url\(/.test(getComputedStyle(banner).backgroundImage)) {
       page.classList.remove("hera-no-backdrop");
@@ -869,10 +887,50 @@
     banner.dataset.heraFilled = itemId;
     if (!art) {
       banner.style.backgroundImage = "";
+      ambient.hide();
       return;
     }
     const width = Math.min(2560, Math.round(window.innerWidth * (window.devicePixelRatio || 1)));
-    banner.style.backgroundImage = `url("${imageUrl(art.id, "Backdrop", { maxWidth: width, tag: art.tag })}")`;
+    const url = imageUrl(art.id, "Backdrop", { maxWidth: width, tag: art.tag });
+    banner.style.backgroundImage = `url("${url}")`;
+    // The page below the banner rests on the same art (one source for series, season and
+    // episode alike), not on Jellyfin's page backdrop, which follows the season's key art.
+    banner.dataset.heraAmbient = imageUrl(art.id, "Backdrop", { maxWidth: 960, tag: art.tag });
+    ambient.show(banner.dataset.heraAmbient);
+  };
+
+  // Series, season, episode and film pages differ in how much sits over the banner (a title, a
+  // meta line, an overview of one to three lines, buttons). The ribbon is pulled up by exactly its
+  // own height plus a fixed foot, so the buttons land the same distance above the banner's edge
+  // on every one of them. --hera-ribbon-h feeds --hera-detail-overlay in hera-tv.css.
+  const ribbonObservers = new WeakMap();
+  const fitRibbon = (page) => {
+    const ribbon = page.querySelector(".detailRibbon");
+    if (!ribbon || ribbonObservers.has(ribbon)) return;
+    const measure = () => {
+      const parts = [...ribbon.children].filter((child) => child.offsetParent !== null && child.offsetHeight > 0);
+      if (!parts.length) return;
+      const top = parts[0].getBoundingClientRect().top;
+      const bottom = Math.max(...parts.map((part) => part.getBoundingClientRect().bottom));
+      const height = Math.ceil(bottom - top);
+      if (height > 0 && page.style.getPropertyValue("--hera-ribbon-h") !== `${height}px`) {
+        page.style.setProperty("--hera-ribbon-h", `${height}px`);
+      }
+    };
+    const observer = new ResizeObserver(() => requestAnimationFrame(measure));
+    const watch = () => [...ribbon.children].forEach((child) => observer.observe(child));
+    watch();
+    // Jellyfin swaps the ribbon's children between items; keep watching the new ones.
+    const children = new MutationObserver(watch);
+    children.observe(ribbon, { childList: true });
+    ribbonObservers.set(ribbon, observer);
+    state.cleanups.push(() => {
+      observer.disconnect();
+      children.disconnect();
+      ribbonObservers.delete(ribbon);
+      page.style.removeProperty("--hera-ribbon-h");
+    });
+    measure();
   };
 
   // The synopsis belongs with the title and buttons, over the artwork, as on tvOS; the stock
@@ -1256,6 +1314,7 @@
       if (isHome) await mountHero(page);
       if (page.id === "itemDetailPage") {
         markLogo(page);
+        fitRibbon(page);
         const id = itemIdFromHash();
         if (id) {
           fillBanner(page, id).catch(console.error);
@@ -1405,6 +1464,7 @@
     teardown() {
       state.hero?.destroy();
       stopHomeWait();
+      ambient.remove();
       heroTabObserver.observer?.disconnect();
       state.cleanups.splice(0).forEach((fn) => fn());
       modules.splice(0).forEach((module) => module.teardown?.());

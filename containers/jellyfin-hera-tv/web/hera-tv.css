@@ -2169,19 +2169,53 @@ html.hera-home #homeTab {
 .hera-episode:active .hera-episode__still {
   transform: scale(0.98);
 }
+/* Hover and focus: the same treatment as every poster with a play action (see .cardOverlayContainer
+ * above): a light frost over the still and a glass play disc in its centre. The frost exists only
+ * while hovered or focused, so idle cards carry no blur layer. */
+.hera-episode__still::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.4) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--hera-fast) var(--hera-ease);
+}
+.hera-episode:hover .hera-episode__still::after,
+.hera-episode:focus-within .hera-episode__still::after {
+  opacity: 1;
+  backdrop-filter: blur(2.5px);
+  -webkit-backdrop-filter: blur(2.5px);
+}
 .hera-episode__play {
   position: absolute;
-  inset: auto auto 12px 12px;
-  width: 40px;
-  height: 40px;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  background: var(--hera-glass-hover) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   opacity: 0;
+  transition: opacity var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.hera-episode__play .material-icons {
+  font-size: 28px;
 }
 .hera-episode:hover .hera-episode__play,
 .hera-episode:focus-within .hera-episode__play {
   opacity: 1;
 }
+.hera-episode__play:hover {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+}
 .hera-episode__progress {
   position: absolute;
+  z-index: 1;
   left: 12px;
   right: 12px;
   bottom: 12px;
@@ -2196,8 +2230,20 @@ html.hera-home #homeTab {
   background: var(--hera-select);
   border-radius: inherit;
 }
-.hera-episode:hover .hera-episode__progress {
-  opacity: 0;
+/* The episode whose page this is: a quiet 2px edge in secondary label colour (the white 3px ring
+ * means keyboard focus), and its number reads as "now". */
+.hera-episode.is-current .hera-episode__still {
+  box-shadow: 0 0 0 2px var(--hera-label-2), var(--hera-shadow);
+}
+.hera-episode.is-current .hera-episode__name b {
+  color: var(--hera-label);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .hera-episode:hover .hera-episode__still::after,
+  .hera-episode:focus-within .hera-episode__still::after {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 .hera-episode__name {
   margin: 0;
@@ -2440,9 +2486,11 @@ html.hera-home #homeTab {
   font-size: 16px;
 }
 
-/* Our season shelf stands in for the stock season cards and Next Up row. */
+/* Our episode shelf stands in for the stock season cards, a season's vertical episode list, an
+ * episode's "More from Series N" carousel and the Next Up row. */
 .hera-has-seasons #childrenCollapsible,
 .hera-has-seasons #listChildrenCollapsible,
+.hera-has-seasons .moreFromSeasonSection,
 .hera-has-seasons .nextUpSection {
   display: none !important;
 }

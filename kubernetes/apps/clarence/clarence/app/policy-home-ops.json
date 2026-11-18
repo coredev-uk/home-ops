@@ -76,6 +76,25 @@
   "requiredContexts": [],
   "stabilityContext": "",
   "minimumReleaseAgeHours": 72,
+  "releaseAge": [
+    {
+      "paths": [
+        "kubernetes/apps/kube-system/**",
+        "kubernetes/apps/rook-ceph/**",
+        "kubernetes/apps/flux-system/**",
+        "kubernetes/apps/cnpg-system/**",
+        "kubernetes/apps/system-upgrade/**",
+        "kubernetes/apps/cert-manager/**",
+        "kubernetes/apps/external-secrets/**",
+        "kubernetes/apps/kopiur-system/**",
+        "talos/**",
+        "bootstrap/**"
+      ],
+      "hours": 72
+    },
+    { "updateTypes": ["patch"], "hours": 24 },
+    { "updateTypes": ["minor"], "hours": 48 }
+  ],
   "flux": {
     "root": "kubernetes/apps"
   },

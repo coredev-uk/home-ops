@@ -62,6 +62,8 @@ public class ActivityController(UpstreamClient upstream, LibraryLookup library, 
         var node = await upstream.SeerrGetAsync($"api/v1/user/{seerrUser}/requests?take={Math.Clamp(take, 1, MaxRequests)}&skip=0", TimeSpan.FromSeconds(20), seerrUser).ConfigureAwait(false);
         var queue = await queueTask.ConfigureAwait(false);
         var sab = await sabTask.ConfigureAwait(false);
+        var settings = IntegrationSettings.Current;
+        var admin = IsAdmin();
 
         // A title requested more than once (a series, then its next series) is one entry.
         var merged = new List<Merged>();
@@ -120,6 +122,7 @@ public class ActivityController(UpstreamClient upstream, LibraryLookup library, 
                 requestedAt = m.RequestedAt,
                 seasons = m.Seasons.Order().ToArray(),
                 activity = activity?.ToJson(sab),
+                links = ExternalLinks.For(settings, admin, m.Type, m.TmdbId, activity is null ? null : ServiceOf(m.Type), activity?.Slug),
             };
         })).ConfigureAwait(false);
 
@@ -139,7 +142,7 @@ public class ActivityController(UpstreamClient upstream, LibraryLookup library, 
         var settings = IntegrationSettings.Current;
         if (!ActivityOn())
         {
-            return Ok(new { activity = (object?)null });
+            return Ok(new { activity = (object?)null, links = ExternalLinks.For(settings, false, type, tmdbId, null, null) });
         }
 
         int? arrId = null;
@@ -159,7 +162,12 @@ public class ActivityController(UpstreamClient upstream, LibraryLookup library, 
         var sabTask = ArrActivity.SabAsync(upstream);
         var queue = await queueTask.ConfigureAwait(false);
         var activity = await LookUp(type, tmdbId, arrId, tvdb, numbers, queue).ConfigureAwait(false);
-        return Ok(new { activity = activity?.ToJson(await sabTask.ConfigureAwait(false)) });
+        var sab = await sabTask.ConfigureAwait(false);
+        return Ok(new
+        {
+            activity = activity?.ToJson(sab),
+            links = ExternalLinks.For(settings, IsAdmin(), type, tmdbId, activity is null ? null : ServiceOf(type), activity?.Slug),
+        });
     }
 
     /// <summary>Everything in Sonarr's and Radarr's queues, with SABnzbd's overall speed. Administrators only.</summary>
@@ -177,6 +185,8 @@ public class ActivityController(UpstreamClient upstream, LibraryLookup library, 
 
     // Sonarr or Radarr connected, and the dashboard's "Request progress" switch on.
     private static bool ActivityOn() => IntegrationSettings.Current.ActivityEnabled && Plugin.Instance?.Configuration.ActivityEnabled != false;
+
+    private static ArrService ServiceOf(string mediaType) => mediaType == "tv" ? ArrService.Sonarr : ArrService.Radarr;
 
     private User? CurrentUser()
     {

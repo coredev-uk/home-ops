@@ -118,4 +118,13 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>Gets or sets the SABnzbd API key.</summary>
     public string? SabnzbdApiKey { get; set; }
+
+    /// <summary>Gets or sets the Sonarr URL people open in a browser.</summary>
+    public string? SonarrPublicUrl { get; set; }
+
+    /// <summary>Gets or sets the Radarr URL people open in a browser.</summary>
+    public string? RadarrPublicUrl { get; set; }
+
+    /// <summary>Gets or sets the SABnzbd URL people open in a browser.</summary>
+    public string? SabnzbdPublicUrl { get; set; }
 }

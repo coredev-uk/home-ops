@@ -47,6 +47,10 @@ spec:
               HERATV_SONARR_URL: http://sonarr.default.svc.cluster.local
               HERATV_RADARR_URL: http://radarr.default.svc.cluster.local
               HERATV_SABNZBD_URL: http://sabnzbd.default.svc.cluster.local
+              # Where an administrator's "Open in Sonarr/Radarr/SABnzbd" buttons go.
+              HERATV_SONARR_PUBLIC_URL: https://sonarr.hera.ac
+              HERATV_RADARR_PUBLIC_URL: https://radarr.hera.ac
+              HERATV_SABNZBD_PUBLIC_URL: https://sabnzbd.hera.ac
             envFrom:
               - secretRef:
                   name: jellyfin-secret

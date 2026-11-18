@@ -15,10 +15,13 @@ public sealed record ArrDefinition(
     string Name,
     string UrlVariable,
     string KeyVariable,
+    string PublicUrlVariable,
     Func<PluginConfiguration, string?> SavedUrl,
     Func<PluginConfiguration, string?> SavedKey,
+    Func<PluginConfiguration, string?> SavedPublic,
     Action<PluginConfiguration, string?> SetUrl,
-    Action<PluginConfiguration, string?> SetKey);
+    Action<PluginConfiguration, string?> SetKey,
+    Action<PluginConfiguration, string?> SetPublic);
 
 /// <summary>
 /// Where Seerr, Maintainerr and the download stack live and how Jellyfin users map to Seerr users.
@@ -36,12 +39,13 @@ public sealed class IntegrationSettings
     /// <summary>The download stack's settings, in the order the dashboard lists them.</summary>
     public static readonly IReadOnlyList<ArrDefinition> Arr =
     [
-        new(ArrService.Sonarr, "sonarr", "Sonarr", "HERATV_SONARR_URL", "HERATV_SONARR_API_KEY", c => c.SonarrUrl, c => c.SonarrApiKey, (c, v) => c.SonarrUrl = v, (c, v) => c.SonarrApiKey = v),
-        new(ArrService.Radarr, "radarr", "Radarr", "HERATV_RADARR_URL", "HERATV_RADARR_API_KEY", c => c.RadarrUrl, c => c.RadarrApiKey, (c, v) => c.RadarrUrl = v, (c, v) => c.RadarrApiKey = v),
-        new(ArrService.Sabnzbd, "sabnzbd", "SABnzbd", "HERATV_SABNZBD_URL", "HERATV_SABNZBD_API_KEY", c => c.SabnzbdUrl, c => c.SabnzbdApiKey, (c, v) => c.SabnzbdUrl = v, (c, v) => c.SabnzbdApiKey = v),
+        new(ArrService.Sonarr, "sonarr", "Sonarr", "HERATV_SONARR_URL", "HERATV_SONARR_API_KEY", "HERATV_SONARR_PUBLIC_URL", c => c.SonarrUrl, c => c.SonarrApiKey, c => c.SonarrPublicUrl, (c, v) => c.SonarrUrl = v, (c, v) => c.SonarrApiKey = v, (c, v) => c.SonarrPublicUrl = v),
+        new(ArrService.Radarr, "radarr", "Radarr", "HERATV_RADARR_URL", "HERATV_RADARR_API_KEY", "HERATV_RADARR_PUBLIC_URL", c => c.RadarrUrl, c => c.RadarrApiKey, c => c.RadarrPublicUrl, (c, v) => c.RadarrUrl = v, (c, v) => c.RadarrApiKey = v, (c, v) => c.RadarrPublicUrl = v),
+        new(ArrService.Sabnzbd, "sabnzbd", "SABnzbd", "HERATV_SABNZBD_URL", "HERATV_SABNZBD_API_KEY", "HERATV_SABNZBD_PUBLIC_URL", c => c.SabnzbdUrl, c => c.SabnzbdApiKey, c => c.SabnzbdPublicUrl, (c, v) => c.SabnzbdUrl = v, (c, v) => c.SabnzbdApiKey = v, (c, v) => c.SabnzbdPublicUrl = v),
     ];
 
     private readonly IReadOnlyDictionary<ArrService, (Uri? Url, string? Key)> _arr;
+    private readonly IReadOnlyDictionary<ArrService, string?> _public;
 
     private IntegrationSettings(
         Uri? seerrUrl,
@@ -49,7 +53,8 @@ public sealed class IntegrationSettings
         string? seerrApiKey,
         IReadOnlyDictionary<string, int> seerrUsers,
         Uri? maintainerrUrl,
-        IReadOnlyDictionary<ArrService, (Uri? Url, string? Key)> arr)
+        IReadOnlyDictionary<ArrService, (Uri? Url, string? Key)> arr,
+        IReadOnlyDictionary<ArrService, string?> publicUrls)
     {
         SeerrUrl = seerrUrl;
         SeerrPublicUrl = seerrPublicUrl;
@@ -57,6 +62,7 @@ public sealed class IntegrationSettings
         SeerrUsers = seerrUsers;
         MaintainerrUrl = maintainerrUrl;
         _arr = arr;
+        _public = publicUrls;
     }
 
     /// <summary>Gets the Seerr base URL the server calls (cluster-internal).</summary>
@@ -80,6 +86,9 @@ public sealed class IntegrationSettings
 
     /// <summary>Gets the address and key of one arr service; either is null when not set.</summary>
     public (Uri? Url, string? Key) Endpoint(ArrService service) => _arr.GetValueOrDefault(service);
+
+    /// <summary>Gets the address people open a service at in a browser, without a trailing slash; null when not set.</summary>
+    public string? PublicUrl(ArrService service) => _public.GetValueOrDefault(service);
 
     /// <summary>Gets a value indicating whether a service has both its address and its key.</summary>
     public bool Enabled(ArrService service) => Endpoint(service) is { Url: not null, Key: { Length: > 0 } };
@@ -113,7 +122,10 @@ public sealed class IntegrationSettings
                 ParseUri(Inspect(MaintainerrUrlVariable, config.MaintainerrUrl).Value),
                 Arr.ToDictionary(
                     d => d.Service,
-                    d => (ParseUri(Inspect(d.UrlVariable, d.SavedUrl(config)).Value), Inspect(d.KeyVariable, d.SavedKey(config)).Value)));
+                    d => (ParseUri(Inspect(d.UrlVariable, d.SavedUrl(config)).Value), Inspect(d.KeyVariable, d.SavedKey(config)).Value)),
+                Arr.ToDictionary(
+                    d => d.Service,
+                    d => Inspect(d.PublicUrlVariable, d.SavedPublic(config)).Value?.TrimEnd('/')));
         }
     }
 

@@ -46,6 +46,12 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
             {
                 return BadRequest(new { message = $"{def.Name} URL must be a full web address, such as http://{def.Id}:8080." });
             }
+
+            var publicUrl = body.Services is not null && body.Services.TryGetValue(def.Id, out var sentPublic) ? Writable(def.PublicUrlVariable, sentPublic.PublicUrl) : null;
+            if (!string.IsNullOrWhiteSpace(publicUrl) && !IsWebAddress(publicUrl))
+            {
+                return BadRequest(new { message = $"{def.Name} public address must be a full web address, such as https://{def.Id}.example.com." });
+            }
         }
 
         var region = body.WatchRegion?.Trim();
@@ -80,6 +86,12 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
             if (arrUrl is not null)
             {
                 def.SetUrl(config, Clean(arrUrl));
+            }
+
+            var arrPublic = Writable(def.PublicUrlVariable, sent.PublicUrl);
+            if (arrPublic is not null)
+            {
+                def.SetPublic(config, Clean(arrPublic));
             }
 
             if (!Locked(def.KeyVariable))
@@ -265,6 +277,7 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
         return new
         {
             url = Show(IntegrationSettings.Inspect(def.UrlVariable, def.SavedUrl(config))),
+            publicUrl = Show(IntegrationSettings.Inspect(def.PublicUrlVariable, def.SavedPublic(config))),
             apiKey = new { set = key.Value is not null, source = key.Source, variable = key.Variable },
         };
     }
@@ -445,6 +458,8 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
     public sealed class ServiceBody
     {
         public string? Url { get; set; }
+
+        public string? PublicUrl { get; set; }
 
         /// <summary>Gets or sets a new key; empty or absent keeps the saved one.</summary>
         public string? ApiKey { get; set; }

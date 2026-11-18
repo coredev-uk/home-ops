@@ -72,6 +72,9 @@
 
 /* On a film or series page it sits under the meta line, inside the ribbon's dark tokens. */
 .hera-activity-slot {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
   margin: 12px 0 2px;
 }
 .hera-activity--block {
@@ -152,7 +155,7 @@ html.hera-activity-on #slides-container {
   background: var(--hera-hover);
 }
 .hera-av__back:focus-visible,
-.hera-av-row:focus-visible {
+.hera-ext__link:focus-visible {
   outline: 2px solid var(--hera-focus);
   outline-offset: 2px;
 }
@@ -208,25 +211,38 @@ html.hera-activity-on #slides-container {
   background: var(--hera-surface);
 }
 .hera-av-row {
-  appearance: none;
   position: relative;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 16px;
   width: 100%;
   margin: 0;
-  padding: 14px 20px;
+  padding: 0 16px 0 0;
+  color: var(--hera-label);
+  transition: background-color var(--hera-fast) var(--hera-ease);
+}
+/* The row's own link takes its width; "open in" pills sit after it, never inside it. */
+.hera-av-row__link {
+  appearance: none;
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 16px 14px 20px;
   border: 0;
   background: none;
-  color: var(--hera-label);
+  color: inherit;
   font: inherit;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color var(--hera-fast) var(--hera-ease);
 }
 .hera-av-row--static {
+  gap: 16px;
+  padding: 14px 20px;
   cursor: default;
 }
 .hera-av-row + .hera-av-row::before {
@@ -240,18 +256,82 @@ html.hera-activity-on #slides-container {
 .hera-av-row:hover {
   background: var(--hera-hover);
 }
-.hera-av-row:focus-visible {
+.hera-av-row:focus-visible,
+.hera-av-row__link:focus-visible {
+  outline: 2px solid var(--hera-focus);
   outline-offset: -2px;
 }
-.layout-tv .hera-av-row:focus {
+.layout-tv .hera-av-row:focus,
+.layout-tv .hera-av-row__link:focus {
   outline: 0;
   background: var(--hera-hover);
   box-shadow: inset 0 0 0 3px var(--hera-focus);
 }
-.hera-av-row > .material-icons {
+.hera-av-row > .hera-ext {
   flex: none;
-  color: var(--hera-label-3);
-  font-size: 24px;
+}
+.hera-av-row--static > .hera-ext {
+  align-self: flex-start;
+  margin-left: auto;
+}
+
+/* ---------- "Open in" pills: Seerr for everyone, the download stack for administrators --------- */
+
+.hera-ext {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.hera-ext[hidden],
+.hera-activity-slot[hidden],
+.hera-sheet__activity[hidden] {
+  display: none;
+}
+.hera-ext__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  background: var(--hera-glass-light);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge);
+  color: var(--hera-label-2);
+  font: 600 13px/1 var(--hera-font);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.hera-ext__link .material-icons {
+  font-size: 16px;
+}
+.hera-ext__link:hover {
+  color: var(--hera-label);
+  background: var(--hera-fill-strong);
+}
+.layout-tv .hera-ext__link {
+  height: 40px;
+  padding: 0 16px 0 14px;
+  font-size: 17px;
+}
+.layout-tv .hera-ext__link .material-icons {
+  font-size: 22px;
+}
+/* On a remote the focused control is the selected one: white with black text, as everywhere else. */
+.layout-tv .hera-ext__link:focus {
+  outline: 0;
+  background: var(--hera-select);
+  color: var(--hera-on-select);
+}
+.hera-sheet__ext {
+  margin: 14px 0 18px;
+}
+.hera-av__aside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
 }
 .hera-av-row__art {
   flex: none;
@@ -337,7 +417,11 @@ html.hera-activity-on #slides-container {
 }
 
 @media (max-width: 720px) {
-  .hera-av-row {
+  .hera-av-row__link {
+    padding: 12px 10px 12px 14px;
+    gap: 12px;
+  }
+  .hera-av-row--static {
     padding: 12px 14px;
     gap: 12px;
   }

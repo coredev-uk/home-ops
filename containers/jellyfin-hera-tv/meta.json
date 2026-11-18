@@ -1,6 +1,6 @@
 {
   "category": "General",
-  "changelog": "Request and download progress from Sonarr, Radarr and SABnzbd; a Requests view; the admin Dashboard re-laid out; posters frost instead of going black on hover; blurred backdrops under detail pages.",
+  "changelog": "Fixes a detail-page freeze from 1.4.1; Open in Seerr/Radarr/Sonarr/SABnzbd; home rows rest on the hero's art; smoother scrolling (no standing blur on cards or the scroll edge); hover frost only on cards with a play action.",
   "description": "Apple TV-style theme, home hero and season shelves for the web client.",
   "guid": "9718b214-55d6-4828-84c8-677f2a4a131b",
   "name": "Hera TV",
@@ -8,7 +8,7 @@
   "owner": "coredev-uk",
   "targetAbi": "12.4.0.0",
   "timestamp": "2026-11-16T00:00:00.0000000Z",
-  "version": "1.4.1.0",
+  "version": "1.4.2.0",
   "status": "Active",
   "autoUpdate": false,
   "assemblies": ["Jellyfin.Plugin.HeraTv.dll"]

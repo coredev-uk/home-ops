@@ -57,6 +57,68 @@ public sealed class UpstreamClient(ILogger<UpstreamClient> logger)
         return Cached($"maintainerr|{path}", cacheFor, () => SendAsync(HttpMethod.Get, new Uri(settings.MaintainerrUrl!, path), settings, null, null));
     }
 
+    private static readonly TimeSpan ArrTimeout = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan ArrBackoff = TimeSpan.FromSeconds(15);
+    private readonly ConcurrentDictionary<ArrService, DateTime> _arrDownUntil = new();
+
+    /// <summary>
+    /// Reads JSON from Sonarr, Radarr (<c>api/v3/...</c>) or SABnzbd (<c>api?mode=...</c>). Fails
+    /// soft: a missing setting, an error or a service that stopped answering gives null, and a
+    /// service that failed is left alone for a few seconds instead of stalling every page on it.
+    /// </summary>
+    public Task<JsonNode?> ArrGetAsync(ArrService service, string pathAndQuery, TimeSpan cacheFor)
+    {
+        var (url, key) = IntegrationSettings.Current.Endpoint(service);
+        if (url is null || string.IsNullOrEmpty(key) || (_arrDownUntil.TryGetValue(service, out var until) && until > DateTime.UtcNow))
+        {
+            return Task.FromResult<JsonNode?>(null);
+        }
+
+        var cacheKey = $"{service}|{pathAndQuery}";
+        return Cached(cacheKey, cacheFor, () => SendArrAsync(service, url, key, pathAndQuery, cacheKey));
+    }
+
+    private async Task<JsonNode?> SendArrAsync(ArrService service, Uri baseUri, string key, string pathAndQuery, string cacheKey)
+    {
+        // SABnzbd takes its key and the JSON switch in the query; Sonarr and Radarr in a header.
+        var target = service == ArrService.Sabnzbd
+            ? $"{pathAndQuery}&output=json&apikey={Uri.EscapeDataString(key)}"
+            : pathAndQuery;
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, target));
+        if (service != ArrService.Sabnzbd)
+        {
+            request.Headers.Add("X-Api-Key", key);
+        }
+
+        using var timeout = new CancellationTokenSource(ArrTimeout);
+        try
+        {
+            using var response = await Http.SendAsync(request, timeout.Token).ConfigureAwait(false);
+            _arrDownUntil.TryRemove(service, out _);
+            if (!response.IsSuccessStatusCode)
+            {
+                if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+                {
+                    logger.LogWarning("Hera TV: {Service} {Path} returned {Status}", service, pathAndQuery.Split('?')[0], (int)response.StatusCode);
+                }
+
+                return null;
+            }
+
+            var text = await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
+            var body = string.IsNullOrWhiteSpace(text) ? null : JsonNode.Parse(text);
+            // SABnzbd answers a wrong key or a bad mode with HTTP 200 and an error object.
+            return service == ArrService.Sabnzbd && body?["error"] is not null ? null : body;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
+        {
+            _arrDownUntil[service] = DateTime.UtcNow + ArrBackoff;
+            _cache.TryRemove(cacheKey, out _);
+            logger.LogWarning("Hera TV: {Service} {Path} failed: {Reason}", service, pathAndQuery.Split('?')[0], ex.GetType().Name);
+            return null;
+        }
+    }
+
     private Task<JsonNode?> Cached(string key, TimeSpan cacheFor, Func<Task<JsonNode?>> load)
     {
         var now = DateTime.UtcNow;
@@ -116,7 +178,11 @@ public sealed class UpstreamClient(ILogger<UpstreamClient> logger)
     public sealed record Probe(int? Status, JsonNode? Body, string? Failure);
 
     /// <summary>Drops cached reads, so a changed URL or key never serves the old server's answers.</summary>
-    public void ClearCache() => _cache.Clear();
+    public void ClearCache()
+    {
+        _cache.Clear();
+        _arrDownUntil.Clear();
+    }
 
     /// <summary>One uncached GET against a base URL that may not be saved yet: the settings page's Test connection.</summary>
     public async Task<Probe> ProbeAsync(Uri baseUri, string path, string? apiKey)

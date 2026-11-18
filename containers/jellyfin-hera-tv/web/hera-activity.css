@@ -1,0 +1,354 @@
+/* Hera TV: request activity (hera-activity.js). Loaded after hera-extras.css; colours are scheme tokens only. */
+
+/* ---------- The state line: film and series pages, the title sheet, the Requests view ------------ */
+
+.hera-activity {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: var(--hera-label-2);
+  font: 600 14px/1.3 var(--hera-font);
+}
+.hera-activity[hidden],
+.hera-activity-slot[hidden] {
+  display: none;
+}
+.hera-activity__main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hera-activity__main .material-icons {
+  flex: none;
+  font-size: 20px;
+}
+.hera-activity__text {
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+/* What is moving reads in the full label colour; what waits stays quiet. */
+.hera-activity[data-state="downloading"],
+.hera-activity[data-state="importing"],
+.hera-activity[data-state="queued"],
+.hera-activity[data-state="attention"],
+.hera-activity[data-state="failed"] {
+  color: var(--hera-label);
+}
+.hera-activity__bar {
+  display: block;
+  height: 4px;
+  max-width: 360px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--hera-track);
+}
+.hera-activity__bar[hidden],
+.hera-activity__extra[hidden] {
+  display: none;
+}
+.hera-activity__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--hera-select);
+  transition: width 900ms var(--hera-ease);
+}
+.hera-activity__extra {
+  color: var(--hera-label-3);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.layout-tv .hera-activity {
+  font-size: 18px;
+}
+.layout-tv .hera-activity__extra {
+  font-size: 16px;
+}
+.layout-tv .hera-activity__main .material-icons {
+  font-size: 24px;
+}
+
+/* On a film or series page it sits under the meta line, inside the ribbon's dark tokens. */
+.hera-activity-slot {
+  margin: 12px 0 2px;
+}
+.hera-activity--block {
+  font-size: 15px;
+}
+.hera-activity--block .hera-activity__bar {
+  width: min(100%, 320px);
+}
+.hera-sheet__activity {
+  margin: 0 0 14px;
+}
+.hera-sheet__activity:empty {
+  display: none;
+}
+
+/* ---------- Discover: the way into Requests ---------------------------------------------------- */
+
+.hera-discover__search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.hera-discover__search .hera-discover__field {
+  flex: 1 1 320px;
+}
+.hera-discover__requests[hidden] {
+  display: none;
+}
+
+/* ---------- The Requests view: #/home?hera=requests ------------------------------------------- */
+
+/* The view takes the place of the home tab, as Discover and a person's page do: no hero, no home rows, and Home steps back. */
+html.hera-activity-on[data-hera-view] .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root:not(:has(> a.MuiButton-colorPrimary)) > a:first-child,
+html.hera-activity-on .headerTabs .emby-tab-button.emby-tab-button-active:not(:focus) {
+  background: transparent !important;
+  color: var(--hera-label-2) !important;
+}
+html.hera-activity-on #homeTab > .hera-hero,
+html.hera-activity-on #indexPage .homeSectionsContainer,
+html.hera-activity-on .backdropContainer,
+html.hera-activity-on #slides-container {
+  display: none !important;
+}
+
+.hera-av {
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 84px var(--hera-edge) 72px;
+}
+.layout-tv .hera-av {
+  padding-top: 24px;
+}
+.hera-av__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+.hera-av__back {
+  display: inline-flex;
+  align-items: center;
+  margin-left: -6px;
+  padding: 2px 8px 2px 2px;
+  border-radius: 999px;
+  color: var(--hera-label-2);
+  font: 600 15px/1.4 var(--hera-font);
+  text-decoration: none;
+  transition: color var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.hera-av__back .material-icons {
+  font-size: 22px;
+}
+.hera-av__back:hover {
+  color: var(--hera-label);
+  background: var(--hera-hover);
+}
+.hera-av__back:focus-visible,
+.hera-av-row:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: 2px;
+}
+.hera-av__title {
+  margin: 0;
+  font-family: var(--hera-font-display);
+  font-size: clamp(30px, 3.4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+.hera-av__section {
+  margin: 0 0 36px;
+}
+.hera-av__section[hidden],
+.hera-av__empty[hidden] {
+  display: none;
+}
+.hera-av__section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin: 0 0 12px;
+}
+.hera-av__heading {
+  margin: 0;
+  font: 700 22px/1.2 var(--hera-font-display);
+  letter-spacing: -0.015em;
+}
+.hera-av__summary {
+  margin: 0;
+  color: var(--hera-label-2);
+  font: 600 14px/1.3 var(--hera-font);
+  font-variant-numeric: tabular-nums;
+}
+.hera-av__empty,
+.hera-av__none {
+  margin: 0;
+  padding: 20px 0;
+  color: var(--hera-label-2);
+  font: 500 17px/1.45 var(--hera-font);
+  max-width: 60ch;
+}
+.hera-av__none {
+  padding: 20px;
+}
+
+.hera-av__list {
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--hera-surface);
+}
+.hera-av-row {
+  appearance: none;
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 14px 20px;
+  border: 0;
+  background: none;
+  color: var(--hera-label);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--hera-fast) var(--hera-ease);
+}
+.hera-av-row--static {
+  cursor: default;
+}
+.hera-av-row + .hera-av-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 0;
+  border-top: 1px solid var(--hera-separator);
+}
+.hera-av-row:hover {
+  background: var(--hera-hover);
+}
+.hera-av-row:focus-visible {
+  outline-offset: -2px;
+}
+.layout-tv .hera-av-row:focus {
+  outline: 0;
+  background: var(--hera-hover);
+  box-shadow: inset 0 0 0 3px var(--hera-focus);
+}
+.hera-av-row > .material-icons {
+  flex: none;
+  color: var(--hera-label-3);
+  font-size: 24px;
+}
+.hera-av-row__art {
+  flex: none;
+  width: 48px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--hera-surface-2);
+}
+.hera-av-row__art--empty,
+.hera-av-row__art--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--hera-label-3);
+}
+.hera-av-row__art--icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--hera-fill-strong);
+  color: var(--hera-label);
+}
+.hera-av-row__main {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.hera-av-row__title {
+  overflow: hidden;
+  font: 600 17px/1.3 var(--hera-font-display);
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hera-av-row__meta {
+  overflow: hidden;
+  color: var(--hera-label-2);
+  font: 500 14px/1.3 var(--hera-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hera-av-row__meta[hidden],
+.hera-av-row__note[hidden] {
+  display: none;
+}
+.hera-av-row__note {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--hera-label-2);
+  font: 500 13px/1.4 var(--hera-font);
+}
+/* A download row's state icon is the disc at its left; the line repeats only the words. */
+.hera-av-row--static .hera-activity__main .material-icons {
+  display: none;
+}
+.hera-activity--row {
+  margin-top: 6px;
+}
+.hera-activity--row .hera-activity__bar {
+  width: min(100%, 420px);
+}
+
+.layout-tv .hera-av-row__title {
+  font-size: 22px;
+}
+.layout-tv .hera-av-row__meta,
+.layout-tv .hera-av__summary {
+  font-size: 17px;
+}
+.layout-tv .hera-av-row__note {
+  font-size: 16px;
+}
+.layout-tv .hera-av__heading {
+  font-size: 28px;
+}
+.layout-tv .hera-av-row__art:not(.hera-av-row__art--icon) {
+  width: 60px;
+  height: 90px;
+}
+
+@media (max-width: 720px) {
+  .hera-av-row {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .hera-av-row + .hera-av-row::before {
+    left: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hera-activity__fill,
+  .hera-av-row,
+  .hera-av__back {
+    transition: none;
+  }
+}

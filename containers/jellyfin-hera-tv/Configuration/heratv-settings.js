@@ -52,6 +52,14 @@ const SWITCHES = [
   ["leavingSoon", "leavingSoonEnabled", "hourglass_bottom", "Leaving Soon", "A home row, and a chip on each title page, for what Maintainerr will remove soon."],
   ["requests", "requestsRowEnabled", "playlist_add_check", "Your Requests", "A home row of each person's own Seerr requests and where they stand."],
   ["trending", "trendingRowEnabled", "trending_up", "Trending to Request", "A home row of what's trending on Seerr, ready to request."],
+  ["activity", "activityEnabled", "downloading", "Request progress", "Live download state on requests and title pages, and a Downloads view for administrators. Needs Sonarr or Radarr."],
+];
+
+// The download stack: [id in /HeraTV/settings, name, example address, where the key lives]. SABnzbd only adds speed and time left.
+const ARR = [
+  ["sonarr", "Sonarr", "http://sonarr:8989", "Sonarr's Settings > General > API Key."],
+  ["radarr", "Radarr", "http://radarr:7878", "Radarr's Settings > General > API Key."],
+  ["sabnzbd", "SABnzbd", "http://sabnzbd:8080", "SABnzbd's Config > General > API Key."],
 ];
 
 // What film and series pages add. Ratings and "Also on" come from Seerr; quality badges need nothing.
@@ -70,6 +78,7 @@ export default function (view) {
   let refs = null;
   let dirty = false;
   let clearKey = false;
+  const clearArrKeys = new Set(); // service ids whose saved key is removed on the next save
   let barTimer = 0;
 
   const lower = (name) => String(name || "").toLowerCase();
@@ -356,6 +365,69 @@ export default function (view) {
     return el("div", { class: "hera-set-list hera-cfg-card" }, [url.node, el("div", { class: "hera-cfg-test" }, [test, result])]);
   };
 
+  /** Sonarr, Radarr or SABnzbd: address, write-only key, Test connection. */
+  const arrSection = ([id, name, example, keyHelp]) => {
+    const s = server[id];
+    const url = field({
+      id: `hera-${id}-url`,
+      label: "Server address",
+      description: `Where Jellyfin reaches ${name} from the server, such as ${example}.`,
+      value: s.url.value,
+      placeholder: example,
+      type: "url",
+      variable: s.url.variable,
+      locked: s.url.source === "env",
+      mode: "url",
+    });
+    const keyLocked = s.apiKey.source === "env";
+    const removed = clearArrKeys.has(id);
+    const keySaved = s.apiKey.set && !removed;
+    const remove = !keyLocked && s.apiKey.source === "config" && !removed
+      ? button("Remove", { onclick: () => { clearArrKeys.add(id); markDirty(); renderArr(id); } })
+      : null;
+    if (remove) remove.classList.add("hera-set-btn--small");
+    const key = field({
+      id: `hera-${id}-key`,
+      label: "API key",
+      description: removed ? "The saved key is removed when you save." : `${keyHelp} It stays on the server and is never shown again once saved.`,
+      value: "",
+      placeholder: keyLocked ? `Set by ${s.apiKey.variable}` : keySaved ? "••••••••••••••••" : "Paste the key",
+      type: "password",
+      variable: s.apiKey.variable,
+      locked: keyLocked,
+      pill: keySaved && !keyLocked ? el("span", { class: "hera-cfg-pill" }, [icon("check"), el("span", { text: "Saved" })]) : null,
+      actions: remove,
+    });
+    refs.arr[id] = { url: url.input, key: key.input };
+
+    const result = verdict();
+    const test = button("Test connection", {
+      iconName: "bolt",
+      onclick: async () => {
+        test.disabled = true;
+        showVerdict(result, "pending", "Testing…");
+        try {
+          const body = {};
+          if (!url.input.readOnly) body.url = url.input.value.trim();
+          if (key.input.value.trim()) body.apiKey = key.input.value.trim();
+          const answer = await send("POST", `/test/${id}`, body);
+          showVerdict(result, answer.ok, answer.message);
+        } catch (error) {
+          showVerdict(result, false, await reason(error));
+        } finally {
+          test.disabled = false;
+        }
+      },
+    });
+    return group(name, el("div", { class: "hera-set-list hera-cfg-card" }, [url.node, key.node, el("div", { class: "hera-cfg-test" }, [test, result])]));
+  };
+
+  const renderArr = (id) => {
+    const next = arrSection(ARR.find((entry) => entry[0] === id));
+    sections.arr[id].replaceWith(next);
+    sections.arr[id] = next;
+  };
+
   const homeSection = () => {
     const count = numberRow("heraHeroCount", "view_carousel", "Hero titles", "How many unwatched titles the home hero rotates through, 1 to 20.", server.hero.count, 1, 20);
     const interval = numberRow("heraHeroInterval", "timer", "Seconds per title", "How long each hero title stays before the next, 4 to 60.", server.hero.intervalSeconds, 4, 60);
@@ -451,21 +523,25 @@ export default function (view) {
   const render = () => {
     refs = {};
     links = new Map(server.seerr.users.links.map((l) => [lower(l.username), l.seerrId]));
-    const anyLocked =
-      [server.seerr.url, server.seerr.publicUrl, server.seerr.apiKey, server.seerr.users, server.maintainerr.url].some((f) => f.source === "env");
+    const anyLocked = [server.seerr.url, server.seerr.publicUrl, server.seerr.apiKey, server.seerr.users, server.maintainerr.url]
+      .concat(ARR.flatMap(([id]) => [server[id].url, server[id].apiKey]))
+      .some((f) => f.source === "env");
+    refs.arr = {};
+    sections.arr = Object.fromEntries(ARR.map((entry) => [entry[0], arrSection(entry)]));
 
     sections.seerr = group("Seerr", seerrSection());
     sections.mapping = mappingSection();
     root.replaceChildren(
       ...[
         el("h1", { class: "hera-set-title", text: "Hera TV" }),
-        el("p", { class: "hera-cfg-lede", text: "Connect Seerr and Maintainerr and choose what the home page and Discover show. Everything here applies to everyone on the server." }),
+        el("p", { class: "hera-cfg-lede", text: "Connect Seerr, Maintainerr and the download stack (Sonarr, Radarr, SABnzbd) and choose what the home page and Discover show. Everything here applies to everyone on the server." }),
         anyLocked
           ? el("p", { class: "hera-cfg-lede hera-cfg-envnote" }, [icon("lock"), el("span", { text: "Fields marked Server environment are set by HERATV_* variables on the server. Those win over anything saved here, so they're shown for reference and can't be changed on this page." })])
           : null,
         sections.seerr,
         sections.mapping,
         group("Maintainerr", maintainerrSection()),
+        ...ARR.map(([id]) => sections.arr[id]),
         homeSection(),
         rowsSection(),
         titleSection(),
@@ -476,6 +552,7 @@ export default function (view) {
 
   async function load() {
     clearKey = false;
+    clearArrKeys.clear();
     dirty = false;
     bar.classList.remove("is-on");
     root.setAttribute("aria-busy", "true");
@@ -519,6 +596,17 @@ export default function (view) {
     if (open(refs.seerrUrl)) body.seerrUrl = refs.seerrUrl.value.trim();
     if (open(refs.seerrPublicUrl)) body.seerrPublicUrl = refs.seerrPublicUrl.value.trim();
     if (open(refs.maintainerrUrl)) body.maintainerrUrl = refs.maintainerrUrl.value.trim();
+    body.services = {};
+    for (const [id] of ARR) {
+      const ref = refs.arr[id];
+      const entry = {};
+      if (open(ref.url)) entry.url = ref.url.value.trim();
+      if (open(ref.key)) {
+        if (ref.key.value.trim()) entry.apiKey = ref.key.value.trim();
+        else if (clearArrKeys.has(id)) entry.clearApiKey = true;
+      }
+      body.services[id] = entry;
+    }
     if (open(refs.seerrApiKey)) {
       if (refs.seerrApiKey.value.trim()) body.seerrApiKey = refs.seerrApiKey.value.trim();
       else if (clearKey) body.clearSeerrApiKey = true;
@@ -535,6 +623,7 @@ export default function (view) {
     try {
       server = await send("POST", "", body);
       clearKey = false;
+      clearArrKeys.clear();
       render();
       settle("Saved");
       if (server.seerr.url.value && server.seerr.apiKey.set) {

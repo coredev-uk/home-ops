@@ -81,6 +81,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether the Trending to Request row shows on the home page.</summary>
     public bool TrendingRowEnabled { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether requests show live download progress from Sonarr, Radarr and SABnzbd.</summary>
+    public bool ActivityEnabled { get; set; } = true;
+
     // Integrations. HERATV_* environment variables take precedence over these.
 
     /// <summary>Gets or sets the Seerr URL the server calls.</summary>
@@ -97,4 +100,22 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>Gets or sets the Maintainerr URL the server calls.</summary>
     public string? MaintainerrUrl { get; set; }
+
+    /// <summary>Gets or sets the Sonarr URL the server calls.</summary>
+    public string? SonarrUrl { get; set; }
+
+    /// <summary>Gets or sets the Sonarr API key.</summary>
+    public string? SonarrApiKey { get; set; }
+
+    /// <summary>Gets or sets the Radarr URL the server calls.</summary>
+    public string? RadarrUrl { get; set; }
+
+    /// <summary>Gets or sets the Radarr API key.</summary>
+    public string? RadarrApiKey { get; set; }
+
+    /// <summary>Gets or sets the SABnzbd URL the server calls.</summary>
+    public string? SabnzbdUrl { get; set; }
+
+    /// <summary>Gets or sets the SABnzbd API key.</summary>
+    public string? SabnzbdApiKey { get; set; }
 }

@@ -1089,6 +1089,12 @@
           [icon("more_horiz"), el("span", { text: "All options" })],
         ),
       ]);
+      // Requests (hera-activity.js) are for people who can request and administrators who watch the queue.
+      integrations().then((ints) => {
+        if (window.HeraTV?.activity?.requestsAvailable(ints)) {
+          links.firstElementChild?.after(link(window.HeraTV.activity.hash, "playlist_add_check", "Requests"));
+        }
+      });
 
       const dialog = el("dialog", { class: "hera-cc", "aria-label": "Control Center" }, [
         el("div", { class: "hera-cc__panel" }, [

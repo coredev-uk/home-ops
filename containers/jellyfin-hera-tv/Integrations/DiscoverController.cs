@@ -39,6 +39,11 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
             seerrLinked = settings.SeerrEnabled && user is not null && settings.SeerrUserFor(user.Username) is not null,
             seerrUrl = settings.SeerrPublicUrl,
             maintainerr = settings.MaintainerrEnabled,
+            sonarr = settings.Enabled(ArrService.Sonarr),
+            radarr = settings.Enabled(ArrService.Radarr),
+            sabnzbd = settings.Enabled(ArrService.Sabnzbd),
+            activity = settings.ActivityEnabled,
+            admin = User.IsInRole("Administrator"),
             features = IntegrationSettings.Features(config),
         });
     }
@@ -118,48 +123,6 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
             trailer = (string?)trailer?["url"],
             cast = cast ?? [],
         });
-    }
-
-    [HttpGet("discover/requests")]
-    public async Task<IActionResult> GetRequests()
-    {
-        var user = CurrentUser();
-        var seerrUser = user is null ? null : IntegrationSettings.Current.SeerrUserFor(user.Username);
-        if (user is null || seerrUser is null)
-        {
-            return Ok(Array.Empty<object>());
-        }
-
-        var node = await upstream.SeerrGetAsync($"api/v1/user/{seerrUser}/requests?take=20&skip=0", TimeSpan.FromMinutes(1), seerrUser).ConfigureAwait(false);
-        var requests = node?["results"]?.AsArray() ?? [];
-        var items = new List<object>();
-        foreach (var request in requests)
-        {
-            var media = request?["media"];
-            var type = (string?)media?["mediaType"] ?? (string?)request?["type"];
-            var tmdbId = media?["tmdbId"]?.GetValue<int>();
-            if (type is null || tmdbId is null)
-            {
-                continue;
-            }
-
-            // Request records carry ids only; the title's own record (cached) supplies the rest.
-            var title = await upstream.SeerrGetAsync($"api/v1/{type}/{tmdbId}?language=en", TimeSpan.FromHours(6)).ConfigureAwait(false);
-            if (title is null)
-            {
-                continue;
-            }
-
-            title["mediaType"] = type;
-            items.Add(new
-            {
-                item = SeerrMapper.Item(title, user, library),
-                requestStatus = SeerrMapper.RequestStatus(request!["status"]?.GetValue<int>() ?? 0),
-                requestedAt = (string?)request["createdAt"],
-            });
-        }
-
-        return Ok(items);
     }
 
     [HttpPost("discover/requests")]

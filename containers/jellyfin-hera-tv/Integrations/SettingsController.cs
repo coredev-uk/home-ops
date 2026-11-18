@@ -39,6 +39,15 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
             }
         }
 
+        foreach (var def in IntegrationSettings.Arr)
+        {
+            var arrUrl = body.Services is not null && body.Services.TryGetValue(def.Id, out var sent) ? Writable(def.UrlVariable, sent.Url) : null;
+            if (!string.IsNullOrWhiteSpace(arrUrl) && !IsWebAddress(arrUrl))
+            {
+                return BadRequest(new { message = $"{def.Name} URL must be a full web address, such as http://{def.Id}:8080." });
+            }
+        }
+
         var region = body.WatchRegion?.Trim();
         if (!string.IsNullOrEmpty(region) && (region.Length != 2 || !region.All(char.IsAsciiLetter)))
         {
@@ -58,6 +67,32 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
         if (maintainerrUrl is not null)
         {
             config.MaintainerrUrl = Clean(maintainerrUrl);
+        }
+
+        foreach (var def in IntegrationSettings.Arr)
+        {
+            if (body.Services is null || !body.Services.TryGetValue(def.Id, out var sent))
+            {
+                continue;
+            }
+
+            var arrUrl = Writable(def.UrlVariable, sent.Url);
+            if (arrUrl is not null)
+            {
+                def.SetUrl(config, Clean(arrUrl));
+            }
+
+            if (!Locked(def.KeyVariable))
+            {
+                if (sent.ClearApiKey == true)
+                {
+                    def.SetKey(config, null);
+                }
+                else if (!string.IsNullOrWhiteSpace(sent.ApiKey))
+                {
+                    def.SetKey(config, sent.ApiKey.Trim());
+                }
+            }
         }
 
         if (!Locked(IntegrationSettings.SeerrApiKeyVariable))
@@ -88,6 +123,7 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
         config.ElsewhereEnabled = body.ElsewhereEnabled ?? config.ElsewhereEnabled;
         config.RatingsEnabled = body.RatingsEnabled ?? config.RatingsEnabled;
         config.QualityBadgesEnabled = body.QualityBadgesEnabled ?? config.QualityBadgesEnabled;
+        config.ActivityEnabled = body.ActivityEnabled ?? config.ActivityEnabled;
         if (!string.IsNullOrEmpty(region))
         {
             config.WatchRegion = region.ToUpperInvariant();
@@ -135,6 +171,18 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
 
         return Ok(new { ok = false, message = $"{host} answered HTTP {status.Status} but does not look like Maintainerr. Check the URL." });
     }
+
+    [HttpPost("test/sonarr")]
+    public async Task<IActionResult> TestSonarr([FromBody] ConnectionBody? body)
+        => Ok(await CheckArr(ArrService.Sonarr, body).ConfigureAwait(false));
+
+    [HttpPost("test/radarr")]
+    public async Task<IActionResult> TestRadarr([FromBody] ConnectionBody? body)
+        => Ok(await CheckArr(ArrService.Radarr, body).ConfigureAwait(false));
+
+    [HttpPost("test/sabnzbd")]
+    public async Task<IActionResult> TestSabnzbd([FromBody] ConnectionBody? body)
+        => Ok(await CheckArr(ArrService.Sabnzbd, body).ConfigureAwait(false));
 
     /// <summary>The Seerr accounts a Jellyfin user can be linked to.</summary>
     [HttpPost("seerr/users")]
@@ -195,6 +243,9 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
             {
                 url = Show(IntegrationSettings.Inspect(IntegrationSettings.MaintainerrUrlVariable, config.MaintainerrUrl)),
             },
+            sonarr = DescribeArr(config, ArrService.Sonarr),
+            radarr = DescribeArr(config, ArrService.Radarr),
+            sabnzbd = DescribeArr(config, ArrService.Sabnzbd),
             hero = new
             {
                 count = Math.Clamp(config.HeroItemCount, 1, 20),
@@ -206,6 +257,82 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
     }
 
     private static object Show(IntegrationSettings.Field field) => new { value = field.Value, source = field.Source, variable = field.Variable };
+
+    private static object DescribeArr(PluginConfiguration config, ArrService service)
+    {
+        var def = IntegrationSettings.Arr.First(d => d.Service == service);
+        var key = IntegrationSettings.Inspect(def.KeyVariable, def.SavedKey(config));
+        return new
+        {
+            url = Show(IntegrationSettings.Inspect(def.UrlVariable, def.SavedUrl(config))),
+            apiKey = new { set = key.Value is not null, source = key.Source, variable = key.Variable },
+        };
+    }
+
+    /// <summary>
+    /// Tries one service of the download stack with the form's values (or the saved ones). The key
+    /// is only ever sent to the address being tested and never echoed back.
+    /// </summary>
+    private async Task<object> CheckArr(ArrService service, ConnectionBody? body)
+    {
+        var def = IntegrationSettings.Arr.First(d => d.Service == service);
+        var config = Plugin.Instance?.Configuration ?? new PluginConfiguration();
+        var urlField = IntegrationSettings.Inspect(def.UrlVariable, def.SavedUrl(config));
+        var keyField = IntegrationSettings.Inspect(def.KeyVariable, def.SavedKey(config));
+        var url = IntegrationSettings.ParseUri(urlField.Locked ? urlField.Value : body?.Url ?? urlField.Value);
+        var key = keyField.Locked || string.IsNullOrWhiteSpace(body?.ApiKey) ? keyField.Value : body.ApiKey.Trim();
+        if (url is null)
+        {
+            return new { ok = false, message = $"Enter the {def.Name} URL first." };
+        }
+
+        if (string.IsNullOrEmpty(key))
+        {
+            return new { ok = false, message = $"Enter the {def.Name} API key first." };
+        }
+
+        var host = url.GetLeftPart(UriPartial.Authority);
+        if (service == ArrService.Sabnzbd)
+        {
+            // Its version call is public; a queue read is what needs the key.
+            var version = await upstream.ProbeAsync(url, "api?mode=version&output=json", null).ConfigureAwait(false);
+            if (version.Failure is not null)
+            {
+                return new { ok = false, message = $"Could not reach {host}: {version.Failure}" };
+            }
+
+            if (version.Status != 200 || version.Body?["version"] is not { } sabVersion)
+            {
+                return new { ok = false, message = $"{host} answered HTTP {version.Status} but does not look like SABnzbd. Check the URL." };
+            }
+
+            var queue = await upstream.ProbeAsync(url, $"api?mode=queue&limit=1&output=json&apikey={Uri.EscapeDataString(key)}", null).ConfigureAwait(false);
+            return queue.Status == 200 && queue.Body?["queue"] is not null
+                ? new { ok = true, version = sabVersion.ToString(), message = $"Connected to SABnzbd {sabVersion}. The API key works." }
+                : new { ok = false, version = sabVersion.ToString(), message = $"Reached SABnzbd {sabVersion}, but it rejected the API key." };
+        }
+
+        var status = await upstream.ProbeAsync(url, "api/v3/system/status", key).ConfigureAwait(false);
+        if (status.Failure is not null)
+        {
+            return new { ok = false, message = $"Could not reach {host}: {status.Failure}" };
+        }
+
+        if (status.Status is 401 or 403)
+        {
+            return new { ok = false, message = $"Reached {host}, but {def.Name} rejected the API key." };
+        }
+
+        if (status.Status == 200 && status.Body?["version"] is { } arrVersion)
+        {
+            var app = (string?)status.Body["appName"];
+            return app is not null && !app.Equals(def.Name, StringComparison.OrdinalIgnoreCase)
+                ? new { ok = false, version = arrVersion.ToString(), message = $"{host} is {app}, not {def.Name}. Check the URL." }
+                : new { ok = true, version = arrVersion.ToString(), message = $"Connected to {def.Name} {arrVersion}. The API key works." };
+        }
+
+        return new { ok = false, message = $"{host} answered HTTP {status.Status} but does not look like {def.Name}. Check the URL." };
+    }
 
     private static bool Locked(string variable) => IntegrationSettings.Inspect(variable, null).Locked;
 
@@ -289,6 +416,9 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
 
         public string? MaintainerrUrl { get; set; }
 
+        /// <summary>Gets or sets the download stack's addresses and keys, by service id: "sonarr", "radarr", "sabnzbd".</summary>
+        public Dictionary<string, ServiceBody>? Services { get; set; }
+
         public int? HeroItemCount { get; set; }
 
         public int? HeroIntervalSeconds { get; set; }
@@ -307,6 +437,18 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
 
         public bool? QualityBadgesEnabled { get; set; }
 
+        public bool? ActivityEnabled { get; set; }
+
         public string? WatchRegion { get; set; }
+    }
+
+    public sealed class ServiceBody
+    {
+        public string? Url { get; set; }
+
+        /// <summary>Gets or sets a new key; empty or absent keeps the saved one.</summary>
+        public string? ApiKey { get; set; }
+
+        public bool? ClearApiKey { get; set; }
     }
 }

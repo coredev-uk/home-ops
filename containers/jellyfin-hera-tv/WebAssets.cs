@@ -7,10 +7,10 @@ namespace Jellyfin.Plugin.HeraTv;
 public static class WebAssets
 {
     /// <summary>Stylesheets in cascade order: the core theme first, modules after it.</summary>
-    public static readonly string[] Stylesheets = ["hera-tv.css", "hera-home.css", "hera-discover.css", "hera-player.css", "hera-settings.css", "hera-login.css", "hera-search.css", "hera-seerr.css", "hera-extras.css", "hera-dashboard.css"];
+    public static readonly string[] Stylesheets = ["hera-tv.css", "hera-home.css", "hera-discover.css", "hera-player.css", "hera-settings.css", "hera-login.css", "hera-search.css", "hera-seerr.css", "hera-extras.css", "hera-activity.css", "hera-dashboard.css"];
 
     /// <summary>Scripts in run order: modules register with the core, so it loads first.</summary>
-    public static readonly string[] Scripts = ["hera-tv.js", "hera-home.js", "hera-discover.js", "hera-player.js", "hera-settings.js", "hera-login.js", "hera-search.js", "hera-seerr.js", "hera-extras.js"];
+    public static readonly string[] Scripts = ["hera-tv.js", "hera-home.js", "hera-discover.js", "hera-player.js", "hera-settings.js", "hera-login.js", "hera-search.js", "hera-seerr.js", "hera-extras.js", "hera-activity.js"];
 
     private static readonly FrozenDictionary<string, Asset> Assets = Load();
 

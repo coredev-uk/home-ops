@@ -76,6 +76,12 @@ spec:
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
+      # In-progress articles, par2 repair and direct unpack stay off NFS
+      # (52 MB/s, shared with final writes); only finished files land there.
+      incomplete:
+        existingClaim: "{{ .Release.Name }}-incomplete"
+        globalMounts:
+          - path: /media/downloads/usenet/incomplete
       media:
         type: nfs
         server: expanse.internal

@@ -31,7 +31,7 @@ spec:
             # Built from coredev-uk/clarence main; the tag is the commit SHA, pinned here by hand.
             image: &image
               repository: ghcr.io/coredev-uk/clarence
-              tag: 917360699f10b30b168c3c0bd03712e411c7889b@sha256:75c9539bd48a157e49ec1de92a30456d1519bf3343c6fbab7f10000bb1f5136d
+              tag: 62e5efe8f4fd3fa8d161b9f5de8291e0e3fed635@sha256:f5b1f28913fbea9fa4545ca31354dfc039bf3b41ca5b65733c8e64cec541532c
             args:
               - -policy=/etc/clarence/config/policy.json
               - -secrets=/etc/clarence/secret

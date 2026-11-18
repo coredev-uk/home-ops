@@ -779,6 +779,78 @@
     );
   };
 
+  // Moving between episodes of a show opens a new detail page each time (Jellyfin keeps a few in
+  // its view cache, which is why some came back instantly and others redrew from nothing). What
+  // a page needs from the show (its series, the series list, each series' episodes, the banner
+  // art) is kept here for a minute, so a new page paints the banner and the Episodes shelf in its
+  // first frame instead of after three round trips. itemHints answers "what is this id?" for
+  // anything the shelf has already shown, so even the first item lookup is skipped.
+  const SHOW_TTL = 60 * 1000;
+  const showCache = new Map(); // seriesId -> { at, seasons, nextUp, episodes: Map(seasonId -> promise) }
+  const itemHints = new Map(); // itemId -> { Id, Type, SeriesId, SeasonId }
+  const artCache = new Map(); // itemId or seriesId -> { banner, ambient }
+  let shelfNavigation = null; // { seriesId, y, left, at } while moving between episodes from the shelf
+  const showData = (seriesId) => {
+    let entry = showCache.get(seriesId);
+    if (!entry || Date.now() - entry.at > SHOW_TTL || entry.user !== userId()) {
+      const failed = () => showCache.delete(seriesId);
+      entry = {
+        at: Date.now(),
+        user: userId(),
+        seasons: getJSON(`Shows/${seriesId}/Seasons`, { userId: userId() }).catch((error) => (failed(), Promise.reject(error))),
+        nextUp: getJSON("Shows/NextUp", { seriesId, userId: userId(), limit: 1 }).catch(() => null),
+        episodes: new Map(),
+      };
+      showCache.set(seriesId, entry);
+    }
+    return entry;
+  };
+  // After moving between episodes from the shelf, put the reader back where they were: same shelf
+  // position, same scroll. Runs for a freshly drawn page (from the shelf's first paint) and for
+  // one Jellyfin brings back from its view cache (from onView). Jellyfin scrolls a shown page to
+  // the top a frame later, and the page below the shelf may still be loading (so it can't scroll
+  // that far yet), so this keeps trying for a moment, and stops as soon as the reader scrolls.
+  const restoreShelfPlace = (page) => {
+    const memo = shelfNavigation;
+    if (!memo || Date.now() - memo.at > 4000) return false;
+    const section = page.querySelector(".hera-seasons");
+    const hint = itemHints.get(itemIdFromHash());
+    if (!section || hint?.Type !== "Episode" || hint.SeriesId !== memo.seriesId) return false;
+    shelfNavigation = null;
+    section.querySelector(".hera-shelf")?.scrollTo({ left: memo.left, behavior: "instant" });
+    let stopped = false;
+    const stop = () => (stopped = true);
+    const events = ["wheel", "touchstart", "keydown", "mousedown"];
+    events.forEach((type) => window.addEventListener(type, stop, { once: true, passive: true }));
+    const until = Date.now() + 1500;
+    const land = () => {
+      if (stopped || Date.now() > until) {
+        events.forEach((type) => window.removeEventListener(type, stop));
+        return;
+      }
+      if (Math.abs(window.scrollY - memo.y) > 2) window.scrollTo({ top: memo.y, behavior: "instant" });
+      setTimeout(() => requestAnimationFrame(land), 120);
+    };
+    requestAnimationFrame(() => requestAnimationFrame(land));
+    return true;
+  };
+
+  const seasonEpisodes = (seriesId, seasonId) => {
+    const entry = showData(seriesId);
+    if (!entry.episodes.has(seasonId)) {
+      entry.episodes.set(
+        seasonId,
+        getJSON(`Shows/${seriesId}/Episodes`, { seasonId, userId: userId(), Fields: "Overview,PremiereDate" }).then((result) => {
+          for (const episode of result?.Items ?? []) {
+            itemHints.set(episode.Id, { Id: episode.Id, Type: "Episode", SeriesId: seriesId, SeasonId: episode.SeasonId ?? seasonId });
+          }
+          return result;
+        }),
+      );
+    }
+    return entry.episodes.get(seasonId);
+  };
+
   // The same Episodes section, in the same place (first after the banner), on a series, a season
   // and an episode page, as the Apple TV app has one episode shelf with series tabs wherever you
   // are in a show. A series opens on the series it's up to; a season on itself; an episode on its
@@ -789,15 +861,15 @@
     if (existing?.dataset.item === itemId) return;
     existing?.remove();
     page.classList.remove("hera-has-seasons");
-    const item = await api().getItem(userId(), itemId);
+    const item = itemHints.get(itemId) ?? (await api().getItem(userId(), itemId));
     if (!item || !["Series", "Season", "Episode"].includes(item.Type)) return;
     const seriesId = item.Type === "Series" ? item.Id : item.SeriesId;
     if (!seriesId) return;
-    const [seasonsResult, nextUp] = await Promise.all([
-      getJSON(`Shows/${seriesId}/Seasons`, { userId: userId() }),
-      getJSON("Shows/NextUp", { seriesId, userId: userId(), limit: 1 }),
-    ]);
+    itemHints.set(itemId, { Id: item.Id, Type: item.Type, SeriesId: seriesId, SeasonId: item.SeasonId });
+    const show = showData(seriesId);
+    const [seasonsResult, nextUp] = await Promise.all([show.seasons, show.nextUp]);
     const seasons = seasonsResult?.Items ?? [];
+    for (const season of seasons) itemHints.set(season.Id, { Id: season.Id, Type: "Season", SeriesId: seriesId });
     if (!seasons.length || page.querySelector(".hera-seasons") || itemIdFromHash() !== itemId) return;
 
     const nextEpisode = nextUp?.Items?.[0];
@@ -805,6 +877,13 @@
     const focusEpisodeId = item.Type === "Episode" ? item.Id : nextEpisode?.Id;
     const startIndex = Math.max(0, seasons.findIndex((s) => s.Id === openSeasonId));
     const shelf = el("div", { class: "hera-shelf", role: "tabpanel" });
+    // Picking another episode from the shelf is browsing, not leaving: the new page opens where
+    // the old one was (same scroll, same shelf position) instead of at the top, every time, rather
+    // than only when Jellyfin happened to have the page cached.
+    shelf.addEventListener("click", (event) => {
+      if (!event.target.closest(".hera-episode") || event.target.closest(".hera-episode__play")) return;
+      shelfNavigation = { seriesId, y: window.scrollY, left: shelf.scrollLeft, at: Date.now() };
+    });
     const tabs = seasons.map((season, i) =>
       el("button", {
         type: "button",
@@ -816,22 +895,10 @@
       }),
     );
 
-    const cache = new Map();
     const select = async (i) => {
       tabs.forEach((tab, j) => tab.setAttribute("aria-selected", String(i === j)));
       shelf.setAttribute("aria-label", seasons[i].Name);
-      const season = seasons[i];
-      if (!cache.has(season.Id)) {
-        cache.set(
-          season.Id,
-          getJSON(`Shows/${seriesId}/Episodes`, {
-            seasonId: season.Id,
-            userId: userId(),
-            Fields: "Overview,PremiereDate",
-          }),
-        );
-      }
-      const result = await cache.get(season.Id);
+      const result = await seasonEpisodes(seriesId, seasons[i].Id);
       if (tabs[i].getAttribute("aria-selected") !== "true") return;
       shelf.replaceChildren(...(result?.Items ?? []).map(episodeCard));
       const target = focusEpisodeId && shelf.querySelector(`a[href$="${focusEpisodeId}"]`);
@@ -839,6 +906,7 @@
         target.classList.add("is-current");
         target.setAttribute("aria-current", "page");
       }
+      if (restoreShelfPlace(page)) return;
       shelf.scrollTo({ left: target ? target.offsetLeft - shelf.offsetLeft : 0, behavior: "instant" });
     };
 
@@ -873,6 +941,16 @@
     return null;
   };
 
+  // Paints the banner and the ambient ground from a { banner, ambient } pair of image URLs.
+  const paintBanner = (page, banner, itemId, urls) => {
+    page.classList.remove("hera-no-backdrop");
+    root.classList.add("hera-art-top");
+    banner.dataset.heraFilled = itemId;
+    banner.style.backgroundImage = `url("${urls.banner}")`;
+    banner.dataset.heraAmbient = urls.ambient;
+    ambient.show(urls.ambient);
+  };
+
   const fillBanner = async (page, itemId) => {
     const banner = page.querySelector("#itemBackdrop");
     if (!banner) return;
@@ -887,28 +965,35 @@
       root.classList.add("hera-art-top");
       return;
     }
+    // Known art (this item, or the series of an episode or season the shelf has shown) paints
+    // in the page's first frame; the lookup below only confirms or corrects it.
+    const hint = itemHints.get(itemId);
+    const known = artCache.get(itemId) ?? (hint?.SeriesId ? artCache.get(hint.SeriesId) : null);
+    if (known) paintBanner(page, banner, itemId, known);
     const item = await api().getItem(userId(), itemId);
     if (itemIdFromHash() !== itemId) return;
     page.classList.toggle("hera-person", item?.Type === "Person");
     const art = item ? await bannerArt(item) : null;
     if (itemIdFromHash() !== itemId) return;
-    // No artwork (people, books, bare collections): no banner; the portrait or cover shows.
-    page.classList.toggle("hera-no-backdrop", !art);
-    // Artwork under the header at the top of the page keeps the header's dark (on-art) tokens.
-    root.classList.toggle("hera-art-top", !!art);
-    banner.dataset.heraFilled = itemId;
     if (!art) {
+      // No artwork (people, books, bare collections): no banner; the portrait or cover shows.
+      page.classList.add("hera-no-backdrop");
+      root.classList.remove("hera-art-top");
+      banner.dataset.heraFilled = itemId;
       banner.style.backgroundImage = "";
       ambient.hide();
       return;
     }
     const width = Math.min(2560, Math.round(window.innerWidth * (window.devicePixelRatio || 1)));
-    const url = imageUrl(art.id, "Backdrop", { maxWidth: width, tag: art.tag });
-    banner.style.backgroundImage = `url("${url}")`;
     // The page below the banner rests on the same art (one source for series, season and
     // episode alike), not on Jellyfin's page backdrop, which follows the season's key art.
-    banner.dataset.heraAmbient = imageUrl(art.id, "Backdrop", { maxWidth: 960, tag: art.tag });
-    ambient.show(banner.dataset.heraAmbient);
+    const urls = {
+      banner: imageUrl(art.id, "Backdrop", { maxWidth: width, tag: art.tag }),
+      ambient: imageUrl(art.id, "Backdrop", { maxWidth: 960, tag: art.tag }),
+    };
+    artCache.set(itemId, urls);
+    if (item.SeriesId && art.id === item.SeriesId) artCache.set(item.SeriesId, urls);
+    if (banner.style.backgroundImage !== `url("${urls.banner}")`) paintBanner(page, banner, itemId, urls);
   };
 
   // Series, season, episode and film pages differ in how much sits over the banner (a title, a
@@ -916,16 +1001,28 @@
   // own height plus a fixed foot, so the buttons land the same distance above the banner's edge
   // on every one of them. --hera-ribbon-h feeds --hera-detail-overlay in hera-tv.css.
   const ribbonObservers = new WeakMap();
+  // A new page starts from the last page's height, which for the next episode of the same show
+  // is almost always right, instead of from a half-built ribbon (title only, no buttons yet).
+  let lastRibbonHeight = 0;
   const fitRibbon = (page) => {
     const ribbon = page.querySelector(".detailRibbon");
     if (!ribbon || ribbonObservers.has(ribbon)) return;
+    if (lastRibbonHeight && !page.style.getPropertyValue("--hera-ribbon-h")) {
+      page.style.setProperty("--hera-ribbon-h", `${lastRibbonHeight}px`);
+    }
     const measure = () => {
+      // Until Jellyfin has drawn the buttons the ribbon is incomplete; measuring it then would
+      // pull the content up and drop it again a moment later.
+      const buttons = ribbon.querySelector(".mainDetailButtons");
+      if (!buttons || buttons.offsetHeight === 0) return;
       const parts = [...ribbon.children].filter((child) => child.offsetParent !== null && child.offsetHeight > 0);
       if (!parts.length) return;
       const top = parts[0].getBoundingClientRect().top;
       const bottom = Math.max(...parts.map((part) => part.getBoundingClientRect().bottom));
       const height = Math.ceil(bottom - top);
-      if (height > 0 && page.style.getPropertyValue("--hera-ribbon-h") !== `${height}px`) {
+      if (height <= 0) return;
+      lastRibbonHeight = height;
+      if (page.style.getPropertyValue("--hera-ribbon-h") !== `${height}px`) {
         page.style.setProperty("--hera-ribbon-h", `${height}px`);
       }
     };
@@ -1332,6 +1429,9 @@
           fillBanner(page, id).catch(console.error);
           mountOverview(page, id).catch(console.error);
           await mountSeasons(page, id);
+          // A page Jellyfin brings back from its cache keeps its shelf, so mountSeasons returns
+          // early; the reader's place is restored here instead.
+          restoreShelfPlace(page);
         }
       }
     } catch (error) {

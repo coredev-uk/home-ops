@@ -20,7 +20,7 @@ spec:
           hera-tv:
             image:
               repository: ghcr.io/coredev-uk/jellyfin-hera-tv
-              tag: df46e603b2f97e576a707c9a501792fe8ba1cad9@sha256:95b8c1d4ded21d61565bcc5207328cd8a4925d4d26c1f25964930f1f3b7ec7a9
+              tag: 95248b7c57d5cc1d5d6d3729efc7eb0b9a9420da@sha256:ac66718e50f117de78d2b9d973c936ef33833cd4b6d5f72080b1c0a68618d8e0
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true

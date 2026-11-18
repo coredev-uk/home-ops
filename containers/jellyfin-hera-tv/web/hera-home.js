@@ -4,8 +4,9 @@
  *  - Top Picks: "Because You Watched ..." and "More Like ..." rows from the server's own taste data.
  *  - Leaving Soon (Maintainerr), Your Requests and Trending to Request (Seerr), when connected.
  *  - A "Leaving 9 Dec" chip on the detail page of a title that is leaving.
- * Jellyfin's own Recently Added rows stay; the stock Continue Watching, Next Up and library tiles
- * are switched off in Jellyfin Tweaks' home sections rather than hidden here.
+ * Jellyfin's own Recently Added rows stay. Every other stock section (Continue Watching, Next Up,
+ * My Media, ...) is hidden here, whatever the person's home settings say, because Up Next and
+ * the rows below stand in for them. Titles the person hid (hera-extras.js) stay out of the rows.
  */
 (() => {
   "use strict";
@@ -31,6 +32,7 @@
     container: null,
     observer: null,
     detailObserver: null,
+    kept: null, // slots of Jellyfin's own sections to keep: a Set, "all", or null while unknown
   };
 
   // ---------- data ------------------------------------------------------------------------
@@ -157,7 +159,7 @@
       return [...byKey.values()]
         .sort((a, b) => b.at - a.at)
         .slice(0, UP_NEXT_LIMIT)
-        .map(({ item, resumable }) => {
+        .map(({ key, item, resumable, at }) => {
           const isEpisode = item.Type === "Episode";
           const left = resumable ? timeLeft(item) : null;
           return {
@@ -171,6 +173,8 @@
             image: stillOf(item),
             progress: resumable ? item.UserData?.PlayedPercentage || 0 : 0,
             position: item.UserData?.PlaybackPositionTicks || 0,
+            hideKeys: [plainId(key)],
+            at,
           };
         });
     });
@@ -197,6 +201,17 @@
       progress: entry.progress,
       label: `Play ${entry.title}${entry.subtitle ? `, ${entry.subtitle}` : ""}`,
     });
+    // hera-extras.js reads this: the card's "more" button, right click and (on a remote) a long press.
+    main.heraId = entry.id;
+    main.heraHide = {
+      scope: "upnext",
+      keys: entry.hideKeys,
+      title: entry.title,
+      kind: entry.type === "Episode" ? "TV Show" : "Film",
+      image: entry.image,
+      extra: [{ label: "Open Page", icon: "info_outline", onSelect: () => openDetails(entry.detailId) }],
+    };
+    const openMenu = () => (heraTv.hidden?.menu?.(main) ? true : (openDetails(entry.detailId), false));
     const info = kit.el(
       "button",
       {
@@ -209,7 +224,7 @@
       kit.icon("info_outline"),
     );
     // On a remote there is no pointer for the info button: a long press on OK, or the remote's
-    // Info / context-menu key, opens the page instead of playing.
+    // context-menu key, opens the card's menu; its Info key opens the page.
     let pressTimer = 0;
     let handled = false;
     main.addEventListener("keydown", (event) => {
@@ -221,9 +236,12 @@
         pressTimer = setTimeout(() => {
           pressTimer = 0;
           handled = true;
-          openDetails(entry.detailId);
+          openMenu();
         }, LONG_PRESS_MS);
-      } else if (event.key === "ContextMenu" || event.key === "Info" || event.keyCode === 457 || event.key === "i") {
+      } else if (event.key === "ContextMenu") {
+        event.preventDefault();
+        openMenu();
+      } else if (event.key === "Info" || event.keyCode === 457 || event.key === "i") {
         event.preventDefault();
         openDetails(entry.detailId);
       }
@@ -254,10 +272,15 @@
     title: item.Name,
     subtitle: item.ProductionYear ? String(item.ProductionYear) : null,
     image: posterOf(item),
+    kind: item.Type === "Series" ? "TV Show" : "Film",
   });
 
-  const posterCard = (entry) =>
-    kit.card({ href: `#/details?id=${entry.id}`, image: entry.image, title: entry.title, subtitle: entry.subtitle });
+  // A title from a taste row can be marked Not Interested: hera-extras.js reads this off the card.
+  const posterCard = (entry) => {
+    const card = kit.card({ href: `#/details?id=${entry.id}`, image: entry.image, title: entry.title, subtitle: entry.subtitle });
+    card.heraHide = { scope: "interest", keys: [plainId(entry.id)], title: entry.title, year: entry.subtitle, kind: entry.kind, image: entry.image };
+    return card;
+  };
 
   const RECOMMENDATION_TITLE = {
     SimilarToRecentlyPlayed: (name) => `Because You Watched ${name}`,
@@ -396,7 +419,11 @@
           title: "Trending to Request",
           href: "#/home?hera=discover",
           entries,
-          card: (e) => kit.card({ onClick: () => openSeerrTitle(e.item), image: e.image, title: e.title, subtitle: e.subtitle }),
+          card: (e) => {
+            const card = kit.card({ onClick: () => openSeerrTitle(e.item), image: e.image, title: e.title, subtitle: e.subtitle });
+            card.heraItem = e.item;
+            return card;
+          },
         }
       : null;
   };
@@ -427,9 +454,26 @@
     for (const { row } of state.shown.values()) row.hidden = hidden;
   };
 
+  // What the person hid (hera-extras.js). Up Next drops a removed title until it is watched again;
+  // the taste and Seerr rows drop what was marked Not Interested, by library id or TMDB id.
+  const isHidden = (id, entry) => {
+    const store = heraTv.hidden;
+    if (!store) return false;
+    if (id === "upnext") {
+      const held = store.match("upnext", entry.hideKeys);
+      return !!held && !(entry.at > Date.parse(held.at));
+    }
+    if (id === "trending") {
+      return !!store.match("interest", [`tmdb:${entry.item.mediaType}:${entry.item.tmdbId}`, entry.item.jellyfinId ? plainId(entry.item.jellyfinId) : null]);
+    }
+    return id.startsWith("picks") && !!store.match("interest", [plainId(entry.id)]);
+  };
+
   /** Shows a row, or removes it when it has nothing. Unchanged data leaves the row alone. */
-  const show = (id, spec) => {
-    if (!spec?.entries?.length) return removeRow(id);
+  const show = (id, shown) => {
+    const entries = (shown?.entries ?? []).filter((entry) => !isHidden(id, entry));
+    if (!entries.length) return removeRow(id);
+    const spec = { ...shown, entries };
     const sig = JSON.stringify([spec.title, spec.entries]);
     const held = state.shown.get(id);
     if (held?.sig === sig) {
@@ -475,10 +519,55 @@
         for (const { row } of state.shown.values()) {
           if (row.parentNode !== container) kit.mountRow(row, place);
         }
-        tidyLibraryTiles(container);
+        tidyStock(container);
       });
     });
     state.observer.observe(container, { childList: true, subtree: true });
+    tidyStock(container);
+  };
+
+  // ---------- Jellyfin's own sections -------------------------------------------------------
+  // Home is built from Hera's rows plus Jellyfin's Recently Added. The container holds one
+  // element per home-settings slot (class "section<N>"); the person's `homesection<N>` setting
+  // (display preferences, client "emby") says which slot holds Recently Added. Every other slot
+  // is hidden, by a class of ours that Jellyfin's own show/hide never touches. An account that
+  // never changed its home settings has jellyfin-web's own layout, below. Until the settings are
+  // known a stylesheet rule holds the stock sections back, so nothing flashes.
+
+  const STOCK_LAYOUT = ["smalllibrarytiles", "resume", "resumeaudio", "resumebook", "livetv", "nextup", "latestmedia"];
+
+  const homeSettings = () =>
+    load("home-settings", 30 * 1000, async () => {
+      const prefs = await kit.getJSON("DisplayPreferences/usersettings", { userId: kit.userId(), client: "emby" });
+      return prefs?.CustomPrefs || {};
+    });
+
+  const keptSlots = (prefs) => {
+    const kept = new Set();
+    for (let slot = 0; slot < 10; slot++) {
+      if ((prefs[`homesection${slot}`] ?? STOCK_LAYOUT[slot] ?? "none") === "latestmedia") kept.add(slot);
+    }
+    return kept;
+  };
+
+  const slotOf = (node) => {
+    const match = /(?:^|\s)section(\d+)(?:\s|$)/.exec(node.className);
+    return match ? Number(match[1]) : null;
+  };
+
+  const tidyStock = (container) => {
+    if (state.kept) {
+      for (const section of container.children) {
+        const slot = slotOf(section);
+        if (slot === null || section.classList.contains("hera-row")) continue;
+        const keep = state.kept === "all" || state.kept.has(slot);
+        const was = section.classList.contains("hera-stock-hidden");
+        section.classList.toggle("hera-keep", keep);
+        section.classList.toggle("hera-stock-hidden", !keep);
+        if (!keep) section.classList.add("hide");
+        else if (was) section.classList.remove("hide");
+      }
+    }
     tidyLibraryTiles(container);
   };
 
@@ -507,20 +596,37 @@
     ["trending", trendingRow],
   ];
 
+  const hiddenReady = () => (heraTv.hidden ? heraTv.hidden.ready() : Promise.resolve([]));
+
   const refreshHome = (page) => {
     const user = kit.userId();
     if (state.user !== user) {
       for (const id of [...state.shown.keys()]) removeRow(id);
       state.cache.clear();
+      state.kept = null;
       state.user = user;
     }
     const container = homeContainer();
     if (!container) return;
     watch(container);
     const run = ++state.run;
+    document.documentElement.classList.add("hera-owns-home");
+    state.cache.delete("home-settings");
+    homeSettings()
+      .then((prefs) => {
+        state.kept = keptSlots(prefs);
+      })
+      .catch(() => {
+        // Unknown settings: show Jellyfin's sections rather than risk hiding Recently Added.
+        state.kept = "all";
+      })
+      .finally(() => {
+        if (run === state.run && container.isConnected) tidyStock(container);
+      });
     for (const [id, job] of jobs) {
       job()
-        .then((spec) => {
+        .then(async (spec) => {
+          await hiddenReady();
           // A newer visit, a different profile or another page showing makes this answer stale.
           if (run !== state.run || state.user !== kit.userId() || !page.isConnected) return;
           show(id, spec);
@@ -587,6 +693,10 @@
       state.cache.clear();
       for (const id of [...state.shown.keys()]) removeRow(id);
       document.querySelectorAll(".hera-library-tiles").forEach((n) => n.classList.remove("hide", "hera-library-tiles"));
+      document.querySelectorAll(".hera-stock-hidden").forEach((n) => n.classList.remove("hide", "hera-stock-hidden"));
+      document.querySelectorAll(".hera-keep").forEach((n) => n.classList.remove("hera-keep"));
+      document.documentElement.classList.remove("hera-owns-home");
+      state.kept = null;
       clearChips();
     },
   });

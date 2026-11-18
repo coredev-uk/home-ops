@@ -46,6 +46,18 @@ public sealed class IntegrationSettings
 
     public bool MaintainerrEnabled => MaintainerrUrl is not null;
 
+    /// <summary>The server-wide switches the web client and the dashboard read.</summary>
+    public static object Features(PluginConfiguration config) => new
+    {
+        discover = config.DiscoverEnabled,
+        leavingSoon = config.LeavingSoonEnabled,
+        requests = config.RequestsRowEnabled,
+        trending = config.TrendingRowEnabled,
+        elsewhere = config.ElsewhereEnabled,
+        ratings = config.RatingsEnabled,
+        qualityBadges = config.QualityBadgesEnabled,
+    };
+
     public static IntegrationSettings Current
     {
         get

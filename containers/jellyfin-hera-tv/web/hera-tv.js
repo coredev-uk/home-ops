@@ -607,6 +607,31 @@
       }
       const next = this.slides[(this.index + 1) % total]?.querySelector(".hera-hero__backdrop");
       if (next) next.loading = "eager";
+      this.paintAmbient();
+    }
+
+    // Below the hero the home page rests on the current title's art, blurred and dimmed (see
+    // .hera-ambient in hera-tv.css), so the rows sit in its light rather than on flat black. Two
+    // layers crossfade so a change of title never flashes the ground.
+    paintAmbient() {
+      const src = this.slides[this.index]?.querySelector(".hera-hero__backdrop")?.currentSrc
+        || this.slides[this.index]?.querySelector(".hera-hero__backdrop")?.src;
+      if (!src) return;
+      if (!this.ambient) {
+        this.ambient = el("div", { class: "hera-ambient", "aria-hidden": "true" }, [
+          el("div", { class: "hera-ambient__layer" }),
+          el("div", { class: "hera-ambient__layer" }),
+        ]);
+        document.body.prepend(this.ambient);
+      }
+      const [a, b] = this.ambient.children;
+      const shown = a.classList.contains("is-on") ? a : b.classList.contains("is-on") ? b : null;
+      if (shown?.dataset.src === src) return;
+      const incoming = shown === a ? b : a;
+      incoming.dataset.src = src;
+      incoming.style.backgroundImage = `url("${src.replace(/"/g, "%22")}")`;
+      incoming.classList.add("is-on");
+      shown?.classList.remove("is-on");
     }
 
     paint(progress) {
@@ -631,6 +656,7 @@
       document.removeEventListener("visibilitychange", this.onVisibility);
       document.removeEventListener("keydown", this.onKeyUp, true);
       this.node.remove();
+      this.ambient?.remove();
     }
   }
 

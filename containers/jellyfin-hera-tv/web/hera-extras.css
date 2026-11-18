@@ -134,9 +134,7 @@ html.hera-owns-home .homeSectionsContainer > [class*="section"]:not(.hera-row):n
 .hera-quality__chip {
   padding: 3px 6px;
   border-radius: 5px;
-  background: var(--hera-glass);
-  backdrop-filter: var(--hera-blur);
-  -webkit-backdrop-filter: var(--hera-blur);
+  background: var(--hera-glass-hover);
   box-shadow: inset 0 1px 0 var(--hera-glass-edge);
   color: var(--hera-label);
   font: 700 10px/1 var(--hera-font);

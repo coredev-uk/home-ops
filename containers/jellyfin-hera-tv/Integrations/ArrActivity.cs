@@ -37,7 +37,9 @@ public static class ArrActivity
         string? Client,
         string? Protocol,
         string DownloadId,
-        string? Message)
+        string? Message,
+        string? Slug,
+        int? TmdbId)
     {
         public double? Percent => Size > 0 ? Math.Round(Math.Clamp((Size - SizeLeft) * 100.0 / Size, 0, 100), 1) : null;
     }
@@ -68,6 +70,9 @@ public static class ArrActivity
         int? Want,
         IReadOnlyList<SeasonRow>? Seasons)
     {
+        /// <summary>Gets the *arr's slug for the title, for an administrator's "open in" link; never sent as is.</summary>
+        public string? Slug { get; init; }
+
         /// <summary>The shape the web client reads: a title's state, never a release name, client or path.</summary>
         public object ToJson(SabQueue? sab) => new
         {
@@ -230,7 +235,9 @@ public static class ArrActivity
             (string?)node["downloadClient"],
             (string?)node["protocol"],
             key,
-            Message(node));
+            Message(node),
+            (string?)series?["titleSlug"] ?? (string?)movie?["titleSlug"],
+            series?["tmdbId"]?.GetValue<int?>() ?? movie?["tmdbId"]?.GetValue<int?>());
     }
 
     // The *arr's own words, two layers: a download's state, then its status.
@@ -306,6 +313,13 @@ public static class ArrActivity
     /// <summary>A film's state in Radarr; null when Radarr is not set up, not answering, or does not know it.</summary>
     public static async Task<Activity?> MovieAsync(UpstreamClient upstream, int tmdbId, int? arrId, IReadOnlyList<QueueItem> queue)
     {
+        string? slug = null;
+        var activity = await MovieCoreAsync(upstream, tmdbId, arrId, queue, s => slug = s).ConfigureAwait(false);
+        return activity is null ? null : activity with { Slug = slug };
+    }
+
+    private static async Task<Activity?> MovieCoreAsync(UpstreamClient upstream, int tmdbId, int? arrId, IReadOnlyList<QueueItem> queue, Action<string?> slugSink)
+    {
         JsonNode? movie = null;
         if (arrId is int id)
         {
@@ -321,6 +335,8 @@ public static class ArrActivity
         {
             return null;
         }
+
+        slugSink((string?)movie["titleSlug"]);
 
         var monitored = movie["monitored"]?.GetValue<bool?>() ?? false;
         var hasFile = movie["hasFile"]?.GetValue<bool?>() ?? false;
@@ -364,6 +380,20 @@ public static class ArrActivity
         IReadOnlyCollection<int>? seasons,
         IReadOnlyList<QueueItem> queue)
     {
+        string? slug = null;
+        var activity = await SeriesCoreAsync(upstream, tmdbId, tvdbId, arrId, seasons, queue, s => slug = s).ConfigureAwait(false);
+        return activity is null ? null : activity with { Slug = slug };
+    }
+
+    private static async Task<Activity?> SeriesCoreAsync(
+        UpstreamClient upstream,
+        int tmdbId,
+        int? tvdbId,
+        int? arrId,
+        IReadOnlyCollection<int>? seasons,
+        IReadOnlyList<QueueItem> queue,
+        Action<string?> slugSink)
+    {
         JsonNode? series = null;
         if (arrId is int id)
         {
@@ -385,6 +415,8 @@ public static class ArrActivity
         {
             return null;
         }
+
+        slugSink((string?)series["titleSlug"]);
 
         var monitored = series["monitored"]?.GetValue<bool?>() ?? false;
         var mine = queue.Where(q => q.Source == ArrService.Sonarr && q.MediaId == seriesId).ToList();
@@ -517,6 +549,7 @@ public static class ArrActivity
                     client = first.Client,
                     protocol = first.Protocol,
                     message = first.Message,
+                    links = ExternalLinks.For(settings, true, first.Source == ArrService.Radarr ? "movie" : "tv", first.TmdbId, first.Source, first.Slug),
                 };
             })
             .OrderBy(r => Array.IndexOf(StatePriority, r.state))
@@ -537,6 +570,7 @@ public static class ArrActivity
                     etaSeconds = sab.EtaSeconds,
                     queued = sab.Slots,
                 },
+            links = ExternalLinks.Sabnzbd(settings, true),
             services = new
             {
                 sonarr = settings.Enabled(ArrService.Sonarr),

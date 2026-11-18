@@ -182,6 +182,7 @@
     const seasonsBox = el("div", { class: "hera-sheet__seasons" });
     const castBox = el("div", { class: "hera-sheet__cast-wrap" });
     const activityBox = el("div", { class: "hera-sheet__activity" });
+    const externalBox = el("div", { class: "hera-ext hera-sheet__ext", hidden: true });
     let activityLine = null;
     const closeButton = el(
       "button",
@@ -259,6 +260,7 @@
         d?.tagline && d.tagline !== "null" ? el("p", { class: "hera-sheet__tagline", text: d.tagline }) : null,
         current.overview ? el("p", { class: "hera-sheet__overview", text: current.overview }) : null,
         actions,
+        externalBox,
         seasonsBox,
         castBox,
       );
@@ -565,8 +567,9 @@
     document.body.append(dialog);
     dialog.showModal();
     // The download stack's word on where a request stands replaces Seerr's "Processing" pill.
-    if (HT.activity?.activityOn(ints)) {
+    if (HT.activity?.titleInfoOn(ints)) {
       activityLine = HT.activity.mountTitle(activityBox, {
+        linksHost: externalBox,
         mediaType: item.mediaType,
         tmdbId: item.tmdbId,
         onChange: (found) => {

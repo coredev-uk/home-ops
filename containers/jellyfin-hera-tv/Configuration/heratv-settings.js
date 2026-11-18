@@ -379,6 +379,17 @@ export default function (view) {
       locked: s.url.source === "env",
       mode: "url",
     });
+    const publicUrl = field({
+      id: `hera-${id}-public`,
+      label: "Public address",
+      description: `What people open in a browser; the "Open in ${name}" buttons go here. Shown to administrators only.`,
+      value: s.publicUrl.value,
+      placeholder: `https://${id}.example.com`,
+      type: "url",
+      variable: s.publicUrl.variable,
+      locked: s.publicUrl.source === "env",
+      mode: "url",
+    });
     const keyLocked = s.apiKey.source === "env";
     const removed = clearArrKeys.has(id);
     const keySaved = s.apiKey.set && !removed;
@@ -398,7 +409,7 @@ export default function (view) {
       pill: keySaved && !keyLocked ? el("span", { class: "hera-cfg-pill" }, [icon("check"), el("span", { text: "Saved" })]) : null,
       actions: remove,
     });
-    refs.arr[id] = { url: url.input, key: key.input };
+    refs.arr[id] = { url: url.input, publicUrl: publicUrl.input, key: key.input };
 
     const result = verdict();
     const test = button("Test connection", {
@@ -419,7 +430,7 @@ export default function (view) {
         }
       },
     });
-    return group(name, el("div", { class: "hera-set-list hera-cfg-card" }, [url.node, key.node, el("div", { class: "hera-cfg-test" }, [test, result])]));
+    return group(name, el("div", { class: "hera-set-list hera-cfg-card" }, [url.node, publicUrl.node, key.node, el("div", { class: "hera-cfg-test" }, [test, result])]));
   };
 
   const renderArr = (id) => {
@@ -524,7 +535,7 @@ export default function (view) {
     refs = {};
     links = new Map(server.seerr.users.links.map((l) => [lower(l.username), l.seerrId]));
     const anyLocked = [server.seerr.url, server.seerr.publicUrl, server.seerr.apiKey, server.seerr.users, server.maintainerr.url]
-      .concat(ARR.flatMap(([id]) => [server[id].url, server[id].apiKey]))
+      .concat(ARR.flatMap(([id]) => [server[id].url, server[id].publicUrl, server[id].apiKey]))
       .some((f) => f.source === "env");
     refs.arr = {};
     sections.arr = Object.fromEntries(ARR.map((entry) => [entry[0], arrSection(entry)]));
@@ -601,6 +612,7 @@ export default function (view) {
       const ref = refs.arr[id];
       const entry = {};
       if (open(ref.url)) entry.url = ref.url.value.trim();
+      if (open(ref.publicUrl)) entry.publicUrl = ref.publicUrl.value.trim();
       if (open(ref.key)) {
         if (ref.key.value.trim()) entry.apiKey = ref.key.value.trim();
         else if (clearArrKeys.has(id)) entry.clearApiKey = true;

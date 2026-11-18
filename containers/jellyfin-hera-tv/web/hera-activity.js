@@ -176,11 +176,11 @@
     return promise;
   };
 
-  /** A title's state in the download stack, or null. Several parts of one page share one fetch. */
+  /** What the server says of a title: `{ activity, links }`. Several parts of one page share one fetch. */
   const fetchTitle = (mediaType, tmdbId, tvdb) =>
     cached(`title:${mediaType}:${tmdbId}`, 4000, async () => {
       const reply = await kit.hera(`activity/title/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}`, { query: tvdb ? { tvdb } : undefined });
-      return reply?.activity ?? null;
+      return reply ?? null;
     });
 
   const fetchRequests = (take = 20) => cached(`requests:${take}`, 4000, async () => (await kit.hera("activity/requests", { query: { take } })) || []);
@@ -192,6 +192,9 @@
 
   // The Requests view is for people who can request, and for administrators who can see the queue.
   const requestsAvailable = (ints) => Boolean(ints?.seerrLinked) || (Boolean(ints?.admin) && activityOn(ints));
+
+  // A title's state and "open in" links are worth a call when Seerr or the download stack is there.
+  const titleInfoOn = (ints) => Boolean(ints?.seerr) || activityOn(ints);
 
   /** Runs `step` every few seconds while `alive()`; a step that returns true is busy and runs sooner. */
   const poll = (step, alive) => {
@@ -254,21 +257,61 @@
   // States a film or series page, or a title sheet, is worth a line for. A finished or untouched title has none.
   const SHOWN = new Set(["downloading", "queued", "importing", "attention", "failed", "searching", "partial", "waiting"]);
 
+  // ---------- "open in" links ---------------------------------------------------------------
+  // The server names only the services this person may open: Seerr for everyone, Radarr, Sonarr
+  // and SABnzbd for administrators. Each opens in a new tab.
+
+  const EXTERNAL = [["seerr", "Seerr"], ["radarr", "Radarr"], ["sonarr", "Sonarr"], ["sabnzbd", "SABnzbd"]];
+
+  const externalLinks = (links, { short = false } = {}) =>
+    EXTERNAL.filter(([key]) => links?.[key]).map(([key, name]) =>
+      el(
+        "a",
+        {
+          class: "hera-ext__link",
+          href: links[key],
+          target: "_blank",
+          rel: "noopener noreferrer",
+          title: `Open in ${name}`,
+          "aria-label": `Open in ${name}, opens in a new tab`,
+        },
+        [icon("open_in_new"), el("span", { text: short ? name : `Open in ${name}` })],
+      ),
+    );
+
+  /** Fills a `.hera-ext` host; unchanged links leave the nodes alone, so a focused one stays focused. */
+  const paintLinks = (host, links, options) => {
+    const sig = JSON.stringify([links ?? null, Boolean(options?.short)]);
+    if (host.dataset.sig === sig) return;
+    host.dataset.sig = sig;
+    const nodes = externalLinks(links, options);
+    host.replaceChildren(...nodes);
+    host.hidden = !nodes.length;
+  };
+
+  const linksHost = () => el("div", { class: "hera-ext", hidden: true });
+
   /**
-   * Keeps one line in `host` for a title: fetched now and again while the host is on screen.
-   * `options.onChange(activity | null)` hears whether a line is showing.
+   * Keeps a title's state line, and its "open in" links, in `host`: fetched now and again while the
+   * host is on screen. `options.linksHost` puts the links elsewhere. `options.onChange(activity | null)`
+   * hears whether a state line is showing.
    */
-  const mountTitle = (host, { mediaType, tmdbId, tvdb, onChange }) => {
+  const mountTitle = (host, { mediaType, tmdbId, tvdb, onChange, linksHost: separate }) => {
     const line = buildLine("hera-activity--block");
     line.hidden = true;
-    host.replaceChildren(line);
+    host.hidden = true;
+    const ext = separate ?? linksHost();
+    host.replaceChildren(...(separate ? [line] : [line, ext]));
     let stopped = false;
     const refresh = async () => {
-      const a = await fetchTitle(mediaType, tmdbId, tvdb);
+      const reply = await fetchTitle(mediaType, tmdbId, tvdb);
       if (stopped || !host.isConnected) return false;
+      const a = reply?.activity ?? null;
       const show = Boolean(a && SHOWN.has(a.state));
       if (show) fillLine(line, describe(a));
       else line.hidden = true;
+      paintLinks(ext, reply?.links);
+      host.hidden = line.hidden && (separate ? true : ext.hidden);
       onChange?.(show ? a : null);
       return show && BUSY.has(a.state);
     };
@@ -344,9 +387,12 @@
 
   // ---------- film and series pages ---------------------------------------------------------
 
-  const detail = { page: null, id: null, stop: null, watch: null, node: null };
+  // `run` ends a mount still waiting on the network when the page moves on or mounts again; two
+  // mounts would otherwise leave two slots after the meta line, each putting itself first.
+  const detail = { page: null, id: null, stop: null, watch: null, node: null, run: 0 };
 
   const clearDetail = () => {
+    detail.run++;
     detail.stop?.();
     detail.watch?.disconnect();
     Object.assign(detail, { page: null, id: null, stop: null, watch: null, node: null });
@@ -357,9 +403,11 @@
     if (detail.page === page && detail.id === itemId && detail.node?.isConnected) return;
     clearDetail();
     if (!itemId) return;
+    const run = detail.run;
     const ints = await kit.integrations();
-    if (!activityOn(ints)) return;
+    if (run !== detail.run || !titleInfoOn(ints)) return;
     const item = await kit.api().getItem(kit.userId(), itemId);
+    if (run !== detail.run) return;
     const tmdbId = item?.ProviderIds?.Tmdb;
     if (!tmdbId || (item.Type !== "Movie" && item.Type !== "Series")) return;
     if (kit.itemIdFromHash() !== itemId || !page.isConnected || page.classList.contains("hide")) return;
@@ -376,9 +424,6 @@
       mediaType: item.Type === "Series" ? "tv" : "movie",
       tmdbId,
       tvdb: item.ProviderIds?.Tvdb,
-      onChange: (a) => {
-        slot.hidden = !a;
-      },
     });
     detail.page = page;
     detail.id = itemId;
@@ -430,21 +475,24 @@
     const title = el("span", { class: "hera-av-row__title" });
     const meta = el("span", { class: "hera-av-row__meta" });
     const line = buildLine("hera-activity--row");
-    const children = [art, el("span", { class: "hera-av-row__main" }, [title, meta, line]), icon("chevron_right")];
-    const node = request.item.jellyfinId
-      ? el("a", { class: "hera-av-row", href: `#/details?id=${request.item.jellyfinId}` }, children)
-      : el("button", { class: "hera-av-row", type: "button" }, children);
+    const children = [art, el("span", { class: "hera-av-row__main" }, [title, meta, line])];
+    const link = request.item.jellyfinId
+      ? el("a", { class: "hera-av-row__link", href: `#/details?id=${request.item.jellyfinId}` }, children)
+      : el("button", { class: "hera-av-row__link", type: "button" }, children);
+    const node = el("div", { class: "hera-av-row" });
     if (!request.item.jellyfinId) {
-      node.addEventListener("click", (event) => HT.discover?.openTitle?.(node.heraRequest.item, { opener: event.currentTarget }));
+      link.addEventListener("click", (event) => HT.discover?.openTitle?.(node.heraRequest.item, { opener: event.currentTarget }));
     }
-    node.heraParts = { title, meta, line };
+    const ext = linksHost();
+    node.append(link, ext);
+    node.heraParts = { title, meta, line, link, ext };
     node.dataset.key = keyOf(request);
     return node;
   };
 
   const updateRequestRow = (node, request) => {
     node.heraRequest = request;
-    const { title, meta, line } = node.heraParts;
+    const { title, meta, line, link, ext } = node.heraParts;
     const d = describeRequest(request);
     title.textContent = request.item.title;
     const parts = [kindOf(request.item.mediaType)];
@@ -454,7 +502,8 @@
     if (asked) parts.push(`Requested ${asked}`);
     meta.textContent = parts.join(" · ");
     fillLine(line, d);
-    node.setAttribute("aria-label", [request.item.title, d.full].join(", "));
+    paintLinks(ext, request.links, { short: true });
+    link.setAttribute("aria-label", [request.item.title, d.full].join(", "));
   };
 
   const downloadSubtitle = (item) => {
@@ -472,23 +521,26 @@
     const meta = el("span", { class: "hera-av-row__meta" });
     const line = buildLine("hera-activity--row");
     const note = el("span", { class: "hera-av-row__note", hidden: true });
+    const ext = linksHost();
     const node = el("div", { class: "hera-av-row hera-av-row--static", tabindex: "0", role: "group" }, [
       el("span", { class: "hera-av-row__art hera-av-row__art--icon", "aria-hidden": "true" }, glyph),
       el("span", { class: "hera-av-row__main" }, [title, meta, line, note]),
+      ext,
     ]);
-    node.heraParts = { glyph, title, meta, line, note };
+    node.heraParts = { glyph, title, meta, line, note, ext };
     node.dataset.key = item.id;
     return node;
   };
 
   const updateDownloadRow = (node, item) => {
-    const { glyph, title, meta, line, note } = node.heraParts;
+    const { glyph, title, meta, line, note, ext } = node.heraParts;
     const d = describe({ ...item, items: item.episodes });
     glyph.textContent = d.icon;
     title.textContent = item.title;
     meta.textContent = [downloadSubtitle(item), bytes(item.sizeBytes), item.client].filter(Boolean).join(" · ");
     meta.hidden = !meta.textContent;
     fillLine(line, d);
+    paintLinks(ext, item.links, { short: true });
     note.hidden = !item.message;
     note.textContent = item.message || "";
     node.setAttribute("aria-label", [item.title, d.full].join(", "));
@@ -511,11 +563,15 @@
     const section = (id, title, aside) => {
       const list = el("div", { class: "hera-av__list", role: "group", "aria-labelledby": `hera-av-${id}` });
       const summary = aside ? el("p", { class: "hera-av__summary" }) : null;
+      const links = aside ? linksHost() : null;
       const node = el("section", { class: "hera-av__section", hidden: true }, [
-        el("div", { class: "hera-av__section-head" }, [el("h2", { class: "hera-av__heading", id: `hera-av-${id}`, text: title }), summary]),
+        el("div", { class: "hera-av__section-head" }, [
+          el("h2", { class: "hera-av__heading", id: `hera-av-${id}`, text: title }),
+          aside ? el("div", { class: "hera-av__aside" }, [summary, links]) : null,
+        ]),
         list,
       ]);
-      return { node, list, summary };
+      return { node, list, summary, links };
     };
 
     const progress = section("progress", "In Progress");
@@ -557,6 +613,7 @@
         place(downloads, queue.items ?? [], downloadRow, updateDownloadRow, (item) => item.id);
         downloads.node.hidden = false;
         downloads.summary.textContent = sabSummary(queue);
+        paintLinks(downloads.links, queue.links);
         if (!queue.items?.length) {
           downloads.list.replaceChildren(el("p", { class: "hera-av__none", text: "Nothing is downloading." }));
         } else {
@@ -667,6 +724,7 @@
     describeRequest,
     activityOn,
     requestsAvailable,
+    titleInfoOn,
     requestCard,
     updateCard,
     mountTitle,

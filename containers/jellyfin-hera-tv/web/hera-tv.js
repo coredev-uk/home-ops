@@ -727,57 +727,62 @@
 
   // ---------- series seasons ------------------------------------------------------------
 
-  const episodeCard = (episode) => {
-    const progress = episode.UserData?.PlayedPercentage;
-    const played = episode.UserData?.Played;
-    const still = episode.ImageTags?.Primary
-      ? el("img", {
-          src: imageUrl(episode.Id, "Primary", { maxWidth: 640, tag: episode.ImageTags.Primary }),
-          alt: "",
-          loading: "lazy",
-          decoding: "async",
-        })
-      : null;
-    const playButton = el(
-      "button",
+  // One wide card for every shelf of stills: a show's episodes, a collection's films, and (from
+  // hera-seerr.js) the films a collection is missing. The centred disc is the card's action: Play
+  // for what the library holds, Request for what it doesn't. A card without a page to open is a
+  // button that runs that action; its disc is then only a picture of it.
+  const shelfCard = ({ href = null, image = null, logo = null, numbered = false, number = null, name, overview, meta, progress = 0, played = false, action, className = "", label = null }) => {
+    let disc;
+    if (href) {
+      disc = el("button", { type: "button", class: "hera-btn hera-btn--glass hera-episode__play", "aria-label": action.label }, icon(action.icon));
+      disc.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        action.run(e);
+      });
+    } else {
+      disc = el("span", { class: "hera-btn hera-btn--glass hera-episode__play", "aria-hidden": "true" }, icon(action.icon));
+    }
+    const card = el(
+      href ? "a" : "button",
       {
-        type: "button",
-        class: "hera-btn hera-btn--glass hera-episode__play",
-        "aria-label": `Play ${episode.Name}`,
-      },
-      icon("play_arrow"),
-    );
-    playButton.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      play(episode).catch(console.error);
-    });
-    const meta = [runtime(episode.RunTimeTicks), episode.PremiereDate ? new Date(episode.PremiereDate).getFullYear() : null]
-      .filter(Boolean)
-      .join(" · ");
-    return el(
-      "a",
-      {
-        class: `hera-episode${played ? " is-played" : ""}`,
-        href: `#/details?id=${episode.Id}`,
+        class: ["hera-episode", played ? "is-played" : "", className].filter(Boolean).join(" "),
+        href,
+        type: href ? null : "button",
+        "aria-label": label,
       },
       [
-        el("span", { class: "hera-episode__still" }, [
-          still,
-          progress && !played
-            ? el("span", { class: "hera-episode__progress" }, el("span", { style: `width:${Math.max(3, progress)}%` }))
-            : null,
-          playButton,
+        el("span", { class: logo ? "hera-episode__still has-logo" : "hera-episode__still" }, [
+          image ? el("img", { src: image, alt: "", loading: "lazy", decoding: "async" }) : null,
+          logo ? el("img", { class: "hera-episode__logo", src: logo, alt: "", loading: "lazy", decoding: "async" }) : null,
+          progress && !played ? el("span", { class: "hera-episode__progress" }, el("span", { style: `width:${Math.max(3, progress)}%` })) : null,
+          disc,
         ]),
-        el("p", { class: "hera-episode__name" }, [
-          episode.IndexNumber != null ? el("b", { text: String(episode.IndexNumber) }) : null,
-          document.createTextNode(episode.Name),
+        el("span", { class: "hera-episode__name" }, [
+          // A numbered shelf counts its cards in CSS, so a card added in its place renumbers the rest.
+          numbered ? el("b", { class: "hera-episode__number" }) : number != null ? el("b", { text: String(number) }) : null,
+          document.createTextNode(name),
         ]),
-        episode.Overview ? el("p", { class: "hera-episode__overview", text: episode.Overview }) : null,
-        meta ? el("p", { class: "hera-episode__meta", text: meta }) : null,
+        overview ? el("span", { class: "hera-episode__overview", text: overview }) : null,
+        meta ? el("span", { class: "hera-episode__meta", text: meta }) : null,
       ],
     );
+    if (!href) card.addEventListener("click", (e) => action.run(e));
+    return card;
   };
+
+  const episodeCard = (episode) =>
+    shelfCard({
+      href: `#/details?id=${episode.Id}`,
+      image: episode.ImageTags?.Primary ? imageUrl(episode.Id, "Primary", { maxWidth: 640, tag: episode.ImageTags.Primary }) : null,
+      number: episode.IndexNumber,
+      name: episode.Name,
+      overview: episode.Overview,
+      meta: [runtime(episode.RunTimeTicks), episode.PremiereDate ? new Date(episode.PremiereDate).getFullYear() : null].filter(Boolean).join(" · "),
+      progress: episode.UserData?.PlayedPercentage,
+      played: episode.UserData?.Played,
+      action: { icon: "play_arrow", label: `Play ${episode.Name}`, run: () => play(episode).catch(console.error) },
+    });
 
   // Moving between episodes of a show opens a new detail page each time (Jellyfin keeps a few in
   // its view cache, which is why some came back instantly and others redrew from nothing). What
@@ -924,6 +929,226 @@
     primary.insertBefore(section, primary.firstChild);
     page.classList.add("hera-has-seasons");
     await select(startIndex);
+  };
+
+  // ---------- collections ---------------------------------------------------------------
+
+  // A collection is its films in release order, on the same shelf as a show's episodes (the Apple
+  // TV app puts a bundle's films and a season's episodes on the same kind of row): wide stills
+  // with the film's logo, numbered, with synopsis and meta. The next film to watch carries the
+  // quiet edge, and the banner's Play starts it ("Play Batman Begins", or "Resume …"). Films the
+  // library lacks join the shelf in their place from hera-seerr.js, through kit.collectionShelf.
+  const boxSets = new WeakMap(); // page -> { itemId, ready: Promise<shelf handle | null> }
+
+  const dateOf = (item) => (item.PremiereDate || (item.ProductionYear ? `${item.ProductionYear}-01-01` : "")).slice(0, 10);
+
+  // In progress first, as Up Next does; else the first one not watched; else the first.
+  const nextInOrder = (items) =>
+    items.find((item) => item.UserData?.PlaybackPositionTicks > 0 && !item.UserData?.Played) ??
+    items.find((item) => !item.UserData?.Played) ??
+    items[0];
+
+  const filmCard = (item, { rating = true } = {}) => {
+    const backdrop = item.BackdropImageTags?.[0];
+    const tags = item.ImageTags ?? {};
+    const image = backdrop
+      ? imageUrl(item.Id, "Backdrop", { maxWidth: 720, tag: backdrop })
+      : tags.Thumb
+        ? imageUrl(item.Id, "Thumb", { maxWidth: 720, tag: tags.Thumb })
+        : tags.Primary
+          ? imageUrl(item.Id, "Primary", { maxWidth: 720, tag: tags.Primary })
+          : null;
+    const card = shelfCard({
+      href: `#/details?id=${item.Id}`,
+      image,
+      // A thumb usually has the title painted on; the logo goes only over plain key art.
+      logo: backdrop && tags.Logo ? imageUrl(item.Id, "Logo", { maxWidth: 360, tag: tags.Logo }) : null,
+      numbered: true,
+      name: item.Name,
+      overview: item.Overview,
+      meta: [item.ProductionYear, runtime(item.RunTimeTicks), rating ? item.OfficialRating : null].filter(Boolean).join(" · "),
+      progress: item.UserData?.PlayedPercentage,
+      played: item.UserData?.Played,
+      action: { icon: "play_arrow", label: `Play ${item.Name}`, run: () => play(item).catch(console.error) },
+    });
+    card.dataset.date = dateOf(item);
+    return card;
+  };
+
+  // What hera-seerr.js needs to put a missing film on the shelf: the shelf, its head (for the
+  // Request button) and a way to place a card by release date. Cards without a date go last.
+  // A page keeps one handle: a redraw points it at the new section, so whatever holds the handle
+  // (a Request in flight, a Seerr fetch still loading) lands on the shelf that is on screen.
+  const boxSetHandle = (section, shelf) => {
+    const handle = {
+      section,
+      shelf,
+      head: section.querySelector(".hera-seasons__head"),
+      adopt(nextSection, nextShelf) {
+        handle.section = nextSection;
+        handle.shelf = nextShelf;
+        handle.head = nextSection.querySelector(".hera-seasons__head");
+      },
+      // Up to three films fill the width between them; four or more make an ordinary shelf.
+      refit() {
+        const count = handle.shelf.children.length;
+        handle.shelf.toggleAttribute("data-few", count < 4);
+        handle.shelf.style.setProperty("--hera-few", String(Math.max(2, count)));
+      },
+      place(card, date) {
+        card.dataset.date = date || "";
+        const after = date ? [...handle.shelf.children].find((other) => !other.dataset.date || other.dataset.date > date) : null;
+        handle.shelf.insertBefore(card, after ?? null);
+        handle.refit();
+      },
+      // Scrolls the next film into view when it would start off the right edge, as a season
+      // shelf opens on the episode you're up to.
+      reveal() {
+        const next = handle.shelf.querySelector(".is-current");
+        if (!next) return;
+        const x = next.offsetLeft - handle.shelf.offsetLeft;
+        if (x + next.offsetWidth <= handle.shelf.clientWidth) return;
+        handle.shelf.scrollTo({ left: x, behavior: "instant" });
+      },
+    };
+    return handle;
+  };
+
+  const fitBoxSetMeta = (page, items, noun) => {
+    const parts = [...page.querySelectorAll(".itemMiscInfo-primary .mediaInfoItem")];
+    const count = parts.find((part) => /^\d+ items?$/.test(part.textContent.trim()));
+    if (count) count.textContent = `${items.length} ${noun}${items.length === 1 ? "" : "s"}`;
+    const years = items.map((item) => item.ProductionYear).filter(Boolean);
+    const year = parts.find((part) => /^\d{4}$/.test(part.textContent.trim()));
+    if (!year || !years.length) return;
+    const first = Math.min(...years);
+    const last = Math.max(...years);
+    year.textContent = first === last ? String(first) : `${first}–${last}`;
+    if (noun !== "film" || year.nextElementSibling?.classList.contains("hera-boxset-runtime")) return;
+    const total = runtime(items.reduce((sum, item) => sum + (item.RunTimeTicks || 0), 0));
+    if (total) year.after(el("div", { class: "mediaInfoItem hera-boxset-runtime", text: total }));
+  };
+
+  // The banner's Play names the film it starts, as Apple TV's names the episode.
+  const labelBoxSetPlay = (page, next) => {
+    const button = page.querySelector(".mainDetailButtons .btnPlay");
+    const content = button?.querySelector(".detailButton-content");
+    if (!content) return;
+    const verb = next.UserData?.PlaybackPositionTicks > 0 && !next.UserData?.Played ? "Resume" : "Play";
+    content.dataset.heraLabel = `${verb} ${next.Name}`;
+    button.setAttribute("aria-label", `${verb} ${next.Name}`);
+    button.title = `${verb} ${next.Name}`;
+  };
+
+  const buildBoxSet = async (page, itemId, previous) => {
+    const item = await api().getItem(userId(), itemId);
+    if (item?.Type !== "BoxSet") return null;
+    const result = await getJSON(`Users/${userId()}/Items`, {
+      ParentId: itemId,
+      SortBy: "PremiereDate,ProductionYear,SortName",
+      SortOrder: "Ascending",
+      Fields: "Overview,PremiereDate,OfficialRating",
+    });
+    // Jellyfin sorts films without a date first; they belong at the end of the order.
+    const all = result?.Items ?? [];
+    const items = [...all.filter((child) => dateOf(child)), ...all.filter((child) => !dateOf(child))];
+    const drawn = page.querySelector(".hera-boxset");
+    if (!items.length || itemIdFromHash() !== itemId || (drawn && drawn.dataset.item !== itemId)) return null;
+
+    const films = items.every((child) => child.Type === "Movie");
+    const shows = items.every((child) => child.Type === "Series");
+    const title = films ? "Films" : shows ? "TV Shows" : "In This Collection";
+    const next = nextInOrder(items);
+    // One certificate for the lot is already in the banner's meta; per film only when they differ.
+    const rating = new Set(items.map((child) => child.OfficialRating || "")).size > 1;
+    const shelf = el("div", { class: "hera-shelf", "aria-label": title });
+    for (const child of items) {
+      const card = filmCard(child, { rating });
+      if (child === next) card.classList.add("is-current");
+      shelf.append(card);
+    }
+    const section = el("section", { class: "hera-boxset verticalSection", "aria-label": title, "data-item": itemId }, [
+      el("div", { class: "hera-seasons__head" }, el("h2", { class: "hera-seasons__title", text: title })),
+      shelf,
+    ]);
+    const primary = page.querySelector(".detailPagePrimaryContent");
+    if (!primary) return null;
+    // Coming back to the page redraws the shelf in place (watched films, the next one, Play), so
+    // nothing jumps; what hera-seerr.js added (missing films, Request) moves across with it, and
+    // so do the shelf's scroll and the remote's focus.
+    const stale = page.querySelector(".hera-boxset");
+    const handle = stale && previous ? previous : boxSetHandle(section, shelf);
+    if (stale) {
+      const left = stale.querySelector(".hera-shelf")?.scrollLeft ?? 0;
+      const focused = stale.contains(document.activeElement) ? document.activeElement : null;
+      const focusedHref = focused?.getAttribute("href");
+      handle.adopt(section, shelf);
+      for (const card of stale.querySelectorAll('.hera-shelf > [data-hera-seerr="collection"]')) handle.place(card, card.dataset.date);
+      for (const node of stale.querySelectorAll('.hera-seasons__head > [data-hera-seerr="collection"]')) handle.head.append(node);
+      for (const node of stale.querySelectorAll(':scope > [data-hera-seerr="collection"]')) section.append(node);
+      handle.refit();
+      stale.replaceWith(section);
+      shelf.scrollTo({ left, behavior: "instant" });
+      const refocus = focusedHref ? shelf.querySelector(`a[href="${CSS.escape(focusedHref)}"]`) : focused?.isConnected ? focused : null;
+      refocus?.focus({ preventScroll: true });
+    } else {
+      handle.refit();
+      primary.insertBefore(section, primary.firstChild);
+      handle.reveal();
+    }
+    page.classList.add("hera-has-boxset");
+    fitBoxSetMeta(page, items, films ? "film" : shows ? "TV show" : "title");
+    page.heraBoxSetNext = next;
+    labelBoxSetPlay(page, next);
+    if (!page.heraBoxSetPlay) {
+      page.heraBoxSetPlay = true;
+      // Jellyfin's Play on a collection plays every film from the first; Hera's starts the next.
+      page.addEventListener(
+        "click",
+        (event) => {
+          const button = event.target.closest?.(".mainDetailButtons .btnPlay");
+          if (!button || !page.heraBoxSetNext || !page.classList.contains("hera-has-boxset")) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          play(page.heraBoxSetNext).catch(console.error);
+        },
+        true,
+      );
+    }
+    return handle;
+  };
+
+  const mountBoxSet = (page, itemId) => {
+    const known = boxSets.get(page);
+    // Same collection: reuse what is drawing or was drawn a moment ago (a show of the page runs
+    // this twice); otherwise draw again, in place, so a page Jellyfin brings back is current.
+    if (known?.itemId === itemId && (!known.settled || (Date.now() - known.at < 2000 && known.handle?.section.isConnected))) return known.ready;
+    const same = known?.itemId === itemId;
+    if (!same) {
+      page.querySelector(".hera-boxset")?.remove();
+      page.classList.remove("hera-has-boxset");
+      page.heraBoxSetNext = null;
+    }
+    const entry = { itemId, settled: false, handle: null };
+    entry.ready = buildBoxSet(page, itemId, same ? known.handle : null)
+      .catch((error) => {
+        console.error("[Hera TV]", error);
+        return null;
+      })
+      .then((handle) => {
+        entry.settled = true;
+        entry.at = Date.now();
+        entry.handle = handle;
+        return handle;
+      });
+    boxSets.set(page, entry);
+    return entry.ready;
+  };
+
+  /** The collection shelf on `page` for `itemId` once it is drawn, or null if there is none. */
+  const collectionShelf = (page, itemId) => {
+    const known = boxSets.get(page);
+    return known?.itemId === itemId ? known.ready : Promise.resolve(null);
   };
 
   // ---------- detail pages --------------------------------------------------------------
@@ -1432,6 +1657,7 @@
           // A page Jellyfin brings back from its cache keeps its shelf, so mountSeasons returns
           // early; the reader's place is restored here instead.
           restoreShelfPlace(page);
+          await mountBoxSet(page, id);
         }
       }
     } catch (error) {
@@ -1555,6 +1781,8 @@
       card,
       shelf,
       mountRow,
+      shelfCard,
+      collectionShelf,
       shortDate,
       itemIdFromHash,
       reduceMotion,
@@ -1580,7 +1808,7 @@
       heroTabObserver.observer?.disconnect();
       state.cleanups.splice(0).forEach((fn) => fn());
       modules.splice(0).forEach((module) => module.teardown?.());
-      document.querySelectorAll(".hera-seasons").forEach((n) => n.remove());
+      document.querySelectorAll(".hera-seasons, .hera-boxset").forEach((n) => n.remove());
       root.classList.remove("hera-home");
     },
   };

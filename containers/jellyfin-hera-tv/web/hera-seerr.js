@@ -7,7 +7,8 @@
  *    only Seerr knows is shown by the same renderer at #/home?hera=person&tmdb=<id>.
  *  - Film and series pages: a "More Like This" row of the library's own similar titles and
  *    Seerr's recommendations, the ones not in the library requestable.
- *  - Collection (box set) pages: the collection's films the library lacks, with "Request Missing".
+ *  - Collection (box set) pages: the films the library lacks join the collection's own shelf
+ *    in release order, dimmed, opening the title sheet, with "Request Missing" by its title.
  * Everything goes through the plugin's server: the Seerr key never reaches the browser, and
  * requests are made as the viewer's own Seerr account. With Seerr off, Jellyfin's stock sections stay.
  */
@@ -514,38 +515,55 @@
     return ids.size === 1 ? [...ids][0] : null;
   };
 
-  const mountCollection = async (page, item) => {
-    const [collectionId, ints] = await Promise.all([collectionIdOf(item), kit.integrations()]);
-    if (!collectionId || !isCurrent(page, item.Id)) return;
-    const data = await fetchCollection(collectionId).catch(() => null);
-    if (!data || !isCurrent(page, item.Id) || page.querySelector('[data-hera-seerr="collection"]')) return;
+  const MISSING_STATUS = { pending: "Requested", processing: "Processing", partial: "Partly Available" };
 
-    const section = el("section", { class: "hera-collection hera-seerr", "data-hera-seerr": "collection", "aria-label": "Not in Your Library" });
+  // A film the library lacks, on the collection's own shelf in its place: its TMDB art dimmed,
+  // and Request (the title sheet) where a library film has Play. `onClose` runs when the sheet
+  // closes, so a request made there shows on the shelf.
+  const missingCard = (film, onClose) => {
+    const status = MISSING_STATUS[film.status] ?? "Not in Your Library";
+    const card = kit.shelfCard({
+      image: film.backdrop ?? film.poster,
+      numbered: true,
+      name: film.title,
+      overview: film.overview,
+      meta: [futureText(film), status].filter(Boolean).join(" · "),
+      className: "is-missing",
+      label: `${film.title}, ${futureText(film)}, ${status}`,
+      action: {
+        icon: MISSING_STATUS[film.status] ? "schedule" : "add",
+        run: (event) => discover().openTitle(film, { opener: event.currentTarget, onClose: () => onClose(film) }),
+      },
+    });
+    card.dataset.heraSeerr = "collection";
+    card.dataset.heraTmdb = String(film.tmdbId);
+    return card;
+  };
+
+  const mountCollection = async (page, item) => {
+    const [collectionId, ints, handle] = await Promise.all([collectionIdOf(item), kit.integrations(), kit.collectionShelf(page, item.Id)]);
+    if (!collectionId || !handle || !isCurrent(page, item.Id)) return;
+    const data = await fetchCollection(collectionId).catch(() => null);
+    if (!data || !isCurrent(page, item.Id) || !handle.section.isConnected || handle.section.querySelector('[data-hera-seerr="collection"]')) return;
+
     let current = data;
     let notice = null;
     let busy = false;
 
     const paint = () => {
+      handle.section.querySelectorAll('[data-hera-seerr="collection"]').forEach((node) => node.remove());
       const missing = current.parts.filter((film) => !film.jellyfinId);
-      if (!missing.length) {
-        section.replaceChildren();
-        section.hidden = true;
-        return;
-      }
-      section.hidden = false;
-      const row = kit.shelf({
-        id: "seerr-collection",
-        title: "Not in Your Library",
-        cards: missing.map((film) => discover().itemCard(film, { subtitle: [kindText(film), futureText(film)].filter(Boolean).join(" · ") })),
-      });
+      for (const film of missing) handle.place(missingCard(film, refresh), film.releaseDate);
+      handle.refit();
       const count = current.requestable.length;
       if (ints.seerrLinked && count) {
-        row.querySelector(".hera-row__head").append(
+        handle.head.append(
           el(
             "button",
             {
               type: "button",
               class: "hera-btn hera-btn--glass hera-btn--text hera-seerr__action",
+              "data-hera-seerr": "collection",
               disabled: busy,
               "aria-busy": busy ? "true" : null,
               onclick: requestMissing,
@@ -554,15 +572,29 @@
           ),
         );
       }
-      section.replaceChildren(row);
       if (notice) {
-        section.append(
-          el("p", { class: `hera-note hera-note--${notice.tone}`, role: notice.tone === "error" ? "alert" : "status" }, [
+        handle.shelf.after(
+          el("p", { class: `hera-note hera-note--${notice.tone}`, role: notice.tone === "error" ? "alert" : "status", "data-hera-seerr": "collection" }, [
             icon(notice.tone === "error" ? "error_outline" : "check_circle"),
             notice.text,
           ]),
         );
       }
+    };
+
+    // After the title sheet closes: fetch the collection again and repaint, keeping focus on the
+    // film that was open.
+    const refresh = async (film) => {
+      memo.delete(`collection:${data.id}`);
+      try {
+        current = await fetchCollection(data.id);
+      } catch {
+        return;
+      }
+      if (busy || !handle.section.isConnected) return;
+      const hadFocus = handle.section.contains(document.activeElement);
+      paint();
+      if (hadFocus) handle.shelf.querySelector(`[data-hera-tmdb="${film.tmdbId}"]`)?.focus({ preventScroll: true });
     };
 
     const requestMissing = async () => {
@@ -585,15 +617,14 @@
         /* the cards keep their last state */
       }
       busy = false;
-      if (!section.isConnected) return;
+      if (!handle.section.isConnected) return;
       paint();
-      section.querySelector(".hera-seerr__action")?.focus({ preventScroll: true });
+      handle.head.querySelector(".hera-seerr__action")?.focus({ preventScroll: true });
     };
 
     paint();
-    if (section.hidden) return;
-    const host = page.querySelector(".detailPagePrimaryContent .detailSection");
-    host?.append(section);
+    // Missing films before the next one push it along; bring it back into view.
+    handle.reveal();
   };
 
   // ---------- detail pages --------------------------------------------------------------

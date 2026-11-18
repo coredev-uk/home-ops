@@ -2058,7 +2058,8 @@ html.hera-home #homeTab {
 
 /* ---------- Hera seasons (series pages) ------------------------------------------- */
 
-.hera-seasons {
+.hera-seasons,
+.hera-boxset {
   margin: 44px 0 32px;
 }
 .hera-seasons__head {
@@ -2279,6 +2280,95 @@ html.hera-home #homeTab {
 }
 .hera-episode.is-played .hera-episode__meta::after {
   content: " · Watched";
+}
+
+/* ---------- Collections: the films on the episode shelf ------------------------------ */
+
+/* The collection's own shelf stands in for Jellyfin's poster grid. */
+.hera-has-boxset .collectionItems {
+  display: none !important;
+}
+.hera-boxset .hera-shelf {
+  counter-reset: hera-film;
+  grid-auto-columns: clamp(280px, 26vw, 400px);
+}
+/* Up to three films share the width (--hera-few is the count, at least 2), each at most 600px:
+ * a short collection reads as a set of features, not a row that stops a third of the way across. */
+.hera-boxset .hera-shelf[data-few] {
+  grid-auto-columns: min(600px, calc((100% - (var(--hera-few) - 1) * var(--hera-gap)) / var(--hera-few)));
+  scroll-snap-type: none;
+}
+.hera-boxset .hera-episode {
+  counter-increment: hera-film;
+}
+.hera-episode__number::before {
+  content: counter(hera-film);
+}
+.hera-boxset .hera-episode__name {
+  font-size: 17px;
+}
+.hera-boxset .hera-episode__overview {
+  font-size: 14px;
+  -webkit-line-clamp: 5;
+  max-width: 68ch;
+}
+/* The film's logo over its key art, on a quiet foot of shade; above the hover frost. */
+.hera-episode__still.has-logo::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 50% 0 0;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+.hera-episode__still img.hera-episode__logo {
+  position: absolute;
+  z-index: 1;
+  left: 6%;
+  bottom: 9%;
+  width: auto;
+  height: auto;
+  max-width: 44%;
+  max-height: 28%;
+  object-fit: contain;
+  object-position: left bottom;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.45));
+}
+/* A missing film: a card that opens the request sheet, its art dimmed and Request always shown. */
+button.hera-episode {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.hera-episode.is-missing .hera-episode__still img {
+  opacity: 0.42;
+  filter: saturate(0.35);
+  transition: opacity var(--hera-fast) var(--hera-ease), transform var(--hera-fast) var(--hera-ease);
+}
+.hera-episode.is-missing:hover .hera-episode__still img,
+.hera-episode.is-missing:focus-visible .hera-episode__still img {
+  opacity: 0.65;
+}
+.hera-episode.is-missing .hera-episode__play {
+  opacity: 1;
+}
+.hera-episode.is-missing .hera-episode__name {
+  color: var(--hera-label-2);
+}
+/* The banner's Play names the film it starts. */
+.mainDetailButtons .btnPlay .detailButton-content[data-hera-label]::after {
+  content: attr(data-hera-label);
+  display: inline-block;
+  max-width: 22em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 /* ---------- Shared rows and cards (hera-home, hera-discover) ------------------------ */

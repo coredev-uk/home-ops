@@ -14,15 +14,11 @@
   padding-left: 0;
   padding-right: 0;
 }
-.hera-films,
-.hera-collection {
+.hera-films {
   margin: 8px 0 12px;
 }
 .detailPageSecondaryContainer .hera-seerr.hera-row {
   margin-top: 8px;
-}
-.hera-collection[hidden] {
-  display: none;
 }
 
 /* Sort sits beside the first row's title, as the season tabs sit by Episodes. */

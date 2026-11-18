@@ -48,6 +48,11 @@
       "name": "tooling",
       "paths": ["flake.lock", ".renovaterc.json5"],
       "deploy": "none"
+    },
+    {
+      "name": "containers",
+      "paths": ["containers/**"],
+      "deploy": "none"
     }
   ],
   "modes": {
@@ -55,7 +60,8 @@
     "ci": "merge",
     "talos": "shadow",
     "bootstrap": "shadow",
-    "tooling": "merge"
+    "tooling": "merge",
+    "containers": "merge"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",

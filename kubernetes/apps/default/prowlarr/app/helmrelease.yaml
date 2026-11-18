@@ -26,6 +26,9 @@ spec:
               PROWLARR__AUTH__REQUIRED: DisabledForLocalAddresses
               PROWLARR__LOG__DBENABLED: "False"
               PROWLARR__LOG__LEVEL: info
+              # Every name clients use: the arr apps and Sportarr (http://prowlarr), the
+              # service FQDN and the envoy route. localhost is always accepted.
+              PROWLARR__SERVER__ALLOWEDHOSTS: prowlarr,prowlarr.default.svc.cluster.local,prowlarr.hera.ac
               PROWLARR__SERVER__PORT: &port 80
               PROWLARR__UPDATE__BRANCH: develop
               TZ: Europe/London
@@ -46,6 +49,10 @@ spec:
                   httpGet:
                     path: /ping
                     port: *port
+                    # The kubelet sends the pod IP as Host, which Allowed Hosts rejects.
+                    httpHeaders:
+                      - name: Host
+                        value: localhost
                   timeoutSeconds: 5
                   failureThreshold: 5
               startup:

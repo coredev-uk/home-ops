@@ -14,22 +14,8 @@ spec:
       jellyfin:
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          # Hera TV (coredev-uk/jellyfin-hera-tv): copies the plugin into /config/plugins/HeraTV,
-          # replacing whatever build was there, before the server loads its plugins.
-          hera-tv:
-            image:
-              repository: ghcr.io/coredev-uk/jellyfin-hera-tv
-              tag: 5e23026ef486d9c7193a4a91d6a13be10473a892@sha256:700d67be752d2558a7b9f7977e26cf75fd17a71ce3d7b99d0f687125675c368b
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: true
-              capabilities: { drop: ["ALL"] }
-            resources:
-              requests:
-                cpu: 10m
-              limits:
-                memory: 64Mi
+        # Hera TV is installed and updated from its own plugin repository, added in Dashboard >
+        # Plugins > Repositories: https://raw.githubusercontent.com/coredev-uk/jellyfin-hera-tv/manifest/manifest.json
         containers:
           app:
             image:
@@ -96,8 +82,6 @@ spec:
                     operator: In
                     values:
                       - high
-      imagePullSecrets:
-        - name: jellyfin-pull
       resourceClaims:
         - name: gpu
           resourceClaimTemplateName: jellyfin-gpu

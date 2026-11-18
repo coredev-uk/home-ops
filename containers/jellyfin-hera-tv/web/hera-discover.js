@@ -170,6 +170,7 @@
       seerrUrl: ints.seerrUrl,
       busy: false,
       notice: null,
+      live: false,
     };
 
     const opener = options.opener ?? document.activeElement;
@@ -180,6 +181,8 @@
     const actions = el("div", { class: "hera-sheet__actions" });
     const seasonsBox = el("div", { class: "hera-sheet__seasons" });
     const castBox = el("div", { class: "hera-sheet__cast-wrap" });
+    const activityBox = el("div", { class: "hera-sheet__activity" });
+    let activityLine = null;
     const closeButton = el(
       "button",
       { type: "button", class: "hera-btn hera-btn--glass hera-sheet__close", "aria-label": "Close", onclick: () => close() },
@@ -190,6 +193,7 @@
     const close = () => {
       if (closed) return;
       closed = true;
+      activityLine?.stop();
       if (dialog.open) dialog.close();
       dialog.remove();
       if (sheetState.dialog === dialog) {
@@ -250,6 +254,7 @@
       body.replaceChildren(
         el("h2", { class: "hera-sheet__title", text: current.title || "" }),
         meta.length ? el("p", { class: "hera-sheet__meta" }, meta) : null,
+        activityBox,
         // TMDB sometimes stores the word "null" as a title's tagline.
         d?.tagline && d.tagline !== "null" ? el("p", { class: "hera-sheet__tagline", text: d.tagline }) : null,
         current.overview ? el("p", { class: "hera-sheet__overview", text: current.overview }) : null,
@@ -416,7 +421,7 @@
             } else if (selectableSeasons().length && !ctx.linked) {
               extras.push(unlinkedNote());
             } else if (!current.jellyfinId && status !== "none") {
-              buttons.push(pill(status));
+              if (!ctx.live) buttons.push(pill(status));
             }
           } else if (status === "none") {
             if (ctx.linked) {
@@ -437,7 +442,7 @@
               extras.push(unlinkedNote());
             }
           } else if (!current.jellyfinId) {
-            buttons.push(pill(status));
+            if (!ctx.live) buttons.push(pill(status));
           }
         }
 
@@ -559,6 +564,19 @@
     paintActions();
     document.body.append(dialog);
     dialog.showModal();
+    // The download stack's word on where a request stands replaces Seerr's "Processing" pill.
+    if (HT.activity?.activityOn(ints)) {
+      activityLine = HT.activity.mountTitle(activityBox, {
+        mediaType: item.mediaType,
+        tmdbId: item.tmdbId,
+        onChange: (found) => {
+          if (ctx.live === Boolean(found)) return;
+          ctx.live = Boolean(found);
+          paintActions();
+          keepFocus();
+        },
+      });
+    }
     closeButton.blur();
     (dialog.querySelector(".hera-sheet__request, .hera-btn--primary") ?? closeButton).focus({ preventScroll: true });
 
@@ -674,8 +692,17 @@
       enterkeyhint: "search",
     });
     const clear = el("button", { type: "button", class: "hera-discover__clear", hidden: true, "aria-label": "Clear search" }, icon("close"));
-    const search = el("div", { class: "hera-discover__search", role: "search" }, [
-      el("div", { class: "hera-discover__field" }, [icon("search"), input, clear]),
+    const requestsLink = el(
+      "a",
+      { class: "hera-btn hera-btn--glass hera-btn--text hera-discover__requests", href: HT.activity?.hash ?? "#/home?hera=requests", hidden: true },
+      [icon("playlist_add_check"), "Requests"],
+    );
+    kit.integrations().then((ints) => {
+      if (!signal.aborted && HT.activity?.requestsAvailable(ints)) requestsLink.hidden = false;
+    });
+    const search = el("div", { class: "hera-discover__search" }, [
+      el("div", { class: "hera-discover__field", role: "search" }, [icon("search"), input, clear]),
+      requestsLink,
     ]);
     const featureSlot = el("div", { class: "hera-discover__feature-slot" });
     const rows = el("div", { class: "hera-discover__rows" });
@@ -1069,6 +1096,6 @@
     },
   });
 
-  HT.discover = { openTitle, itemCard };
+  HT.discover = { openTitle, itemCard, seriesText };
   start();
 })();

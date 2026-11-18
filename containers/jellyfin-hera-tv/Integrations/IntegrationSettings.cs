@@ -1,9 +1,29 @@
 namespace Jellyfin.Plugin.HeraTv.Integrations;
 
+/// <summary>The download stack Hera TV reads: Sonarr and Radarr for what is wanted and queued, SABnzbd for speed.</summary>
+public enum ArrService
+{
+    Sonarr,
+    Radarr,
+    Sabnzbd,
+}
+
+/// <summary>Where one arr service's settings live: the variables that override them and the saved fields.</summary>
+public sealed record ArrDefinition(
+    ArrService Service,
+    string Id,
+    string Name,
+    string UrlVariable,
+    string KeyVariable,
+    Func<PluginConfiguration, string?> SavedUrl,
+    Func<PluginConfiguration, string?> SavedKey,
+    Action<PluginConfiguration, string?> SetUrl,
+    Action<PluginConfiguration, string?> SetKey);
+
 /// <summary>
-/// Where Seerr and Maintainerr live and how Jellyfin users map to Seerr users. Environment
-/// variables (set from the cluster's secrets) win over the plugin's saved configuration, so the
-/// API key never has to be typed into the dashboard.
+/// Where Seerr, Maintainerr and the download stack live and how Jellyfin users map to Seerr users.
+/// Environment variables (set from the cluster's secrets) win over the plugin's saved
+/// configuration, so an API key never has to be typed into the dashboard.
 /// </summary>
 public sealed class IntegrationSettings
 {
@@ -13,18 +33,30 @@ public sealed class IntegrationSettings
     public const string SeerrUsersVariable = "HERATV_SEERR_USERS";
     public const string MaintainerrUrlVariable = "HERATV_MAINTAINERR_URL";
 
+    /// <summary>The download stack's settings, in the order the dashboard lists them.</summary>
+    public static readonly IReadOnlyList<ArrDefinition> Arr =
+    [
+        new(ArrService.Sonarr, "sonarr", "Sonarr", "HERATV_SONARR_URL", "HERATV_SONARR_API_KEY", c => c.SonarrUrl, c => c.SonarrApiKey, (c, v) => c.SonarrUrl = v, (c, v) => c.SonarrApiKey = v),
+        new(ArrService.Radarr, "radarr", "Radarr", "HERATV_RADARR_URL", "HERATV_RADARR_API_KEY", c => c.RadarrUrl, c => c.RadarrApiKey, (c, v) => c.RadarrUrl = v, (c, v) => c.RadarrApiKey = v),
+        new(ArrService.Sabnzbd, "sabnzbd", "SABnzbd", "HERATV_SABNZBD_URL", "HERATV_SABNZBD_API_KEY", c => c.SabnzbdUrl, c => c.SabnzbdApiKey, (c, v) => c.SabnzbdUrl = v, (c, v) => c.SabnzbdApiKey = v),
+    ];
+
+    private readonly IReadOnlyDictionary<ArrService, (Uri? Url, string? Key)> _arr;
+
     private IntegrationSettings(
         Uri? seerrUrl,
         string? seerrPublicUrl,
         string? seerrApiKey,
         IReadOnlyDictionary<string, int> seerrUsers,
-        Uri? maintainerrUrl)
+        Uri? maintainerrUrl,
+        IReadOnlyDictionary<ArrService, (Uri? Url, string? Key)> arr)
     {
         SeerrUrl = seerrUrl;
         SeerrPublicUrl = seerrPublicUrl;
         SeerrApiKey = seerrApiKey;
         SeerrUsers = seerrUsers;
         MaintainerrUrl = maintainerrUrl;
+        _arr = arr;
     }
 
     /// <summary>Gets the Seerr base URL the server calls (cluster-internal).</summary>
@@ -46,6 +78,15 @@ public sealed class IntegrationSettings
 
     public bool MaintainerrEnabled => MaintainerrUrl is not null;
 
+    /// <summary>Gets the address and key of one arr service; either is null when not set.</summary>
+    public (Uri? Url, string? Key) Endpoint(ArrService service) => _arr.GetValueOrDefault(service);
+
+    /// <summary>Gets a value indicating whether a service has both its address and its key.</summary>
+    public bool Enabled(ArrService service) => Endpoint(service) is { Url: not null, Key: { Length: > 0 } };
+
+    /// <summary>Gets a value indicating whether Sonarr or Radarr is connected: what request state is read from.</summary>
+    public bool ActivityEnabled => Enabled(ArrService.Sonarr) || Enabled(ArrService.Radarr);
+
     /// <summary>The server-wide switches the web client and the dashboard read.</summary>
     public static object Features(PluginConfiguration config) => new
     {
@@ -56,6 +97,7 @@ public sealed class IntegrationSettings
         elsewhere = config.ElsewhereEnabled,
         ratings = config.RatingsEnabled,
         qualityBadges = config.QualityBadgesEnabled,
+        activity = config.ActivityEnabled,
     };
 
     public static IntegrationSettings Current
@@ -68,7 +110,10 @@ public sealed class IntegrationSettings
                 Inspect(SeerrPublicUrlVariable, config.SeerrPublicUrl).Value?.TrimEnd('/'),
                 Inspect(SeerrApiKeyVariable, config.SeerrApiKey).Value,
                 ParseUsers(Inspect(SeerrUsersVariable, config.SeerrUsers).Value),
-                ParseUri(Inspect(MaintainerrUrlVariable, config.MaintainerrUrl).Value));
+                ParseUri(Inspect(MaintainerrUrlVariable, config.MaintainerrUrl).Value),
+                Arr.ToDictionary(
+                    d => d.Service,
+                    d => (ParseUri(Inspect(d.UrlVariable, d.SavedUrl(config)).Value), Inspect(d.KeyVariable, d.SavedKey(config)).Value)));
         }
     }
 

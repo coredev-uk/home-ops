@@ -351,50 +351,62 @@
     else kit.go("#/home?hera=discover");
   };
 
-  const REQUEST_BADGE = { pending: "Requested", approved: "Approved", declined: "Declined", failed: "Failed", available: "Available" };
-
-  const requestBadge = (request) => {
-    if (request.requestStatus === "available" || request.item.status === "available") return "Available";
-    if (request.requestStatus === "approved" && request.item.status === "processing") return "Downloading";
-    return REQUEST_BADGE[request.requestStatus] || "Requested";
-  };
+  // The row's cards show where each request really stands (hera-activity.js): the download
+  // stack's state, and a progress bar while it downloads. They update in place while the page shows.
+  let requestsBusy = false;
 
   const requestsRow = async () => {
     const { seerrLinked, features } = await kit.integrations();
-    if (!seerrLinked || features?.requests === false) return null;
-    const requests = await load("requests", 60 * 1000, async () => (await kit.hera("discover/requests")) || []);
+    const activity = heraTv.activity;
+    if (!seerrLinked || features?.requests === false || !activity) return null;
+    const requests = await activity.fetchRequests(20);
     const entries = (requests ?? [])
       .filter((request) => request.item?.title)
-      // Requests still in motion come first, newest first; what has arrived follows.
-      .sort(
-        (a, b) =>
-          (requestBadge(a) === "Available") - (requestBadge(b) === "Available") ||
-          String(b.requestedAt).localeCompare(String(a.requestedAt)),
-      )
-      .slice(0, SHELF_LIMIT)
-      .map((request) => ({
-        item: request.item,
-        title: request.item.title,
-        subtitle: request.item.year ? String(request.item.year) : null,
-        image: request.item.poster,
-        badge: requestBadge(request),
-      }));
-    return entries.length
-      ? {
-          title: "Your Requests",
-          entries,
-          card: (e) =>
-            kit.card({
-              ...(e.item.jellyfinId
-                ? { href: `#/details?id=${e.item.jellyfinId}` }
-                : { onClick: () => openSeerrTitle(e.item) }),
-              image: e.image,
-              title: e.title,
-              subtitle: e.subtitle,
-              badge: e.badge,
-            }),
+      .map((request) => ({ request, item: request.item, d: activity.describeRequest(request) }))
+      // What is moving comes first, then what waits, then what has arrived; newest first within each.
+      .sort((a, b) => activity.rankOf(a.d) - activity.rankOf(b.d) || String(b.request.requestedAt).localeCompare(String(a.request.requestedAt)))
+      .slice(0, SHELF_LIMIT);
+    requestsBusy = entries.some((entry) => !entry.d.final);
+    if (!entries.length) return null;
+    return {
+      title: "Your Requests",
+      href: activity.hash,
+      entries,
+      // The saved shape of the row. Progress and times change under it without a rebuild.
+      sig: entries.map((entry) => `${activity.keyOf(entry.request)}|${entry.item.jellyfinId ? "lib" : "req"}`),
+      card: (entry) => activity.requestCard(entry.request, { onOpen: (item) => openSeerrTitle(item) }),
+      update: (row, next) => {
+        for (const entry of next) {
+          const card = row.querySelector(`[data-hera-request="${CSS.escape(activity.keyOf(entry.request))}"]`);
+          if (card) activity.updateCard(card, entry.request);
         }
-      : null;
+      },
+    };
+  };
+
+  // While the home page shows, a request in motion refreshes every few seconds, a quiet list every half minute.
+  let requestsTimer = 0;
+  const stopRequestsPoll = () => {
+    clearTimeout(requestsTimer);
+    requestsTimer = 0;
+  };
+  const pollRequests = (page) => {
+    stopRequestsPoll();
+    const run = state.run;
+    const tick = async () => {
+      if (run !== state.run || !page.isConnected || page.classList.contains("hide")) return;
+      const onDiscover = new URLSearchParams(window.location.hash.split("?")[1] || "").get("hera");
+      if (!document.hidden && !onDiscover && state.shown.has("requests")) {
+        try {
+          const spec = await requestsRow();
+          if (run === state.run && page.isConnected) show("requests", spec);
+        } catch (error) {
+          console.warn("[Hera TV:home] requests", error);
+        }
+      }
+      requestsTimer = setTimeout(tick, requestsBusy ? 8000 : 30000);
+    };
+    requestsTimer = setTimeout(tick, 8000);
   };
 
   const trendingRow = async () => {
@@ -474,10 +486,11 @@
     const entries = (shown?.entries ?? []).filter((entry) => !isHidden(id, entry));
     if (!entries.length) return removeRow(id);
     const spec = { ...shown, entries };
-    const sig = JSON.stringify([spec.title, spec.entries]);
+    const sig = JSON.stringify([spec.title, spec.sig ?? spec.entries]);
     const held = state.shown.get(id);
     if (held?.sig === sig) {
       if (!held.row.isConnected) kit.mountRow(held.row, place);
+      spec.update?.(held.row, spec.entries);
       return;
     }
     const row = kit.shelf({
@@ -633,6 +646,7 @@
         })
         .catch((error) => console.error(`[Hera TV:home] ${id}`, error));
     }
+    pollRequests(page);
   };
 
   // ---------- leaving chip on detail pages ---------------------------------------------------
@@ -698,6 +712,7 @@
       document.documentElement.classList.remove("hera-owns-home");
       state.kept = null;
       clearChips();
+      stopRequestsPoll();
     },
   });
 })();

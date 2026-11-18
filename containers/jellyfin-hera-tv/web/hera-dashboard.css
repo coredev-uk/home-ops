@@ -1,0 +1,1651 @@
+/*
+ * Hera TV: Jellyfin's admin Dashboard (#/dashboard and everything under it, plus plugin
+ * configuration pages). Loaded last. Jellyfin 12 builds these pages from two kits, MUI
+ * components and the older emby-* markup, often on one page; both are drawn here as one
+ * system, in the Settings app's language: a quiet sidebar whose selected item is the selection
+ * capsule, one centred content column, grouped rows on --hera-surface, filled fields,
+ * pill buttons, switches for booleans.
+ *
+ * Scope: Jellyfin puts `dashboardDocument` on <body> whenever a `.type-interior` page is
+ * showing, so every rule begins there and the main client never sees one. Dialogs and menus
+ * are portalled to <body>, which is why they are styled from the same root.
+ *
+ * The scale (CSS pixels):
+ *   page title 28/700 · section heading 20/700 · row and field text 15 · label 13/600 ·
+ *   help text 13 in --hera-label-3
+ *   field 48 tall, 14 radius · row 52 tall · card radius 20 · button 40 tall, capsule
+ */
+
+.dashboardDocument {
+  --dash-edge: clamp(24px, 3vw, 48px);
+  --dash-w: 760px;
+  --dash-r-field: 14px;
+  --dash-r-card: 20px;
+  --dash-field-h: 48px;
+  --dash-row-h: 52px;
+  --dash-pad: 20px;
+}
+
+/* ====================================================================================== *
+ * Sidebar
+ * ====================================================================================== */
+
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper {
+  background: var(--hera-surface) !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--hera-label);
+  scrollbar-width: thin;
+  scrollbar-color: var(--hera-fill-strong) transparent;
+}
+.dashboardDocument .MuiDrawer-docked .MuiList-root {
+  padding: 4px 0;
+}
+/* The Jellyfin mark is violet; the server's name and version stand in. */
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper > .MuiList-root:first-child {
+  padding: 14px 0 6px;
+}
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper > .MuiList-root:first-child .MuiListItemIcon-root {
+  display: none;
+}
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper > .MuiList-root:first-child .MuiListItemButton-root {
+  min-height: 0;
+  padding: 4px 12px;
+  border-radius: 0;
+}
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper > .MuiList-root:first-child .MuiListItemButton-root:hover {
+  background: transparent;
+}
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper > .MuiList-root:first-child .MuiListItemText-primary {
+  font: 700 20px/1.2 var(--hera-font-display);
+  letter-spacing: -0.02em;
+  color: var(--hera-label);
+}
+.dashboardDocument .MuiDrawer-docked .MuiDrawer-paper > .MuiList-root:first-child .MuiListItemText-secondary {
+  margin-top: 2px;
+  color: var(--hera-label-3);
+  font-size: 13px;
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItem-root {
+  padding: 1px 14px;
+}
+.dashboardDocument .MuiDrawer-docked .MuiList-root > .MuiListItemButton-root {
+  margin: 1px 14px;
+  width: auto;
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--hera-label);
+  transition: background-color var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root:hover {
+  background: var(--hera-hover);
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root.Mui-selected,
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root.Mui-selected:hover {
+  background: var(--hera-select);
+  color: var(--hera-on-select);
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root.Mui-focusVisible {
+  background: var(--hera-hover);
+  outline: 2px solid var(--hera-focus);
+  outline-offset: -2px;
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemIcon-root {
+  min-width: 36px;
+  color: var(--hera-label-2);
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemIcon-root svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+.dashboardDocument .MuiDrawer-docked .Mui-selected .MuiListItemIcon-root,
+.dashboardDocument .MuiDrawer-docked .Mui-selected .MuiListItemText-primary {
+  color: var(--hera-on-select);
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemText-root {
+  margin: 0;
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemText-primary {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+/* Group names are quiet captions that start where the item text starts. */
+.dashboardDocument .MuiDrawer-docked .MuiListSubheader-root {
+  position: static;
+  padding: 18px 26px 6px;
+  background: transparent !important;
+  color: var(--hera-label-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+/* Pages under Libraries and Playback sit one step in, text on the same grid as the group. */
+.dashboardDocument .MuiDrawer-docked .MuiCollapse-root .MuiListItemButton-root {
+  padding-left: 48px;
+}
+.dashboardDocument .MuiDrawer-docked .MuiCollapse-root .MuiListItemText-primary {
+  font-size: 14px;
+  font-weight: 500;
+}
+.dashboardDocument .MuiDrawer-docked .MuiCollapse-root .Mui-selected .MuiListItemText-primary {
+  font-weight: 600;
+}
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root > .MuiSvgIcon-root,
+.dashboardDocument .MuiDrawer-docked .MuiListItemButton-root > svg:last-child {
+  color: var(--hera-label-3);
+}
+.dashboardDocument .MuiDrawer-docked .Mui-selected > .MuiSvgIcon-root {
+  color: var(--hera-on-select);
+}
+
+/* ====================================================================================== *
+ * App bar: back and the account buttons, no title (the sidebar names the server)
+ * ====================================================================================== */
+
+.dashboardDocument .dashboard-appBar {
+  padding-left: var(--dash-edge) !important;
+  padding-right: var(--dash-edge) !important;
+}
+.dashboardDocument .dashboard-appBar::before {
+  content: none !important;
+}
+.dashboardDocument .dashboard-appBar .MuiTypography-root,
+.dashboardDocument .dashboard-appBar h1,
+.dashboardDocument .dashboard-appBar h2,
+.dashboardDocument .dashboard-appBar h3 {
+  font: 700 22px/1.2 var(--hera-font-display);
+  letter-spacing: -0.02em;
+  color: var(--hera-label);
+}
+
+/* ====================================================================================== *
+ * The content column
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .content-primary {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--dash-w) + 2 * var(--dash-edge));
+  margin: 0 auto;
+  padding: 16px var(--dash-edge) 96px;
+  color: var(--hera-label);
+}
+/* Pages built from tables, grids and cards use the wide column. */
+.dashboardDocument #dashboardPage,
+.dashboardDocument #userProfilesPage,
+.dashboardDocument #mediaLibraryPage,
+.dashboardDocument #devicesPage,
+.dashboardDocument #serverActivityPage,
+.dashboardDocument #apiKeysPage,
+.dashboardDocument #pluginsPage,
+.dashboardDocument #liveTvStatusPage,
+.dashboardDocument #logPage {
+  --dash-w: 1180px;
+}
+/* Pages hand their own width to Stack and form wrappers; the column is the only limit. */
+.dashboardDocument .type-interior .content-primary > form,
+.dashboardDocument .type-interior .content-primary > .MuiStack-root,
+.dashboardDocument .type-interior .content-primary > .readOnlyContent {
+  max-width: none;
+  width: 100%;
+}
+.dashboardDocument .type-interior .content-primary form > .MuiStack-root,
+.dashboardDocument .type-interior .content-primary form.editUserProfileForm {
+  gap: 20px;
+}
+.dashboardDocument .type-interior .content-primary form > .MuiStack-root > :not(style) {
+  margin: 0 !important;
+}
+
+/* ---- Type ---- */
+
+.dashboardDocument .type-interior .MuiTypography-root {
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiTypography-h1 {
+  margin: 0;
+  font: 700 28px/1.15 var(--hera-font-display);
+  letter-spacing: -0.025em;
+}
+.dashboardDocument .type-interior .MuiTypography-h2,
+.dashboardDocument .type-interior .MuiTypography-h3,
+.dashboardDocument .type-interior .MuiTypography-h4 {
+  margin: 12px 0 0;
+  font: 700 20px/1.25 var(--hera-font-display);
+  letter-spacing: -0.02em;
+}
+.dashboardDocument .type-interior .sectionTitle,
+.dashboardDocument .type-interior h2.sectionTitle,
+.dashboardDocument .type-interior .verticalSection > h2,
+.dashboardDocument .type-interior .paperListLabel,
+.dashboardDocument .type-interior .checkboxListLabel {
+  margin: 12px 0 0;
+  font: 700 20px/1.25 var(--hera-font-display) !important;
+  letter-spacing: -0.02em;
+  color: var(--hera-label) !important;
+}
+/* Device and browser glyphs are white artwork; in light they take the label colour. */
+html[data-hera-scheme="light"] .dashboardDocument .type-interior .MuiTableCell-body > img,
+html[data-hera-scheme="light"] .dashboardDocument .type-interior .MuiCard-root img[src*="/devices/"] {
+  filter: invert(1) brightness(0.2);
+}
+/* Pages whose markup has no title borrow the one Jellyfin keeps in data-title, above the column. */
+
+.dashboardDocument #dashboardPage::before,
+.dashboardDocument #mediaLibraryPage::before,
+.dashboardDocument #scheduledTasksPage::before,
+.dashboardDocument #liveTvStatusPage::before {
+  content: attr(data-title);
+  position: absolute;
+  top: 16px;
+  left: calc(max(0px, (100% - var(--dash-w) - 2 * var(--dash-edge)) / 2) + var(--dash-edge));
+  font: 700 28px/1.15 var(--hera-font-display);
+  letter-spacing: -0.025em;
+  color: var(--hera-label);
+}
+.dashboardDocument #dashboardPage .content-primary,
+.dashboardDocument #mediaLibraryPage .content-primary,
+.dashboardDocument #scheduledTasksPage .content-primary,
+.dashboardDocument #liveTvStatusPage .content-primary {
+  padding-top: 64px;
+}
+.dashboardDocument .type-interior .MuiTypography-h5,
+.dashboardDocument .type-interior .MuiTypography-h6 {
+  font-family: var(--hera-font-display);
+  letter-spacing: -0.015em;
+}
+.dashboardDocument .type-interior .MuiTypography-colorTextSecondary,
+.dashboardDocument .type-interior .MuiTypography-body2,
+.dashboardDocument .type-interior .MuiListItemText-secondary {
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiTypography-root.MuiTypography-body1,
+.dashboardDocument .type-interior .readOnlyContent,
+.dashboardDocument .type-interior .content-primary p {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.dashboardDocument .type-interior a:not(.MuiButton-root):not(.MuiListItemButton-root):not(.MuiCardActionArea-root):not(.emby-button):not(.cardContent) {
+  color: var(--hera-label);
+  text-decoration-color: var(--hera-label-3);
+  text-underline-offset: 3px;
+}
+.dashboardDocument .type-interior .MuiLink-root,
+.dashboardDocument .type-interior .button-link {
+  color: var(--hera-label);
+}
+
+/* Help text: one style, one place under every field */
+.dashboardDocument .type-interior .fieldDescription,
+.dashboardDocument .type-interior .MuiFormHelperText-root,
+.dashboardDocument .type-interior .checkboxFieldDescription {
+  margin: 8px 2px 0;
+  color: var(--hera-label-3) !important;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.dashboardDocument .type-interior .fieldDescription a,
+.dashboardDocument .type-interior .MuiFormHelperText-root a {
+  color: var(--hera-label-2);
+}
+
+/* ====================================================================================== *
+ * Cards, papers, lists
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .MuiPaper-root:not(.MuiAlert-root) {
+  border-radius: var(--dash-r-card);
+  background: var(--hera-surface);
+  background-image: none;
+  box-shadow: none;
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiPaper-root .MuiPaper-root:not(.MuiAlert-root) {
+  background: var(--hera-surface-2);
+}
+.dashboardDocument .type-interior .MuiCard-root {
+  overflow: hidden;
+}
+.dashboardDocument .type-interior .MuiList-root {
+  padding: 0;
+}
+.dashboardDocument .type-interior .MuiListItem-root,
+.dashboardDocument .type-interior .MuiListItemButton-root {
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiListItemButton-root {
+  transition: background-color var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .MuiListItemButton-root:hover {
+  background: var(--hera-hover);
+}
+.dashboardDocument .type-interior .MuiListItemButton-root.Mui-focusVisible,
+.dashboardDocument .type-interior .MuiButtonBase-root.Mui-focusVisible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: -2px;
+}
+.dashboardDocument .type-interior .paperList,
+.dashboardDocument .type-interior .paperList.itemsContainer,
+.dashboardDocument .type-interior .checkboxList {
+  overflow: hidden;
+  border-radius: var(--dash-r-card);
+  background: var(--hera-surface);
+}
+.dashboardDocument .type-interior .paperList .listItem + .listItem,
+.dashboardDocument .type-interior .paperList .listItem-border + .listItem-border {
+  border-top: 1px solid var(--hera-separator);
+}
+.dashboardDocument .type-interior .listItem {
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .listItemBodyText {
+  color: var(--hera-label);
+  font-size: 15px;
+  font-weight: 500;
+}
+.dashboardDocument .type-interior .listItemBodyText.secondary,
+.dashboardDocument .type-interior .listItemBody .secondary,
+.dashboardDocument .type-interior .listItemBodyText + .listItemBodyText {
+  color: var(--hera-label-2) !important;
+  font-size: 13px;
+  font-weight: 400;
+}
+.dashboardDocument .type-interior .listItemIcon:not(.listItemIcon-transparent) {
+  background-color: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .listItemIcon .material-icons,
+.dashboardDocument .type-interior .listItemIcon.material-icons {
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiAvatar-root,
+.dashboardDocument .type-interior .MuiAvatar-colorDefault {
+  background-color: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiAvatar-root svg,
+.dashboardDocument .type-interior .MuiAvatar-root svg path {
+  color: var(--hera-label) !important;
+  fill: currentColor !important;
+}
+.dashboardDocument .type-interior .MuiListItemIcon-root,
+.dashboardDocument .type-interior .MuiListItemIcon-root svg {
+  color: var(--hera-label-2);
+  fill: currentColor;
+}
+.dashboardDocument .type-interior .MuiDivider-root,
+.dashboardDocument .type-interior .MuiTableCell-root {
+  border-color: var(--hera-separator) !important;
+}
+
+/* Chips: severities, sync badges, counts */
+.dashboardDocument .type-interior .MuiChip-root {
+  border-radius: 999px;
+  background: var(--hera-fill-strong);
+  color: var(--hera-label);
+  font-weight: 600;
+}
+.dashboardDocument .type-interior .MuiChip-colorInfo,
+.dashboardDocument .type-interior .MuiChip-colorPrimary,
+.dashboardDocument .type-interior .MuiChip-colorSuccess,
+.dashboardDocument .type-interior .MuiChip-colorWarning,
+.dashboardDocument .type-interior .MuiChip-colorError,
+.dashboardDocument .type-interior .MuiChip-colorSecondary {
+  background: var(--hera-fill-strong);
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiChip-outlined {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--hera-separator);
+}
+
+/* Notes */
+.dashboardDocument .type-interior .MuiAlert-root {
+  border-radius: 14px;
+  background: var(--hera-fill);
+  box-shadow: none;
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiAlert-icon {
+  color: var(--hera-label-2);
+}
+
+/* Meters */
+.dashboardDocument .type-interior .MuiLinearProgress-root {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hera-track) !important;
+}
+.dashboardDocument .type-interior .MuiLinearProgress-bar {
+  border-radius: 999px;
+  background: var(--hera-select) !important;
+}
+.dashboardDocument .type-interior .MuiLinearProgress-dashed {
+  display: none;
+}
+.dashboardDocument .type-interior .MuiLinearProgress-bar2Buffer {
+  background: var(--hera-label-3) !important;
+}
+.dashboardDocument .type-interior .MuiCircularProgress-root {
+  color: var(--hera-label) !important;
+}
+
+/* ====================================================================================== *
+ * Tables and data grids (Material React Table: Devices, Activity, API Keys)
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .MuiPaper-root {
+  --mrt-base-background-color: var(--hera-surface);
+  --mrt-row-hover-background-color: var(--hera-hover);
+  --mrt-selected-row-background-color: var(--hera-fill);
+  --mrt-striped-row-background-color: transparent;
+  --mrt-pinned-row-background-color: var(--hera-surface);
+  --mrt-menu-background-color: var(--hera-surface-2);
+  --mrt-dragging-border-color: var(--hera-separator);
+}
+.dashboardDocument .type-interior .MuiTableContainer-root,
+.dashboardDocument .type-interior .MuiTable-root {
+  background: transparent;
+}
+.dashboardDocument .type-interior .MuiTableCell-root {
+  border-bottom: 1px solid var(--hera-separator);
+  background-color: transparent;
+  color: var(--hera-label);
+  font-size: 14px;
+}
+.dashboardDocument .type-interior .MuiTableRow-root,
+.dashboardDocument .type-interior .MuiTableBody-root .MuiTableRow-root {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+.dashboardDocument .type-interior .MuiTableCell-head {
+  background: var(--hera-surface) !important;
+  color: var(--hera-label-2);
+  font-size: 13px;
+  font-weight: 600;
+}
+.dashboardDocument .type-interior .MuiTableBody-root .MuiTableRow-root:hover > .MuiTableCell-root {
+  background: var(--hera-hover);
+}
+.dashboardDocument .type-interior .MuiTableSortLabel-root,
+.dashboardDocument .type-interior .MuiTableSortLabel-root:hover,
+.dashboardDocument .type-interior .MuiTableSortLabel-root.Mui-active {
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiTablePagination-root,
+.dashboardDocument .type-interior .MuiTablePagination-root .MuiSelect-select {
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiToolbar-root,
+.dashboardDocument .type-interior .MuiPaper-root > .MuiBox-root {
+  background: transparent !important;
+}
+.dashboardDocument .type-interior .MuiDataGrid-root {
+  border: 0;
+  color: var(--hera-label);
+  --DataGrid-containerBackground: transparent;
+}
+.dashboardDocument .type-interior .MuiDataGrid-columnHeaders,
+.dashboardDocument .type-interior .MuiDataGrid-columnHeader,
+.dashboardDocument .type-interior .MuiDataGrid-footerContainer {
+  background: transparent;
+  border-color: var(--hera-separator);
+}
+.dashboardDocument .type-interior .MuiDataGrid-cell,
+.dashboardDocument .type-interior .MuiDataGrid-row {
+  border-color: var(--hera-separator);
+}
+.dashboardDocument .type-interior .MuiDataGrid-row:hover {
+  background: var(--hera-hover);
+}
+.dashboardDocument .type-interior .Mui-ToolbarDropZone {
+  border-color: var(--hera-separator) !important;
+}
+
+/* ====================================================================================== *
+ * Buttons
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .MuiButton-root {
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font: 600 15px/1 var(--hera-font);
+  letter-spacing: -0.005em;
+  text-transform: none;
+  box-shadow: none;
+  transition: transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .MuiButton-root:active {
+  transform: scale(0.95);
+}
+.dashboardDocument .type-interior .MuiButton-startIcon {
+  margin-left: -4px;
+  margin-right: 8px;
+}
+.dashboardDocument .type-interior .MuiButton-startIcon svg {
+  width: 20px;
+  height: 20px;
+}
+.dashboardDocument .type-interior .MuiButton-outlined,
+.dashboardDocument .type-interior .MuiButton-outlinedPrimary,
+.dashboardDocument .type-interior .MuiButton-outlinedInherit,
+.dashboardDocument .type-interior .MuiButton-containedError,
+.dashboardDocument .type-interior .MuiButton-containedInherit {
+  border: 0 !important;
+  background: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiButton-outlined:hover,
+.dashboardDocument .type-interior .MuiButton-containedError:hover,
+.dashboardDocument .type-interior .MuiButton-containedInherit:hover {
+  background: var(--hera-hover) !important;
+}
+.dashboardDocument .type-interior .MuiButton-text,
+.dashboardDocument .type-interior .MuiButton-textPrimary,
+.dashboardDocument .type-interior .MuiButton-textInherit {
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiButton-text:hover {
+  background: var(--hera-hover);
+}
+.dashboardDocument .type-interior .MuiButton-contained:not(.MuiButton-containedError):not(.MuiButton-containedInherit),
+.dashboardDocument .type-interior .MuiButton-containedPrimary {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+}
+.dashboardDocument .type-interior .MuiButton-contained:not(.MuiButton-containedError):not(.MuiButton-containedInherit):hover {
+  background: var(--hera-select-hover) !important;
+  transform: none;
+}
+.dashboardDocument .type-interior .MuiButton-root.Mui-disabled,
+.dashboardDocument .type-interior .MuiButton-root:disabled {
+  opacity: 0.45;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiButton-root.Mui-focusVisible,
+.dashboardDocument .type-interior .MuiButton-root:focus-visible {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+/* A page's primary action: a wide capsule under its form */
+.dashboardDocument .type-interior form > .MuiStack-root > .MuiButton-contained[type="submit"],
+.dashboardDocument .type-interior .btnSave,
+.dashboardDocument .type-interior .button-submit {
+  min-height: 48px;
+}
+.dashboardDocument .type-interior .MuiIconButton-root {
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiIconButton-root:hover {
+  background: var(--hera-hover);
+  color: var(--hera-label);
+}
+.dashboardDocument .type-interior .MuiIconButton-root.Mui-focusVisible,
+.dashboardDocument .type-interior .MuiIconButton-root:focus-visible {
+  outline: 2px solid var(--hera-focus);
+  outline-offset: 1px;
+}
+/* Destructive icons stay quiet until used: the confirm dialog carries the warning. */
+.dashboardDocument .type-interior .MuiIconButton-colorError,
+.dashboardDocument .type-interior .MuiIconButton-colorError svg {
+  color: var(--hera-label-2) !important;
+  fill: currentColor;
+}
+.dashboardDocument .type-interior .MuiIconButton-colorError:hover {
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiFab-root {
+  background: var(--hera-select);
+  color: var(--hera-on-select);
+}
+.dashboardDocument .type-interior .MuiToggleButton-root {
+  border-color: var(--hera-separator);
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiToggleButton-root.Mui-selected {
+  background: var(--hera-select);
+  color: var(--hera-on-select);
+}
+
+/* Legacy buttons */
+.dashboardDocument .type-interior .raised.button-submit,
+.dashboardDocument .type-interior .button-submit {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+}
+.dashboardDocument .type-interior .raised:not(.button-submit) {
+  background: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .fab,
+.dashboardDocument .type-interior .fab.submit {
+  background: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+  box-shadow: none !important;
+}
+.dashboardDocument .type-interior .fab:hover {
+  background: var(--hera-hover) !important;
+}
+
+/* ====================================================================================== *
+ * Fields: a label above, a filled box, help text below
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .MuiFormControl-root {
+  width: 100%;
+}
+.dashboardDocument .type-interior .MuiInputLabel-root,
+.dashboardDocument .type-interior .MuiFormLabel-root:not(.MuiFormControlLabel-label),
+.dashboardDocument .type-interior .inputLabel,
+.dashboardDocument .type-interior .selectLabel,
+.dashboardDocument .type-interior .textareaLabel {
+  position: static !important;
+  display: block;
+  max-width: none !important;
+  margin: 0 0 6px 2px;
+  padding: 0;
+  transform: none !important;
+  color: var(--hera-label-2) !important;
+  font: 600 13px/1.3 var(--hera-font) !important;
+  letter-spacing: 0;
+  pointer-events: auto;
+}
+.dashboardDocument .type-interior .MuiFormLabel-root.Mui-focused {
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .type-interior .MuiFilledInput-root,
+.dashboardDocument .type-interior .MuiOutlinedInput-root,
+.dashboardDocument .type-interior .MuiInputBase-root:not(.MuiTablePagination-input) {
+  min-height: var(--dash-field-h);
+  border-radius: var(--dash-r-field) !important;
+  background: var(--hera-fill) !important;
+  color: var(--hera-label);
+  transition: background-color var(--hera-fast) var(--hera-ease), box-shadow var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .MuiFilledInput-root::before,
+.dashboardDocument .type-interior .MuiFilledInput-root::after {
+  display: none !important;
+}
+.dashboardDocument .type-interior .MuiOutlinedInput-notchedOutline {
+  display: none;
+}
+.dashboardDocument .type-interior .MuiFilledInput-root:hover,
+.dashboardDocument .type-interior .MuiFilledInput-root.Mui-focused {
+  background: var(--hera-fill-strong) !important;
+}
+.dashboardDocument .type-interior .MuiFilledInput-root.Mui-focused {
+  box-shadow: 0 0 0 1px var(--hera-label-2) inset;
+}
+.dashboardDocument .type-interior .MuiFilledInput-root.Mui-disabled {
+  opacity: 0.55;
+}
+.dashboardDocument .type-interior .MuiInputBase-input,
+.dashboardDocument .type-interior .MuiFilledInput-input,
+.dashboardDocument .type-interior .MuiSelect-select {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  padding: 13px 16px !important;
+  color: var(--hera-label);
+  caret-color: var(--hera-label);
+  font: 500 16px/22px var(--hera-font);
+}
+.dashboardDocument .type-interior .MuiSelect-select {
+  padding-right: 44px !important;
+}
+.dashboardDocument .type-interior .MuiInputBase-multiline {
+  padding: 0;
+}
+.dashboardDocument .type-interior .MuiInputBase-inputMultiline {
+  padding: 13px 16px !important;
+}
+.dashboardDocument .type-interior .MuiInputBase-input::placeholder {
+  color: var(--hera-label-3);
+  opacity: 1;
+}
+.dashboardDocument .type-interior .MuiInputAdornment-root,
+.dashboardDocument .type-interior .MuiInputAdornment-root svg {
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiSelect-icon {
+  right: 14px;
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiFormHelperText-root.Mui-error {
+  color: var(--hera-label) !important;
+}
+
+/* Legacy fields share the box */
+.dashboardDocument .type-interior .inputContainer,
+.dashboardDocument .type-interior .selectContainer,
+.dashboardDocument .type-interior .textareaContainer {
+  margin: 0 0 20px;
+}
+.dashboardDocument .type-interior .emby-input,
+.dashboardDocument .type-interior .emby-select,
+.dashboardDocument .type-interior .emby-textarea {
+  box-sizing: border-box;
+  min-height: var(--dash-field-h);
+  border-radius: var(--dash-r-field) !important;
+  font: 500 16px/22px var(--hera-font);
+}
+.dashboardDocument .type-interior .emby-input:focus,
+.dashboardDocument .type-interior .emby-select:focus,
+.dashboardDocument .type-interior .emby-textarea:focus {
+  border-color: var(--hera-label-2) !important;
+}
+.dashboardDocument .type-interior .emby-select {
+  padding-right: 44px !important;
+  background-image: linear-gradient(45deg, transparent 50%, var(--hera-label-2) 50%), linear-gradient(135deg, var(--hera-label-2) 50%, transparent 50%) !important;
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50% !important;
+  background-size: 6px 6px, 6px 6px !important;
+  background-repeat: no-repeat !important;
+}
+.dashboardDocument .type-interior .selectArrowContainer {
+  display: none !important;
+}
+
+/* ====================================================================================== *
+ * Booleans: switches. Legacy rows already draw one (below); MUI checkboxes and radios are
+ * redrawn to match, and each run of rows reads as one grouped list.
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .emby-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.dashboardDocument .type-interior .emby-checkbox-label .checkboxLabel {
+  flex: 1;
+  margin: 0;
+  padding: 0 !important;
+  color: var(--hera-label) !important;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.dashboardDocument .type-interior .emby-checkbox-label .checkboxOutline {
+  position: relative !important;
+  inset: auto !important;
+  flex: none;
+  width: 51px !important;
+  height: 31px !important;
+  margin: 0 !important;
+  transform: none !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--hera-fill-strong) !important;
+  transition: background-color var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .emby-checkbox-label .checkboxOutline .checkboxIcon {
+  display: none !important;
+}
+.dashboardDocument .type-interior .emby-checkbox-label .checkboxOutline::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--hera-bg);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+  transition: transform var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .emby-checkbox:checked ~ .checkboxOutline {
+  background: var(--hera-select) !important;
+}
+.dashboardDocument .type-interior .emby-checkbox:checked ~ .checkboxOutline::after {
+  transform: translateX(20px);
+}
+.dashboardDocument .type-interior .emby-checkbox:focus-visible ~ .checkboxOutline {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+.dashboardDocument .type-interior .emby-checkbox:disabled ~ .checkboxOutline,
+.dashboardDocument .type-interior .emby-checkbox:disabled ~ .checkboxLabel {
+  opacity: 0.45;
+}
+.dashboardDocument .type-interior .checkboxFieldDescription {
+  margin-top: 6px;
+}
+
+/* Loose legacy rows: a grouped list, one rounded card per run */
+.dashboardDocument .type-interior .sectioncheckbox,
+.dashboardDocument .type-interior .checkboxContainer:not(.emby-checkbox-label) {
+  box-sizing: border-box;
+  margin: 0;
+}
+.dashboardDocument .type-interior .sectioncheckbox > .emby-checkbox-label,
+.dashboardDocument .type-interior .MuiFormControlLabel-root {
+  min-height: var(--dash-row-h);
+}
+.dashboardDocument .type-interior form > .sectioncheckbox,
+.dashboardDocument .type-interior .MuiFormControlLabel-root {
+  padding: 0 var(--dash-pad);
+  background: var(--hera-surface);
+}
+.dashboardDocument .type-interior .paperList .sectioncheckbox,
+.dashboardDocument .type-interior .checkboxList .sectioncheckbox {
+  padding: 0 var(--dash-pad);
+}
+.dashboardDocument .type-interior .paperList .sectioncheckbox + .sectioncheckbox,
+.dashboardDocument .type-interior .checkboxList .sectioncheckbox + .sectioncheckbox,
+.dashboardDocument .type-interior form > .sectioncheckbox + .sectioncheckbox {
+  border-top: 1px solid var(--hera-separator);
+}
+.dashboardDocument .type-interior form > .sectioncheckbox:not(.sectioncheckbox + .sectioncheckbox) {
+  border-radius: var(--dash-r-card) var(--dash-r-card) 0 0;
+}
+.dashboardDocument .type-interior form > .sectioncheckbox:not(:has(+ .sectioncheckbox)) {
+  border-radius: 0 0 var(--dash-r-card) var(--dash-r-card);
+}
+.dashboardDocument .type-interior form > .sectioncheckbox:not(.sectioncheckbox + .sectioncheckbox):not(:has(+ .sectioncheckbox)) {
+  border-radius: var(--dash-r-card);
+}
+
+/* MUI checkbox rows: label left, switch right, in a grouped card */
+.dashboardDocument .type-interior .MuiFormGroup-root {
+  overflow: hidden;
+  border-radius: var(--dash-r-card);
+  background: var(--hera-surface);
+}
+.dashboardDocument .type-interior .MuiFormGroup-root > .MuiFormControlLabel-root + .MuiFormControlLabel-root {
+  border-top: 1px solid var(--hera-separator);
+}
+.dashboardDocument .type-interior .MuiFormGroup-root > .MuiFormControlLabel-root {
+  background: transparent;
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  border-radius: var(--dash-r-card);
+}
+.dashboardDocument .type-interior .MuiFormGroup-root > .MuiFormControlLabel-root {
+  border-radius: 0;
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-label {
+  flex: 1;
+  color: var(--hera-label);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiCheckbox-root,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 51px;
+  height: 31px;
+  padding: 0;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--hera-fill-strong);
+  color: transparent;
+  transition: background-color var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiCheckbox-root:hover,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root:hover {
+  background: var(--hera-fill-strong);
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiCheckbox-root > svg,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root > svg,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root > span {
+  display: none;
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiCheckbox-root::after,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: var(--hera-bg);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+  transition: transform var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiCheckbox-root.Mui-checked,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root.Mui-checked {
+  background: var(--hera-select) !important;
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiCheckbox-root.Mui-checked::after,
+.dashboardDocument .type-interior .MuiFormControlLabel-root .MuiRadio-root.Mui-checked::after {
+  transform: translateX(20px);
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root .Mui-focusVisible {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+.dashboardDocument .type-interior .MuiFormControlLabel-root.Mui-disabled {
+  opacity: 0.45;
+}
+.dashboardDocument .type-interior .MuiRadio-root,
+.dashboardDocument .type-interior .MuiCheckbox-root {
+  color: var(--hera-label-3);
+}
+.dashboardDocument .type-interior .MuiRadio-root.Mui-checked,
+.dashboardDocument .type-interior .MuiCheckbox-root.Mui-checked {
+  color: var(--hera-select) !important;
+}
+
+/* MUI switches */
+.dashboardDocument .type-interior .MuiSwitch-root {
+  width: 51px;
+  height: 31px;
+  padding: 0;
+}
+.dashboardDocument .type-interior .MuiSwitch-switchBase {
+  padding: 2px;
+}
+.dashboardDocument .type-interior .MuiSwitch-switchBase.Mui-checked {
+  transform: translateX(20px);
+}
+.dashboardDocument .type-interior .MuiSwitch-thumb {
+  width: 27px;
+  height: 27px;
+  background-color: var(--hera-bg) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+}
+.dashboardDocument .type-interior .MuiSwitch-track {
+  border-radius: 999px;
+  background-color: var(--hera-fill-strong) !important;
+  opacity: 1 !important;
+}
+.dashboardDocument .type-interior .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
+  background-color: var(--hera-select) !important;
+}
+
+/* ====================================================================================== *
+ * Tabs
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .MuiTabs-root {
+  min-height: 44px;
+  border-bottom: 1px solid var(--hera-separator);
+}
+.dashboardDocument .type-interior .MuiTabs-indicator {
+  height: 2px;
+  background: var(--hera-select);
+}
+.dashboardDocument .type-interior .MuiTab-root {
+  min-height: 44px;
+  padding: 10px 16px;
+  text-transform: none;
+  font: 600 15px/1.2 var(--hera-font);
+  color: var(--hera-label-2);
+}
+.dashboardDocument .type-interior .MuiTab-root.Mui-selected {
+  color: var(--hera-label);
+}
+
+/* ====================================================================================== *
+ * Form flow: legacy forms space their rows like the MUI ones
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior form.editUserProfileForm,
+.dashboardDocument .type-interior .content-primary form:not(.MuiStack-root) {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.dashboardDocument .type-interior form.editUserProfileForm > *,
+.dashboardDocument .type-interior .content-primary form:not(.MuiStack-root) > .verticalSection,
+.dashboardDocument .type-interior .content-primary form:not(.MuiStack-root) > .inputContainer,
+.dashboardDocument .type-interior .content-primary form:not(.MuiStack-root) > .selectContainer {
+  margin: 0 !important;
+}
+.dashboardDocument .type-interior form > br {
+  display: none;
+}
+.dashboardDocument .type-interior .verticalSection {
+  margin: 0;
+  padding: 0;
+}
+.dashboardDocument .type-interior .paperList,
+.dashboardDocument .type-interior .checkboxList {
+  margin-top: 10px;
+  padding: 0 !important;
+}
+.dashboardDocument .type-interior .paperListLabel,
+.dashboardDocument .type-interior .checkboxListLabel {
+  margin-bottom: 0;
+}
+.dashboardDocument .type-interior .lnkEditUserPreferencesContainer {
+  margin: 0;
+}
+.dashboardDocument .type-interior .lnkEditUserPreferences {
+  color: var(--hera-label-2) !important;
+  font: 400 15px/1.4 var(--hera-font) !important;
+}
+.dashboardDocument .type-interior form > .checkboxContainer > .sectioncheckbox {
+  padding: 0 var(--dash-pad);
+  border-radius: var(--dash-r-card);
+  background: var(--hera-surface);
+}
+.dashboardDocument .type-interior form > .checkboxContainer > .fieldDescription {
+  margin-top: 8px;
+}
+.dashboardDocument .type-interior .MuiTypography-root a.MuiLink-root,
+.dashboardDocument .type-interior .MuiFormHelperText-root a {
+  font: inherit;
+  color: var(--hera-label-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dashboardDocument .type-interior .MuiFormHelperText-root a:hover {
+  color: var(--hera-label);
+}
+/* Runs of loose switch rows close up into one list; a row's help text sits under it. */
+.dashboardDocument .type-interior form.editUserProfileForm > .sectioncheckbox + .sectioncheckbox,
+.dashboardDocument .type-interior form > .sectioncheckbox + .sectioncheckbox {
+  margin-top: -20px !important;
+}
+.dashboardDocument .type-interior .MuiStack-root > .MuiFormControlLabel-root + .MuiFormHelperText-root,
+.dashboardDocument .type-interior .MuiStack-root > .MuiFormControlLabel-root + .MuiTypography-root {
+  margin-top: -12px !important;
+}
+
+/* ====================================================================================== *
+ * Lists as grouped cards (Scheduled Tasks, Dashboard activity, alerts, paths)
+ * ====================================================================================== */
+
+.dashboardDocument .type-interior .content-primary .MuiList-root {
+  overflow: hidden;
+  border-radius: var(--dash-r-card);
+  background: var(--hera-surface);
+}
+.dashboardDocument .type-interior .content-primary .MuiList-root > .MuiListItem-root + .MuiListItem-root {
+  border-top: 1px solid var(--hera-separator);
+}
+.dashboardDocument .type-interior .content-primary .MuiListItem-root {
+  padding: 10px var(--dash-pad);
+}
+.dashboardDocument .type-interior .content-primary .MuiListItem-root:has(> .MuiListItemButton-root) {
+  padding: 0;
+}
+.dashboardDocument .type-interior .content-primary .MuiListItemButton-root {
+  padding: 10px var(--dash-pad);
+}
+.dashboardDocument .type-interior .MuiListItemText-root {
+  margin: 0;
+}
+.dashboardDocument .type-interior .MuiListItemText-root .MuiTypography-root {
+  font: 500 15px/1.35 var(--hera-font);
+  letter-spacing: -0.005em;
+}
+.dashboardDocument .type-interior .MuiListItemText-root .MuiListItemText-secondary {
+  color: var(--hera-label-2);
+  font-size: 13px;
+  font-weight: 400;
+}
+.dashboardDocument .type-interior .MuiListItemSecondaryAction-root {
+  right: 8px;
+}
+.dashboardDocument .type-interior .MuiListItemAvatar-root {
+  min-width: 52px;
+}
+
+/* ====================================================================================== *
+ * Dashboard home
+ * ====================================================================================== */
+
+.dashboardDocument #dashboardPage .MuiGrid-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  width: 100%;
+  margin: 0;
+}
+.dashboardDocument #dashboardPage .MuiGrid-container > .MuiGrid-item {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  flex-basis: auto;
+}
+@media (max-width: 1500px) {
+  .dashboardDocument #dashboardPage .MuiGrid-container {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+  .dashboardDocument #dashboardPage .MuiGrid-container > .MuiGrid-item:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+.dashboardDocument #dashboardPage .MuiButton-text {
+  min-height: 0;
+  padding: 2px 4px 2px 0;
+  justify-content: flex-start;
+}
+.dashboardDocument #dashboardPage .MuiButton-text .MuiTypography-root {
+  margin: 0;
+}
+.dashboardDocument #dashboardPage .MuiButton-text .MuiButton-endIcon svg {
+  width: 18px;
+  height: 18px;
+  color: var(--hera-label-3);
+}
+.dashboardDocument #dashboardPage .MuiGrid-container .MuiGrid-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+.dashboardDocument #dashboardPage .MuiGrid-container .MuiGrid-container > .MuiGrid-item {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: max-content;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ====================================================================================== *
+ * Users, libraries, plugins
+ * ====================================================================================== */
+
+.dashboardDocument #userProfilesPage .sectionTitleContainer {
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.dashboardDocument #userProfilesPage .sectionTitleContainer .sectionTitle {
+  margin: 0;
+}
+.dashboardDocument #userProfilesPage .sectionTitleContainer > div {
+  margin: 0;
+}
+.dashboardDocument #userProfilesPage .localUsers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  justify-content: start;
+  gap: 24px 20px;
+  padding: 0 !important;
+}
+.dashboardDocument #userProfilesPage .localUsers > .card {
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+.dashboardDocument #userProfilesPage .localUsers .cardBox {
+  width: 100%;
+  margin: 0 !important;
+}
+.dashboardDocument #mediaLibraryPage .MuiGrid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: 20px;
+  width: 100%;
+  margin: 0;
+}
+.dashboardDocument #mediaLibraryPage .MuiGrid-container > .MuiGrid-item {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.dashboardDocument .type-interior .MuiInputBase-adornedStart {
+  padding-left: 14px;
+}
+.dashboardDocument .type-interior .MuiInputBase-adornedStart .MuiInputBase-input {
+  padding-left: 8px !important;
+}
+.dashboardDocument .type-interior .MuiInputBase-adornedEnd .MuiInputBase-input {
+  padding-right: 8px !important;
+}
+.dashboardDocument .type-interior .MuiInputBase-adornedEnd {
+  padding-right: 8px;
+}
+/* The catalogue's search draws its glass outside the input; the text clears it. */
+.dashboardDocument #pluginsPage .MuiInputBase-input {
+  padding-left: 44px !important;
+}
+/* Prose keeps a readable measure on the wide pages. */
+.dashboardDocument .type-interior .content-primary > .MuiStack-root > .MuiTypography-body1,
+.dashboardDocument .type-interior .content-primary > .MuiStack-root > p {
+  max-width: 72ch;
+  color: var(--hera-label-2);
+}
+
+/* ====================================================================================== *
+ * Other plugins' configuration pages: their own markup, drawn with the same controls so
+ * nothing reads as stock. (Hera TV's own page is built from the Settings app's parts.)
+ * ====================================================================================== */
+
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) {
+  color: var(--hera-label);
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="checkbox"],
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="radio"] {
+  accent-color: var(--hera-select);
+  width: 18px;
+  height: 18px;
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input:not([type]),
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="text"],
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="number"],
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="password"],
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="url"],
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input[type="date"],
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) select,
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) textarea {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background-color: var(--hera-fill);
+  color: var(--hera-label);
+  font: 500 15px/1.3 var(--hera-font);
+  caret-color: var(--hera-label);
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) input:focus,
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) select:focus,
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) textarea:focus {
+  border-color: var(--hera-label-2);
+  outline: none;
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) button:not(.emby-button):not(.MuiButtonBase-root) {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--hera-fill-strong);
+  color: var(--hera-label);
+  font: 600 14px/1 var(--hera-font);
+  cursor: pointer;
+  transition: transform var(--hera-fast) var(--hera-ease), background-color var(--hera-fast) var(--hera-ease);
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) button:not(.emby-button):not(.MuiButtonBase-root):hover {
+  background: var(--hera-hover);
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) button:not(.emby-button):not(.MuiButtonBase-root):active {
+  transform: scale(0.95);
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) button:not(.emby-button):not(.MuiButtonBase-root):focus-visible {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+.dashboardDocument .pluginConfigurationPage:not(.hera-cfg-page) a {
+  color: var(--hera-label);
+}
+
+/* ====================================================================================== *
+ * Menus and dialogs (portalled to <body>)
+ * ====================================================================================== */
+
+.dashboardDocument .MuiDialog-paper {
+  border-radius: var(--dash-r-card) !important;
+  background: var(--hera-surface-2) !important;
+  background-image: none !important;
+  box-shadow: var(--hera-shadow-lift) !important;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .MuiDialogTitle-root {
+  color: var(--hera-label);
+  font: 700 20px/1.25 var(--hera-font-display);
+  letter-spacing: -0.02em;
+}
+.dashboardDocument .MuiDialogContentText-root,
+.dashboardDocument .MuiDialogContent-root {
+  color: var(--hera-label-2);
+  font-size: 15px;
+}
+.dashboardDocument .MuiDialogActions-root {
+  padding: 8px 20px 20px;
+}
+.dashboardDocument .MuiPopover-paper,
+.dashboardDocument .MuiMenu-paper {
+  border-radius: 14px !important;
+  background: var(--hera-glass-hover) !important;
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift) !important;
+  color: var(--hera-label) !important;
+}
+.dashboardDocument .MuiMenuItem-root {
+  min-height: 40px;
+  margin: 0 6px;
+  border-radius: 8px;
+  font: 500 15px/1.3 var(--hera-font);
+}
+.dashboardDocument .MuiMenuItem-root:hover,
+.dashboardDocument .MuiMenuItem-root.Mui-focusVisible {
+  background: var(--hera-hover);
+}
+.dashboardDocument .MuiMenuItem-root.Mui-selected {
+  background: var(--hera-fill-strong);
+}
+.dashboardDocument .MuiMenuItem-root .MuiListItemIcon-root {
+  color: var(--hera-label-2);
+}
+
+.dashboardDocument .dialog .btnCancel {
+  color: var(--hera-label);
+}
+.dashboardDocument .dialog .formDialogContent h1,
+.dashboardDocument .dialog .formDialogContent h2,
+.dashboardDocument .dialog .formDialogContent h3 {
+  margin: 0;
+  color: var(--hera-label);
+  font: 700 20px/1.25 var(--hera-font-display);
+  letter-spacing: -0.02em;
+}
+.dashboardDocument .dialog .fab {
+  background: var(--hera-fill-strong) !important;
+  color: var(--hera-label) !important;
+  box-shadow: none !important;
+}
+.dashboardDocument .dialog .fab:hover {
+  background: var(--hera-hover) !important;
+}
+.dashboardDocument .dialog .formDialogFooter .button-submit {
+  min-height: 48px;
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+}
+.dashboardDocument .dialog .formDialogContent .inputLabel,
+.dashboardDocument .dialog .formDialogContent .selectLabel {
+  margin: 0 0 6px 2px;
+  color: var(--hera-label-2) !important;
+  font: 600 13px/1.3 var(--hera-font) !important;
+}
+.dashboardDocument .dialog .formDialogContent .emby-input,
+.dashboardDocument .dialog .formDialogContent .emby-select,
+.dashboardDocument .dialog .formDialogContent .emby-textarea {
+  min-height: var(--dash-field-h);
+  border-radius: var(--dash-r-field) !important;
+}
+.dashboardDocument .dialog .formDialogContent .emby-select {
+  padding-right: 44px !important;
+  background-image: linear-gradient(45deg, transparent 50%, var(--hera-label-2) 50%), linear-gradient(135deg, var(--hera-label-2) 50%, transparent 50%) !important;
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50% !important;
+  background-size: 6px 6px, 6px 6px !important;
+  background-repeat: no-repeat !important;
+}
+.dashboardDocument .dialog .formDialogContent .selectArrowContainer {
+  display: none !important;
+}
+.dashboardDocument .dialog .formDialogContent .fieldDescription {
+  margin: 8px 2px 0;
+  color: var(--hera-label-3);
+  font-size: 13px;
+}
+.dashboardDocument .dialog .formDialogContent .inputContainer,
+.dashboardDocument .dialog .formDialogContent .selectContainer {
+  margin: 0 0 20px;
+}
+
+/* ---- Hera TV's own page in the Dashboard (Plugins > Hera TV) ----
+ * Drawn by Configuration/heratv-settings.js from the Settings app's components above: grouped
+ * lists, switch rows, fields and pill buttons. Only what a form needs is added here. */
+
+.hera-cfg {
+  max-width: none;
+  color: var(--hera-label);
+}
+.hera-cfg .hera-set-title {
+  margin: 0 0 10px;
+  font: 700 28px/1.15 var(--hera-font-display);
+  letter-spacing: -0.025em;
+}
+.hera-cfg-lede {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 64ch;
+  margin: 0 0 10px;
+  color: var(--hera-label-2);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.hera-cfg-lede .material-icons {
+  flex: none;
+  margin-top: 2px;
+  font-size: 18px;
+}
+.hera-cfg .hera-set-group:first-of-type {
+  margin-top: 30px;
+}
+.hera-cfg .hera-set-group__title {
+  margin: 0 0 12px;
+  color: var(--hera-label);
+  font: 700 20px/1.2 var(--hera-font-display);
+  letter-spacing: -0.02em;
+}
+.hera-cfg .hera-set-group__foot {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 2px 0;
+}
+.hera-cfg .hera-set-group__foot .material-icons {
+  flex: none;
+  margin-top: 1px;
+  font-size: 16px;
+}
+
+.hera-cfg-card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 20px;
+}
+.hera-cfg-field__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  margin-bottom: 8px;
+}
+.hera-cfg-field__head .hera-set-field__label {
+  margin: 0;
+}
+.hera-cfg-field__head .hera-set-btn {
+  margin-left: auto;
+}
+.hera-cfg-field__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 2px 0;
+  color: var(--hera-label-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.hera-cfg-field__note .material-icons {
+  flex: none;
+  margin-top: 1px;
+  font-size: 16px;
+}
+.hera-cfg-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 7px;
+  border-radius: 999px;
+  background: var(--hera-fill-strong);
+  color: var(--hera-label-2);
+  font: 600 12px/1.2 var(--hera-font);
+  white-space: nowrap;
+}
+.hera-cfg-pill .material-icons {
+  font-size: 14px;
+}
+.hera-cfg .hera-set-input[readonly] {
+  background: transparent;
+  border-color: var(--hera-separator);
+  cursor: default;
+}
+.hera-cfg .hera-set-input[readonly]:focus {
+  border-color: var(--hera-label-2);
+}
+
+.hera-cfg-test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.hera-cfg-verdict {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.hera-cfg-verdict:empty {
+  display: none;
+}
+.hera-cfg-verdict .material-icons {
+  flex: none;
+  font-size: 20px;
+}
+
+.hera-cfg .hera-set-btn:focus-visible {
+  outline: 3px solid var(--hera-focus);
+  outline-offset: 3px;
+}
+.hera-cfg .hera-set-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.hera-cfg .hera-set-btn:disabled:active {
+  transform: none;
+}
+.hera-cfg .hera-set-btn[hidden] {
+  display: none;
+}
+.hera-set-btn--small {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.hera-cfg-number {
+  flex: none;
+  width: 92px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.hera-cfg-number::-webkit-inner-spin-button,
+.hera-cfg-number::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+.hera-cfg .hera-set-row__text[for] {
+  cursor: pointer;
+}
+
+/* The select's caret is two gradients in a label token, as on the stock forms above. */
+.hera-cfg-select {
+  flex: none;
+  width: min(300px, 48%);
+  padding-right: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--hera-label-2) 50%), linear-gradient(135deg, var(--hera-label-2) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+.hera-cfg-select:focus-visible {
+  outline: 3px solid var(--hera-focus) !important;
+  outline-offset: 2px;
+}
+.hera-cfg-avatar {
+  width: 38px;
+  height: 38px;
+  font-size: 16px;
+}
+.hera-cfg-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  border-bottom: 1px solid var(--hera-separator);
+}
+.hera-cfg-empty .material-icons {
+  flex: none;
+  font-size: 20px;
+}
+
+/* The save bar: a glass capsule at the foot of the screen while there is something to save, then
+ * a confirmation and gone. Fixed, because the Dashboard's page sits in an overflow-hidden
+ * ancestor that stops `sticky` working; the script sets --hera-cfg-center to the middle of the
+ * form column. */
+.hera-cfg-bar {
+  position: fixed;
+  bottom: 28px;
+  left: var(--hera-cfg-center, 50%);
+  z-index: 5;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 8px 8px 8px 22px;
+  border-radius: 999px;
+  background: var(--hera-glass-hover);
+  backdrop-filter: var(--hera-blur);
+  -webkit-backdrop-filter: var(--hera-blur);
+  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift);
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 12px);
+  transition: opacity var(--hera-fast) var(--hera-ease), transform var(--hera-slow) var(--hera-ease), visibility 0s linear var(--hera-fast);
+}
+.hera-cfg-bar.is-on {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+  transition-delay: 0s;
+}
+.hera-cfg-bar__text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+  color: var(--hera-label);
+  font-size: 15px;
+  font-weight: 600;
+}
+.hera-cfg-bar__text .material-icons {
+  font-size: 20px;
+}
+.hera-cfg-bar .hera-set-btn {
+  min-height: 40px;
+}

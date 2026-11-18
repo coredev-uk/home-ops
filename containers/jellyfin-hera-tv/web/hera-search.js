@@ -1,13 +1,12 @@
 /*
  * Hera TV: search. Registers with window.HeraTV (hera-tv.js).
- * Replaces the body of Jellyfin's search page (#/search) with the Apple TV app's search:
- *  - one glass field, results as you type (debounced; superseded requests are cancelled);
- *  - before typing: recent searches, what was added lately, and what is trending on Seerr;
- *  - results from the Jellyfin API per kind (Top Results, Films, TV Shows, Episodes, People,
- *    Collections) plus Seerr titles that are not in the library yet, with category chips;
- *  - a remote-friendly on-screen keyboard in the TV layout.
- * Jellyfin's own page and route stay, so the header's search button and back navigation work;
- * its markup is only hidden (hera-search.css).
+ *  - The header's search button opens a glass field in the header with a dropdown of suggestions
+ *    that updates on every key; Enter opens the full results.
+ *  - Jellyfin's search page (#/search) is replaced by the Apple TV app's search: one field,
+ *    results on every key, category chips, Seerr titles that are not in the library, and an
+ *    on-screen keyboard in the TV layout.
+ * Both share one engine: per kind Jellyfin API queries, ranking, caches, and cancellation of the
+ * request a newer key supersedes. Jellyfin's own page and route stay; its markup is only hidden.
  */
 (() => {
   "use strict";
@@ -17,13 +16,16 @@
   const { kit } = HT;
   const { el, icon } = kit;
 
-  const MIN_LENGTH = 2;
-  const DEBOUNCE = 260;
+  const MIN_LIBRARY = 1; // the library answers from the first letter
+  const MIN_SEERR = 2; // Seerr is an external call; one letter is noise
+  const SEERR_SETTLE = 220; // Seerr waits for a pause in typing; the library never does
   const LIBRARY_TTL = 60 * 1000;
   const SEERR_TTL = 20 * 1000;
   const SHELF_LIMIT = 20;
   const TOP_LIMIT = 12;
   const RECENT_LIMIT = 8;
+  const MENU_LIBRARY_ROWS = 6;
+  const MENU_SEERR_ROWS = 3;
 
   // Library categories, in the order their shelves appear. `path` is the API route; `types` the
   // item types it asks for; `limit` how many the server may return.
@@ -34,13 +36,16 @@
     { id: "person", label: "People", path: "Persons", shape: "person", limit: 40 },
     { id: "collection", label: "Collections", types: "BoxSet", shape: "poster", limit: 30 },
   ];
+  const INDEX = { episode: 2, person: 3 };
   const REQUEST_CATEGORY = { id: "request", label: "Not in Your Library", shape: "poster" };
   const ALL = { id: "all", label: "All" };
   const KIND = { Movie: "Film", Series: "TV Show", BoxSet: "Collection", Person: "Person" };
   const KEYS = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
 
-  /** Everything the mounted page owns; null while no search page shows. */
+  /** The search page while it shows; null otherwise. */
   let ui = null;
+  /** The header's search field; built on first use. */
+  let hs = null;
 
   // ---------- data ----------------------------------------------------------------------
 
@@ -70,25 +75,9 @@
     return request(category.path || "Items", query, signal).then((data) => data?.Items ?? []);
   };
 
-  // Each kind comes back in Jellyfin's order; a stable sort by how the name matches puts what was
-  // typed first (Array.sort is stable, so ties keep the server's order).
-  const fetchLibrary = (term, signal) => {
-    const query = plain(term);
-    return Promise.all(
-      CATEGORIES.map((category) =>
-        fetchCategory(category, term, signal).then((items) =>
-          items.map((item) => ({ item, score: scoreName(item.Name, query) })).sort((a, b) => b.score - a.score).map((entry) => entry.item),
-        ),
-      ),
-    );
-  };
-
-  const fetchSeerr = (term, signal) =>
-    request("HeraTV/discover/search", { query: term, page: 1 }, signal).then((data) => (data?.results ?? []).filter((item) => !item.jellyfinId));
-
   // ---------- ranking -------------------------------------------------------------------
-  // Jellyfin returns each kind in its own order. Top Results mixes kinds, so rank by how the name
-  // matches: exact, then starts with, then a word starts with, then contains.
+  // Jellyfin returns each kind in its own order. Rank by how the name matches: exact, then starts
+  // with, then a word starts with, then contains.
 
   const plain = (text) =>
     String(text || "")
@@ -106,6 +95,21 @@
     if (text.split(" ").some((word) => word.startsWith(query))) return 60;
     return text.includes(query) ? 40 : 10;
   };
+
+  // A stable sort by how the name matches puts what was typed first; ties keep the server's order.
+  const fetchLibrary = (term, signal) => {
+    const query = plain(term);
+    return Promise.all(
+      CATEGORIES.map((category) =>
+        fetchCategory(category, term, signal).then((items) =>
+          items.map((item) => ({ item, score: scoreName(item.Name, query) })).sort((a, b) => b.score - a.score).map((entry) => entry.item),
+        ),
+      ),
+    );
+  };
+
+  const fetchSeerr = (term, signal) =>
+    request("HeraTV/discover/search", { query: term, page: 1 }, signal).then((data) => (data?.results ?? []).filter((item) => !item.jellyfinId));
 
   const KIND_BIAS = { Series: 3, Movie: 2, BoxSet: 1, Person: 0 };
 
@@ -129,18 +133,88 @@
     return ranked.slice(0, TOP_LIMIT).map((entry) => entry.item);
   };
 
+  // ---------- engine --------------------------------------------------------------------
+  // One run per key. A new run aborts the previous run's requests and makes its answers stale, so
+  // a slow reply to "bro" never paints over "broo". The library is asked at once; Seerr after a
+  // short pause. Hooks: onStart(data), onLibrary(data), onSeerr(data), onError(data, error).
+
+  const createRunner = (hooks) => {
+    let seq = 0;
+    let controller = null;
+    let timer = 0;
+    let active = "";
+    const cancel = () => {
+      clearTimeout(timer);
+      controller?.abort();
+      controller = null;
+      seq++;
+      active = "";
+    };
+    const run = (term, { force = false } = {}) => {
+      if (!force && term === active) return;
+      clearTimeout(timer);
+      controller?.abort();
+      const mine = ++seq;
+      active = term;
+      controller = new AbortController();
+      const { signal } = controller;
+      const stale = () => mine !== seq;
+      const key = term.toLowerCase();
+      const seerrOn = hooks.seerr() && term.length >= MIN_SEERR;
+      const data = {
+        term,
+        lib: remember(timed, `lib:${key}`, LIBRARY_TTL),
+        seerr: seerrOn ? remember(timed, `seerr:${key}`, SEERR_TTL) ?? "loading" : "off",
+      };
+      hooks.onStart(data);
+      if (data.lib) hooks.onLibrary(data);
+      else {
+        fetchLibrary(term, signal)
+          .then((lib) => {
+            if (stale()) return;
+            data.lib = lib;
+            timed.set(`lib:${key}`, { at: Date.now(), value: lib });
+            hooks.onLibrary(data);
+          })
+          .catch((error) => {
+            if (stale() || error?.name === "AbortError") return;
+            console.error("[Hera TV:search]", error);
+            hooks.onError(data, error);
+          });
+      }
+      if (data.seerr === "loading") {
+        timer = setTimeout(() => {
+          fetchSeerr(term, signal)
+            .then((items) => {
+              if (stale()) return;
+              data.seerr = items;
+              timed.set(`seerr:${key}`, { at: Date.now(), value: items });
+              hooks.onSeerr(data);
+            })
+            .catch((error) => {
+              if (stale() || error?.name === "AbortError") return;
+              // Requesting is an extra; a Seerr failure leaves the library's results alone.
+              data.seerr = [];
+              hooks.onSeerr(data);
+            });
+        }, SEERR_SETTLE);
+      }
+    };
+    return { run, cancel, reset: () => (active = "") };
+  };
+
   // ---------- cards ---------------------------------------------------------------------
 
   const art = (item, type, width) =>
     item.ImageTags?.[type] ? kit.imageUrl(item.Id, type, { maxWidth: width, tag: item.ImageTags[type] }) : null;
 
-  const episodeArt = (item) => {
-    if (item.ImageTags?.Primary) return art(item, "Primary", 640);
+  const episodeArt = (item, width = 640) => {
+    if (item.ImageTags?.Primary) return art(item, "Primary", width);
     if (item.ParentThumbItemId && item.ParentThumbImageTag) {
-      return kit.imageUrl(item.ParentThumbItemId, "Thumb", { maxWidth: 640, tag: item.ParentThumbImageTag });
+      return kit.imageUrl(item.ParentThumbItemId, "Thumb", { maxWidth: width, tag: item.ParentThumbImageTag });
     }
     if (item.ParentBackdropItemId && item.ParentBackdropImageTags?.[0]) {
-      return kit.imageUrl(item.ParentBackdropItemId, "Backdrop", { maxWidth: 640, tag: item.ParentBackdropImageTags[0] });
+      return kit.imageUrl(item.ParentBackdropItemId, "Backdrop", { maxWidth: width, tag: item.ParentBackdropImageTags[0] });
     }
     return null;
   };
@@ -180,18 +254,18 @@
     if (status === "available") return item.jellyfinId ? "In Library" : "Available";
     return SEERR_BADGE[status] ?? null;
   };
+  const seerrKind = (item) => (item.mediaType === "tv" ? "TV Show" : "Film");
 
   // Seerr titles share a data-hera-key with Discover's cards, so a request made from the sheet
   // updates the badge here too.
   const seerrCard = (item) => {
-    const kind = item.mediaType === "tv" ? "TV Show" : "Film";
     const available = (item.status ?? "none") === "available";
     const card = kit.card({
       href: item.jellyfinId ? `#/details?id=${item.jellyfinId}` : null,
       onClick: item.jellyfinId ? null : (event) => HT.discover?.openTitle?.(item, { opener: event.currentTarget }),
       image: item.poster,
       title: item.title,
-      subtitle: [item.year, kind].filter(Boolean).join(" · "),
+      subtitle: [item.year, seerrKind(item)].filter(Boolean).join(" · "),
       badge: seerrBadge(item),
       badgeTone: available ? "light" : undefined,
     });
@@ -200,17 +274,12 @@
     return card;
   };
 
-  const SHELF_SHAPES = { poster: "poster", wide: "wide", person: "person" };
-
   const shelfOf = (title, cards, shape, onAll) => {
-    const row = kit.shelf({ title, cards, shape: SHELF_SHAPES[shape] ?? "poster" });
+    const row = kit.shelf({ title, cards, shape });
     row.classList.add("hera-search__row");
     if (onAll) {
       row.querySelector(".hera-row__head").append(
-        el("button", { type: "button", class: "hera-search__all", "aria-label": `See all ${title}`, onclick: onAll }, [
-          "See All",
-          icon("chevron_right"),
-        ]),
+        el("button", { type: "button", class: "hera-search__all", "aria-label": `See all ${title}`, onclick: onAll }, ["See All", icon("chevron_right")]),
       );
     }
     return row;
@@ -242,21 +311,24 @@
   };
   const rememberSearch = (term) => {
     const text = term.trim();
-    if (text.length < MIN_LENGTH) return;
+    if (text.length < 2) return;
     writeRecent([text, ...readRecent().filter((entry) => entry.toLowerCase() !== text.toLowerCase())]);
   };
 
-  // ---------- page ----------------------------------------------------------------------
+  const visible = (node) => node.getClientRects().length > 0;
 
-  const clearTimer = () => {
-    clearTimeout(ui.timer);
-    ui.timer = 0;
+  const queryOf = (params) => (params.get("q") || params.get("query") || "").trim();
+  const filterOf = (params) => {
+    const id = params.get("in");
+    return [...CATEGORIES, REQUEST_CATEGORY].some((category) => category.id === id) ? id : "all";
   };
+  const searchHash = (term) => `#/search?q=${encodeURIComponent(term)}`;
 
-  const abortSearch = () => {
-    ui.controller?.abort();
-    ui.controller = null;
-  };
+  // ==================================================================================
+  // The search page
+  // ==================================================================================
+
+  const abortIdle = () => ui.idleController.abort();
 
   const syncUrl = () => {
     if (!window.location.hash.startsWith("#/search")) return;
@@ -276,8 +348,6 @@
     ui.status.textContent = text;
   };
 
-  const visible = (node) => node.getClientRects().length > 0;
-
   // -- idle: recent searches and suggestions
 
   const renderRecent = () => {
@@ -288,28 +358,36 @@
     const rows = list.map((text) =>
       el("li", { class: "hera-search__recent-item" }, [
         el("button", { type: "button", class: "hera-search__recent-text", onclick: () => submit(text) }, [icon("history"), el("span", { text })]),
-        el("button", {
-          type: "button",
-          class: "hera-search__recent-remove",
-          "aria-label": `Remove ${text} from recent searches`,
-          onclick: () => {
-            writeRecent(readRecent().filter((entry) => entry !== text));
-            renderRecent();
+        el(
+          "button",
+          {
+            type: "button",
+            class: "hera-search__recent-remove",
+            "aria-label": `Remove ${text} from recent searches`,
+            onclick: () => {
+              writeRecent(readRecent().filter((entry) => entry !== text));
+              renderRecent();
+            },
           },
-        }, icon("close")),
+          icon("close"),
+        ),
       ]),
     );
     ui.recent.append(
       el("div", { class: "hera-search__recent-head" }, [
         el("h2", { class: "sectionTitle sectionTitle-cards hera-row__title", text: "Recent Searches" }),
-        el("button", {
-          type: "button",
-          class: "hera-search__link",
-          onclick: () => {
-            writeRecent([]);
-            renderRecent();
+        el(
+          "button",
+          {
+            type: "button",
+            class: "hera-search__link",
+            onclick: () => {
+              writeRecent([]);
+              renderRecent();
+            },
           },
-        }, "Clear"),
+          "Clear",
+        ),
       ]),
       el("ul", { class: "hera-search__recent-list" }, rows),
     );
@@ -322,17 +400,21 @@
         slot: ui.addedSlot,
         title: "Recently Added",
         load: () =>
-          request("Items", {
-            userId: kit.userId(),
-            sortBy: "DateCreated",
-            sortOrder: "Descending",
-            includeItemTypes: "Movie,Series",
-            recursive: true,
-            limit: 24,
-            fields: ITEM_FIELDS,
-            imageTypeLimit: 1,
-            enableTotalRecordCount: false,
-          }, signal).then((data) => (data?.Items ?? []).map((item) => libraryCard(item, { mixed: true }))),
+          request(
+            "Items",
+            {
+              userId: kit.userId(),
+              sortBy: "DateCreated",
+              sortOrder: "Descending",
+              includeItemTypes: "Movie,Series",
+              recursive: true,
+              limit: 24,
+              fields: ITEM_FIELDS,
+              imageTypeLimit: 1,
+              enableTotalRecordCount: false,
+            },
+            signal,
+          ).then((data) => (data?.Items ?? []).map((item) => libraryCard(item, { mixed: true }))),
       },
       ui.seerr && {
         slot: ui.trendingSlot,
@@ -469,10 +551,7 @@
   };
 
   const showIdle = () => {
-    clearTimer();
-    abortSearch();
-    ui.seq++;
-    ui.active = "";
+    ui.runner.cancel();
     ui.data = null;
     ui.term = "";
     showResults(false);
@@ -480,107 +559,57 @@
     syncUrl();
   };
 
-  // Runs a search for `term` now. A term already on screen or already in flight is not asked again.
-  const run = (term) => {
-    if (term === ui.active) return;
-    abortSearch();
-    const mine = ++ui.seq;
-    ui.active = term;
-    ui.term = term;
-    const controller = new AbortController();
-    ui.controller = controller;
-    const { signal } = controller;
-    const stale = () => mine !== ui.seq || !ui.root.isConnected;
-
-    showResults(true);
-    syncUrl();
-
-    const libHit = remember(timed, `lib:${term.toLowerCase()}`, LIBRARY_TTL);
-    const seerrHit = ui.seerr ? remember(timed, `seerr:${term.toLowerCase()}`, SEERR_TTL) : null;
-    const data = { term, lib: libHit, seerr: ui.seerr ? seerrHit ?? "loading" : "off" };
-
-    const arrive = () => {
+  const pageHooks = {
+    seerr: () => Boolean(ui?.seerr),
+    onStart(data) {
+      ui.term = data.term;
+      showResults(true);
+      if (!data.lib) {
+        ui.results.setAttribute("aria-busy", "true");
+        if (!ui.libSlot.firstChild) ui.libSlot.append(el("p", { class: "hera-search__busy", role: "status", text: "Searching…" }));
+      }
+      syncUrl();
+    },
+    onLibrary(data) {
       ui.data = data;
       ui.results.setAttribute("aria-busy", "false");
       renderLibrary();
       renderSeerr();
-    };
-
-    if (data.lib) arrive();
-    else {
-      ui.results.setAttribute("aria-busy", "true");
-      if (!ui.libSlot.firstChild) ui.libSlot.append(el("p", { class: "hera-search__busy", role: "status", text: "Searching…" }));
-      fetchLibrary(term, signal)
-        .then((lib) => {
-          if (stale()) return;
-          data.lib = lib;
-          timed.set(`lib:${term.toLowerCase()}`, { at: Date.now(), value: lib });
-          arrive();
-        })
-        .catch((error) => {
-          if (stale() || error?.name === "AbortError") return;
-          console.error("[Hera TV:search]", error);
-          ui.results.setAttribute("aria-busy", "false");
-          ui.chips.hidden = true;
-          ui.seerrSlot.replaceChildren();
-          ui.libSlot.replaceChildren(emptyState("Search isn't available right now", "Try again in a moment.", () => {
-            ui.active = "";
-            run(term);
-          }));
-        });
-    }
-
-    if (data.seerr === "loading") {
-      fetchSeerr(term, signal)
-        .then((items) => {
-          if (stale()) return;
-          data.seerr = items;
-          timed.set(`seerr:${term.toLowerCase()}`, { at: Date.now(), value: items });
-          if (ui.data !== data) return;
-          const counts = sectionCounts(data);
-          // With no library hits this decides between "no results" and results, so redraw it all.
-          if (!(counts.film + counts.show + counts.episode + counts.person + counts.collection)) renderLibrary();
-          else renderChips(counts);
-          renderSeerr();
-        })
-        .catch((error) => {
-          if (stale() || error?.name === "AbortError") return;
-          // Requesting is an extra here; a Seerr failure leaves the library's results alone.
-          data.seerr = [];
-          if (ui.data === data) renderLibrary();
-        });
-    }
+    },
+    onSeerr(data) {
+      if (ui.data !== data) return;
+      const counts = sectionCounts(data);
+      // With no library hits this decides between "no results" and results, so redraw it all.
+      if (!(counts.film + counts.show + counts.episode + counts.person + counts.collection)) renderLibrary();
+      else renderChips(counts);
+      renderSeerr();
+    },
+    onError(data) {
+      ui.results.setAttribute("aria-busy", "false");
+      ui.chips.hidden = true;
+      ui.seerrSlot.replaceChildren();
+      ui.libSlot.replaceChildren(emptyState("Search isn't available right now", "Try again in a moment.", () => ui.runner.run(data.term, { force: true })));
+    },
   };
 
-  // Typing: wait a beat, then search. Enter and recent searches go straight away.
+  // Every key searches at once; the engine cancels what the next key supersedes.
   const onInput = () => {
     const text = ui.input.value.trim();
     ui.clear.hidden = !ui.input.value;
-    clearTimer();
-    if (text.length < MIN_LENGTH) {
-      showIdle();
-      return;
-    }
-    ui.timer = setTimeout(() => {
-      ui.timer = 0;
-      run(text);
-    }, DEBOUNCE);
+    if (text.length < MIN_LIBRARY) showIdle();
+    else ui.runner.run(text);
   };
 
   const submit = (text) => {
     ui.input.value = text;
     ui.clear.hidden = !text;
-    clearTimer();
     const term = text.trim();
-    if (term.length < MIN_LENGTH) {
-      showIdle();
-      return;
-    }
-    run(term);
+    if (term.length < MIN_LIBRARY) showIdle();
+    else ui.runner.run(term);
     ui.input.focus({ preventScroll: true });
   };
 
-  // ---------- keyboard ------------------------------------------------------------------
+  // -- keyboard
 
   // Desktop arrow keys move between the field, chips and cards by where they are on screen.
   // The TV layout has Jellyfin's own remote navigation, so it is left to that.
@@ -625,7 +654,7 @@
     }
     if (event.key === "Enter" && inField) {
       event.preventDefault();
-      submit(ui.input.value);
+      // The results are already for what was typed; Enter keeps it in Recent Searches.
       rememberSearch(ui.input.value);
       return;
     }
@@ -649,9 +678,9 @@
     }
   };
 
+
   const typeKey = (text) => {
-    const value = text === "\b" ? ui.input.value.slice(0, -1) : ui.input.value + text;
-    ui.input.value = value;
+    ui.input.value = text === "\b" ? ui.input.value.slice(0, -1) : ui.input.value + text;
     onInput();
   };
 
@@ -666,7 +695,7 @@
     ]);
   };
 
-  // ---------- mount ---------------------------------------------------------------------
+  // -- mount
 
   const build = (page) => {
     const input = el("input", {
@@ -690,9 +719,8 @@
     const seerrSlot = el("div", { class: "hera-search__slot" });
     const results = el("div", { class: "hera-search__results", hidden: true, "aria-busy": "false" }, [libSlot, seerrSlot]);
     const root = el("div", { class: "hera-search", "data-hera-search": "" }, [
-      el("div", { class: "hera-search__bar", role: "search" }, [
-        el("div", { class: "hera-search__field" }, [icon("search"), input, clear]),
-      ]),
+      el("h1", { class: "hera-search__heading", text: "Search" }),
+      el("div", { class: "hera-search__bar", role: "search" }, [el("div", { class: "hera-search__field" }, [icon("search"), input, clear])]),
       kit.isTv() ? buildKeyboard() : null,
       chips,
       status,
@@ -706,19 +734,12 @@
 
   const unmount = () => {
     if (!ui) return;
-    clearTimer();
-    abortSearch();
-    ui.idleController.abort();
+    ui.runner.cancel();
+    abortIdle();
     ui.leave?.();
     ui.page.classList.remove("hera-search-page");
     ui.root.remove();
     ui = null;
-  };
-
-  const queryOf = (params) => (params.get("q") || params.get("query") || "").trim();
-  const filterOf = (params) => {
-    const id = params.get("in");
-    return [...CATEGORIES, REQUEST_CATEGORY].some((category) => category.id === id) ? id : "all";
   };
 
   // The address changed under a page that is already showing: adopt its search.
@@ -740,13 +761,10 @@
     ui = {
       ...parts,
       seerr: false,
-      timer: 0,
-      seq: 0,
-      active: "",
       term: "",
       filter: "all",
       data: null,
-      controller: null,
+      runner: createRunner(pageHooks),
       idleController: new AbortController(),
     };
     const mounted = ui;
@@ -759,8 +777,8 @@
     ui.results.addEventListener("click", (event) => {
       if (event.target.closest?.(".hera-card")) rememberSearch(ui.term);
     });
-    // Router pushes and Back do not fire hashchange; the header's search button and the history
-    // buttons are the two ways the address changes under a search page that is already showing.
+    // Router pushes and Back do not fire hashchange; links to a search and the history buttons are
+    // the ways the address changes under a search page that is already showing.
     const readHash = () => new URLSearchParams(window.location.hash.split("?")[1] || "");
     const onLink = (event) => {
       if (event.target.closest?.('a[href^="#/search"]')) setTimeout(() => ui === mounted && adopt(readHash()), 80);
@@ -781,10 +799,10 @@
     const start = queryOf(params);
     ui.filter = filterOf(params);
     loadIdle();
-    if (start.length >= MIN_LENGTH) {
+    if (start.length >= MIN_LIBRARY) {
       ui.input.value = start;
       ui.clear.hidden = false;
-      run(start);
+      ui.runner.run(start);
     }
 
     // Jellyfin shows the page with an animation and may move focus as it settles.
@@ -797,15 +815,425 @@
     setTimeout(focusIn, 320);
   };
 
+  // ==================================================================================
+  // The header's search field
+  // ==================================================================================
+  // The app bar's search button opens a glass field where the tab capsule is, and a menu of
+  // suggestions under it. On a TV the button keeps opening the full page: a remote types into a
+  // header field only through the system keyboard, which hides the menu, where the page's own
+  // keyboard keeps results in view and each key searches there too.
+
+  const HEADER = ".MuiAppBar-root, .skinHeader";
+  const BUTTON = '.MuiAppBar-root a[href="#/search"], .skinHeader a[href="#/search"], .headerSearchButton';
+
+  const capsuleOf = () =>
+    document.querySelector(".MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root") ||
+    document.querySelector(".skinHeader .headerTabs");
+
+  const placeHeader = () => {
+    const capsule = capsuleOf();
+    const box = capsule?.getBoundingClientRect();
+    const height = box && box.height > 0 ? box.height : 52;
+    const top = box && box.height > 0 ? box.top : 6;
+    const width = Math.min(640, window.innerWidth - 32);
+    const style = hs.root.style;
+    style.setProperty("--hs-top", `${top}px`);
+    style.setProperty("--hs-height", `${height}px`);
+    style.setProperty("--hs-width", `${width}px`);
+    style.setProperty("--hs-left", `${(window.innerWidth - width) / 2}px`);
+  };
+
+  // Over the home hero the app bar keeps the dark set whatever the scheme; the field follows it.
+  const toneHeader = () => {
+    const bar = document.querySelector(HEADER);
+    if (!hs || !bar) return;
+    const read = (node) => getComputedStyle(node).getPropertyValue("--hera-bg").trim();
+    hs.root.classList.toggle("hera-dark", read(bar) !== read(document.documentElement));
+  };
+
+  const hsRow = (key, { shape, src, title, subtitle, badge, onActivate, glyph }) => {
+    const id = `hera-hs-${hs.rows.length}`;
+    const thumb = el("span", { class: `hera-hs__thumb hera-hs__thumb--${shape}` }, [
+      src ? el("img", { src, alt: "", decoding: "async" }) : el("span", { class: "hera-hs__ghost" }, icon(glyph || (shape === "person" ? "person" : "movie"))),
+    ]);
+    const node = el(
+      "div",
+      { class: "hera-hs__row", role: "option", id, "aria-selected": "false", onmousedown: (event) => event.preventDefault(), onclick: onActivate },
+      [
+        thumb,
+        el("span", { class: "hera-hs__text" }, [
+          el("span", { class: "hera-hs__title", text: title }),
+          subtitle ? el("span", { class: "hera-hs__sub", text: subtitle }) : null,
+        ]),
+        badge ? el("span", { class: "hera-hs__badge", text: badge }) : null,
+      ],
+    );
+    hs.rows.push({ key, node, onActivate });
+    return node;
+  };
+
+  const hsPlainRow = (key, glyph, text, onActivate, { trailing } = {}) => {
+    const id = `hera-hs-${hs.rows.length}`;
+    const node = el("div", { class: "hera-hs__row hera-hs__row--plain", role: "option", id, "aria-selected": "false", onmousedown: (event) => event.preventDefault(), onclick: onActivate }, [
+      el("span", { class: "hera-hs__glyph" }, icon(glyph)),
+      el("span", { class: "hera-hs__text" }, el("span", { class: "hera-hs__title", text })),
+      trailing ? icon(trailing) : null,
+    ]);
+    hs.rows.push({ key, node, onActivate });
+    return node;
+  };
+
+  const hsGroup = (title, rows) =>
+    el("div", { class: "hera-hs__group", role: "group", "aria-label": title }, [el("div", { class: "hera-hs__heading", "aria-hidden": "true", text: title }), ...rows]);
+
+  const openItem = (item, term) => {
+    rememberSearch(term);
+    closeHeader({ restore: false });
+    kit.go(`#/details?id=${item.Id}`);
+  };
+
+  const libraryRow = (item, term) => {
+    const type = item.Type;
+    const base = { onActivate: () => openItem(item, term), title: item.Name };
+    if (type === "Person") return hsRow(`i:${item.Id}`, { ...base, shape: "person", src: art(item, "Primary", 96), subtitle: KIND.Person });
+    if (type === "Episode") return hsRow(`i:${item.Id}`, { ...base, shape: "wide", src: episodeArt(item, 128), subtitle: episodeLine(item), glyph: "tv" });
+    const subtitle = type === "BoxSet" ? KIND.BoxSet : [KIND[type], item.ProductionYear].filter(Boolean).join(" · ");
+    return hsRow(`i:${item.Id}`, { ...base, shape: "poster", src: art(item, "Primary", 96), subtitle, glyph: type === "BoxSet" ? "video_library" : type === "Series" ? "tv" : "movie" });
+  };
+
+  const seerrRow = (item, term) =>
+    hsRow(`s:${item.mediaType}:${item.tmdbId}`, {
+      shape: "poster",
+      src: item.poster,
+      title: item.title,
+      subtitle: [item.year, seerrKind(item)].filter(Boolean).join(" · "),
+      badge: seerrBadge(item),
+      onActivate: () => {
+        rememberSearch(term);
+        const opener = hs.button;
+        closeHeader({ restore: false });
+        HT.discover?.openTitle?.(item, { opener });
+      },
+    });
+
+  const goFull = (term) => {
+    rememberSearch(term);
+    closeHeader({ restore: false });
+    kit.go(searchHash(term));
+  };
+
+  const setActive = (index, { scroll = true } = {}) => {
+    hs.active = index;
+    hs.rows.forEach((row, i) => {
+      const on = i === index;
+      row.node.classList.toggle("is-active", on);
+      row.node.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    const row = hs.rows[index];
+    if (row) {
+      hs.input.setAttribute("aria-activedescendant", row.node.id);
+      if (scroll) row.node.scrollIntoView({ block: "nearest" });
+    } else hs.input.removeAttribute("aria-activedescendant");
+  };
+
+  // Paints the menu from what has arrived. The row the keyboard is on stays on it as results
+  // change under it; with none chosen, nothing is.
+  const paintMenu = () => {
+    // Until this key's answer arrives the last one stays, rows and all.
+    if (hs.term && !hs.data?.lib && hs.menu.firstChild) return;
+    const keep = hs.rows[hs.active]?.key;
+    hs.rows = [];
+    const term = hs.term;
+    const data = hs.data;
+    const groups = [];
+    if (!term) {
+      const recent = readRecent().slice(0, 5);
+      if (recent.length) {
+        groups.push(
+          hsGroup(
+            "Recent Searches",
+            recent.map((text) =>
+              hsPlainRow(`r:${text}`, "history", text, () => {
+                hs.input.value = text;
+                onHeaderInput();
+                hs.input.focus();
+              }),
+            ),
+          ),
+        );
+      }
+    } else if (data?.lib) {
+      const top = topResults(data.lib, term).slice(0, 4);
+      const shown = new Set(top.map((item) => item.Id));
+      const query = plain(term);
+      const people = data.lib[INDEX.person].filter((item) => !shown.has(item.Id) && scoreName(item.Name, query) >= 60).slice(0, 2);
+      const room = MENU_LIBRARY_ROWS - top.length - people.length;
+      const episodes = data.lib[INDEX.episode].filter((item) => scoreName(item.Name, query) >= 60).slice(0, Math.max(0, Math.min(2, room)));
+      if (top.length) groups.push(hsGroup("Top Results", top.map((item) => libraryRow(item, term))));
+      if (people.length) groups.push(hsGroup("People", people.map((item) => libraryRow(item, term))));
+      if (episodes.length) groups.push(hsGroup("Episodes", episodes.map((item) => libraryRow(item, term))));
+      const requests = Array.isArray(data.seerr) ? data.seerr.slice(0, MENU_SEERR_ROWS) : [];
+      if (requests.length) groups.push(hsGroup(REQUEST_CATEGORY.label, requests.map((item) => seerrRow(item, term))));
+      if (!groups.length) {
+        groups.push(
+          el("div", { class: "hera-hs__note", role: "status" }, data.seerr === "loading" ? "Searching…" : `No results for “${term}”`),
+        );
+      }
+    }
+    const foot = term
+      ? el("div", { class: "hera-hs__group hera-hs__group--foot" }, hsPlainRow("all", "search", `See all results for “${term}”`, () => goFull(term), { trailing: "chevron_right" }))
+      : null;
+    // The groups scroll; the "See all results" row stays in view under them.
+    hs.menu.replaceChildren(...[groups.length ? el("div", { class: "hera-hs__scroll" }, groups) : null, foot].filter(Boolean));
+    const shown = groups.length > 0 || Boolean(foot);
+    hs.menu.hidden = !shown;
+    hs.input.setAttribute("aria-expanded", shown ? "true" : "false");
+    const again = keep ? hs.rows.findIndex((row) => row.key === keep) : -1;
+    setActive(again, { scroll: false });
+  };
+
+  const headerHooks = {
+    seerr: () => Boolean(hs?.seerr),
+    onStart(data) {
+      hs.data = data;
+      hs.menu.setAttribute("aria-busy", data.lib ? "false" : "true");
+    },
+    onLibrary(data) {
+      if (hs.data !== data) return;
+      hs.menu.setAttribute("aria-busy", "false");
+      paintMenu();
+    },
+    onSeerr(data) {
+      if (hs.data === data) paintMenu();
+    },
+    onError() {
+      hs.menu.setAttribute("aria-busy", "false");
+      hs.menu.replaceChildren(el("div", { class: "hera-hs__note", role: "status" }, "Search isn't available right now."));
+      hs.menu.hidden = false;
+    },
+  };
+
+  // Every key searches at once.
+  const onHeaderInput = () => {
+    const text = hs.input.value.trim();
+    hs.clear.hidden = !hs.input.value;
+    hs.term = text;
+    if (text.length < MIN_LIBRARY) {
+      hs.runner.cancel();
+      hs.data = null;
+      hs.menu.setAttribute("aria-busy", "false");
+      paintMenu();
+    } else hs.runner.run(text);
+  };
+
+  const onHeaderKeydown = (event) => {
+    if (event.isComposing) return;
+    const last = hs.rows.length - 1;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeHeader();
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (last >= 0) setActive(hs.active >= last ? 0 : hs.active + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (last >= 0) setActive(hs.active <= 0 ? (hs.active === 0 ? -1 : last) : hs.active - 1);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (hs.active >= 0) hs.rows[hs.active].onActivate();
+      else if (hs.term) goFull(hs.term);
+    } else if (event.key === "Tab") {
+      closeHeader({ restore: false });
+    }
+  };
+
+  const buildHeader = () => {
+    const input = el("input", {
+      class: "hera-hs__input",
+      type: "search",
+      role: "combobox",
+      placeholder: "Search",
+      "aria-label": "Search",
+      "aria-autocomplete": "list",
+      "aria-controls": "hera-hs-menu",
+      "aria-expanded": "false",
+      autocomplete: "off",
+      autocapitalize: "off",
+      spellcheck: "false",
+      enterkeyhint: "search",
+    });
+    const clear = el("button", { type: "button", class: "hera-hs__clear", hidden: true, tabindex: "-1", "aria-label": "Clear search", onmousedown: (event) => event.preventDefault() }, icon("close"));
+    const field = el("div", { class: "hera-hs__field" }, [icon("search"), input, clear]);
+    const menu = el("div", { class: "hera-hs__menu", id: "hera-hs-menu", role: "listbox", "aria-label": "Suggestions", hidden: true, "aria-busy": "false" });
+    const root = el("div", { class: "hera-hs", "data-hera-hs": "", role: "search", hidden: true }, [field, menu]);
+    document.body.append(root);
+    hs = {
+      root,
+      field,
+      input,
+      clear,
+      menu,
+      button: null,
+      open: false,
+      term: "",
+      data: null,
+      rows: [],
+      active: -1,
+      seerr: false,
+      animation: null,
+      runner: createRunner(headerHooks),
+    };
+    input.addEventListener("input", onHeaderInput);
+    input.addEventListener("keydown", onHeaderKeydown);
+    clear.addEventListener("click", () => {
+      input.value = "";
+      onHeaderInput();
+      input.focus();
+    });
+    root.addEventListener("focusout", (event) => {
+      const next = event.relatedTarget;
+      if (hs.open && next && !root.contains(next) && next !== hs.button) closeHeader({ restore: false });
+    });
+    kit.integrations().then((ints) => {
+      if (hs) hs.seerr = Boolean(ints.seerr);
+    });
+  };
+
+  const onAway = (event) => {
+    if (!hs?.open) return;
+    if (hs.root.contains(event.target) || hs.button?.contains(event.target)) return;
+    closeHeader({ restore: false });
+  };
+  const onResize = () => {
+    if (hs?.open) placeHeader();
+  };
+  let toneFrame = 0;
+  const onScroll = () => {
+    if (!hs?.open || toneFrame) return;
+    toneFrame = requestAnimationFrame(() => {
+      toneFrame = 0;
+      toneHeader();
+    });
+  };
+
+  const openHeader = (button) => {
+    if (!hs) buildHeader();
+    if (hs.open) return;
+    hs.button = button;
+    hs.open = true;
+    placeHeader();
+    toneHeader();
+    document.documentElement.classList.add("hera-search-open");
+    button.setAttribute("aria-expanded", "true");
+    hs.root.hidden = false;
+    hs.input.value = "";
+    hs.term = "";
+    hs.clear.hidden = true;
+    paintMenu();
+    // The field grows out of the button: a button-sized window at the button, widening to the field.
+    hs.animation?.cancel();
+    if (!kit.reduceMotion.matches) {
+      const from = button.getBoundingClientRect();
+      const to = hs.field.getBoundingClientRect();
+      hs.animation = hs.field.animate(
+        [
+          { transform: `translateX(${from.right - to.right}px)`, clipPath: `inset(0 0 0 calc(100% - ${from.width}px) round 999px)` },
+          { transform: "translateX(0)", clipPath: "inset(0 0 0 0 round 999px)" },
+        ],
+        { duration: 340, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+      );
+    }
+    hs.input.focus({ preventScroll: true });
+    document.addEventListener("pointerdown", onAway, true);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
+  };
+
+  const closeHeader = ({ restore = true } = {}) => {
+    if (!hs?.open) return;
+    hs.open = false;
+    hs.runner.cancel();
+    hs.data = null;
+    document.removeEventListener("pointerdown", onAway, true);
+    window.removeEventListener("resize", onResize);
+    window.removeEventListener("scroll", onScroll);
+    document.documentElement.classList.remove("hera-search-open");
+    hs.button?.setAttribute("aria-expanded", "false");
+    const finish = () => {
+      if (!hs || hs.open) return;
+      hs.root.hidden = true;
+      hs.menu.replaceChildren();
+      hs.menu.hidden = true;
+      hs.rows = [];
+    };
+    hs.menu.hidden = true;
+    hs.animation?.cancel();
+    if (kit.reduceMotion.matches) finish();
+    else {
+      const to = hs.field.getBoundingClientRect();
+      const from = hs.button.getBoundingClientRect();
+      hs.animation = hs.field.animate(
+        [
+          { transform: "translateX(0)", clipPath: "inset(0 0 0 0 round 999px)" },
+          { transform: `translateX(${from.right - to.right}px)`, clipPath: `inset(0 0 0 calc(100% - ${from.width}px) round 999px)` },
+        ],
+        { duration: 200, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" },
+      );
+      // A timer, not onfinish: a throttled background tab never finishes its animations.
+      setTimeout(() => {
+        if (hs && !hs.open) {
+          hs.animation?.cancel();
+          finish();
+        }
+      }, 210);
+    }
+    if (restore) hs.button?.focus({ preventScroll: true });
+  };
+
+  // Capture phase, so Jellyfin's own link never navigates. Where there is no capsule to replace
+  // (phone widths, where Jellyfin keeps its own layout) or on a TV, the button behaves as before.
+  const onHeaderClick = (event) => {
+    const link = event.target.closest?.(BUTTON);
+    if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (!kit.userId() || kit.isTv()) return;
+    if (window.location.hash.startsWith("#/search")) {
+      // Already on the search page: the button takes you to its field.
+      if (!ui) return;
+      event.preventDefault();
+      event.stopPropagation();
+      ui.input.focus({ preventScroll: true });
+      ui.input.select();
+      return;
+    }
+    if (document.documentElement.classList.contains("layout-mobile")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (hs?.open) closeHeader();
+    else openHeader(link);
+  };
+  document.addEventListener("click", onHeaderClick, true);
+
+  const onHash = () => closeHeader({ restore: false });
+  window.addEventListener("hashchange", onHash);
+
   HT.register({
     name: "search",
     async onView(page, { params }) {
       if (!kit.userId()) return;
-      if (page.id === "searchPage") await mount(page, params);
-      else unmount();
+      if (page.id === "searchPage") {
+        closeHeader({ restore: false });
+        await mount(page, params);
+      } else unmount();
     },
     teardown() {
+      closeHeader({ restore: false });
+      hs?.root.remove();
+      hs = null;
       unmount();
+      document.removeEventListener("click", onHeaderClick, true);
+      window.removeEventListener("hashchange", onHash);
+      document.documentElement.classList.remove("hera-search-open");
     },
   });
 })();

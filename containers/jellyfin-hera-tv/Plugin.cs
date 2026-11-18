@@ -66,6 +66,18 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Gets or sets a value indicating whether the Your Requests row shows on the home page.</summary>
     public bool RequestsRowEnabled { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether title pages list the streaming services that carry the title.</summary>
+    public bool ElsewhereEnabled { get; set; } = true;
+
+    /// <summary>Gets or sets the ISO 3166-1 country whose streaming services "Also on" lists.</summary>
+    public string WatchRegion { get; set; } = "GB";
+
+    /// <summary>Gets or sets a value indicating whether title pages show IMDb and Rotten Tomatoes scores.</summary>
+    public bool RatingsEnabled { get; set; } = true;
+
+    /// <summary>Gets or sets a value indicating whether 4K, HDR, Dolby Vision and Atmos badges show.</summary>
+    public bool QualityBadgesEnabled { get; set; } = true;
+
     /// <summary>Gets or sets a value indicating whether the Trending to Request row shows on the home page.</summary>
     public bool TrendingRowEnabled { get; set; } = true;
 

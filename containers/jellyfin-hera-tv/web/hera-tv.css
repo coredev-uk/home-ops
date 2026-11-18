@@ -42,7 +42,6 @@
 .hera-card__info,
 .hera-episode__play,
 .listItemImageButton,
-#jellyfin-enhanced-panel,
 html.hera-home:not(.hera-discover-on):not(.hera-scrolled) .MuiAppBar-root,
 html.hera-home:not(.hera-discover-on):not(.hera-scrolled) .skinHeader,
 html.hera-art-top:not(.hera-scrolled) .MuiAppBar-root,
@@ -197,11 +196,12 @@ body,
   background: transparent !important;
 }
 
-/* Page backdrops sit behind everything as ambient light at the top of the page, dimmed and
- * fading into the ground. The scrim must sit above the image layers, which Jellyfin positions
+/* Page backdrops (Jellyfin's "Backdrops" setting) sit behind everything as ambient light: the art
+ * stays recognisable across the top of the page, dimmed enough for type to hold 4.5:1 over it, and
+ * dissolves into the ground below. The scrim sits above the image layers, which Jellyfin positions
  * with z-index 1 while it crossfades between them. */
 .backdropContainer .backdropImage {
-  filter: saturate(110%);
+  filter: saturate(115%);
 }
 .backdropContainer::after {
   content: "";
@@ -209,16 +209,20 @@ body,
   z-index: 2;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.82) 38%, var(--hera-bg) 72%),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, transparent 60%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.58) 34%, rgba(0, 0, 0, 0.86) 66%, var(--hera-bg) 94%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.42) 0%, transparent 55%);
 }
-/* Light ground: the backdrop is a faint wash that dissolves into white, not a black veil. */
+/* Light ground: a pale wash of the same art, never a black veil, dissolving into white. */
+:root[data-hera-scheme="light"] .backdropContainer .backdropImage {
+  filter: saturate(150%) brightness(1.35);
+}
 :root[data-hera-scheme="light"] .backdropContainer::after {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--hera-bg) 80%, transparent) 0%,
-    color-mix(in srgb, var(--hera-bg) 92%, transparent) 38%,
-    var(--hera-bg) 72%
+    color-mix(in srgb, var(--hera-bg) 58%, transparent) 0%,
+    color-mix(in srgb, var(--hera-bg) 74%, transparent) 36%,
+    color-mix(in srgb, var(--hera-bg) 92%, transparent) 68%,
+    var(--hera-bg) 94%
   );
 }
 
@@ -372,6 +376,7 @@ html.hera-scrolled.hera-art-top .MuiAppBar-root {
   top: 50%;
   transform: translate(-50%, -50%);
   display: flex;
+  align-items: center;
   gap: 2px;
   padding: 4px;
   border-radius: 999px;
@@ -400,9 +405,17 @@ html.hera-scrolled.hera-art-top .MuiAppBar-root {
 .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a .MuiButton-startIcon {
   display: none !important;
 }
+/* Below 1440px the other tabs tighten to 14px (hera-discover.css); these two are drawn by ::after. */
+@media (max-width: 1440px) {
+  .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a:first-child::after,
+  .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a[href*="tab=1"]::after {
+    font-size: 14px;
+  }
+}
 
 .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiStack-root > a {
   min-height: 36px;
+  line-height: 24px;
   min-width: 0 !important;
   padding: 6px 16px !important;
   border-radius: 999px !important;
@@ -428,6 +441,11 @@ html[data-hera-view="indexPage"] .MuiAppBar-root > .MuiToolbar-root:first-child 
   transform: scale(0.97);
 }
 
+.MuiAppBar-root > .MuiToolbar-root:first-child > .MuiBox-root {
+  display: flex !important;
+  align-items: center;
+  height: 44px;
+}
 .MuiAppBar-root > .MuiToolbar-root:first-child > .MuiBox-root:not(:last-child) {
   grid-column: 3;
   justify-self: end;
@@ -439,8 +457,8 @@ html[data-hera-view="indexPage"] .MuiAppBar-root > .MuiToolbar-root:first-child 
 
 .MuiAppBar-root .MuiIconButton-root,
 .MuiAppBar-root .headerButton {
-  width: 40px;
-  height: 40px;
+  width: 40px !important;
+  height: 40px !important;
   margin: 0 3px;
   border-radius: 999px !important;
   color: var(--hera-label) !important;
@@ -878,19 +896,26 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
     linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 36%, transparent 62%),
     linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 42%);
 }
-/* Light mode: the text stays on the artwork's own dark scrim, so the banner gives the ribbon
- * a little more of its foot and ends in a short soft edge, not a long fade through grey. */
+/* Light mode: the artwork is a contained sheet, as in the Apple TV app on a Mac or iPad: it keeps
+ * its own dark scrim under the text and ends in a clean rounded edge over the white page, not a
+ * long fade through grey. The ribbon gets a little more foot so nothing sits on the edge. */
 :root[data-hera-scheme="light"] .itemDetailPage {
-  --hera-detail-foot: 56px;
+  --hera-detail-foot: 40px;
+}
+:root[data-hera-scheme="light"] .itemDetailPage:not(.hera-no-backdrop) .detailPagePrimaryContent {
+  padding-top: 28px;
 }
 :root[data-hera-scheme="light"] .itemBackdrop {
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 64px), transparent 100%);
-  mask-image: linear-gradient(180deg, #000 calc(100% - 64px), transparent 100%);
+  -webkit-mask-image: none;
+  mask-image: none;
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 16px 32px -24px rgba(0, 0, 0, 0.3);
 }
 :root[data-hera-scheme="light"] .itemBackdrop::after {
+  border-radius: inherit;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 36%, transparent 62%),
-    linear-gradient(0deg, transparent 0, rgba(0, 0, 0, 0.74) 130px, transparent 46%);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.36) 36%, transparent 62%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.4) 28%, transparent 56%);
 }
 
 /* Logo artwork sits in the flow, over the banner's lower left, then the ribbon follows it. */
@@ -925,6 +950,14 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
 }
 .itemDetailPage.hera-no-backdrop .itemBackdrop {
   min-height: 0 !important;
+  background: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.itemDetailPage.hera-no-backdrop .itemBackdrop::after {
+  display: none;
 }
 .itemDetailPage.hera-no-backdrop .detailPagePrimaryContainer > .detailImageContainer {
   display: block !important;
@@ -1201,41 +1234,125 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
   color: var(--hera-label);
 }
 .itemGenres,
-.itemTags,
-.itemExternalLinks,
-.itemDetailsGroup {
-  color: var(--hera-label-3);
-  font-size: 13px;
+.itemTags {
+  color: var(--hera-label-2);
+  font-size: 14px;
 }
 .itemTags .button-link,
-.itemExternalLinks .button-link,
-.itemDetailsGroup .button-link {
+.itemExternalLinks .button-link {
   color: var(--hera-label-2) !important;
   font-weight: 500;
 }
+/* External links are quiet pills, not a bold run of underlined words. */
+.itemExternalLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0 !important;
+  font-size: 0 !important; /* hides the commas Jellyfin sets between links */
+}
+.itemExternalLinks .button-link {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border-radius: 999px;
+  background: var(--hera-fill);
+  font-size: 13px;
+  text-decoration: none;
+  transition: background-color var(--hera-fast) var(--hera-ease), color var(--hera-fast) var(--hera-ease);
+}
+.itemExternalLinks .button-link:hover {
+  background: var(--hera-fill-strong);
+  color: var(--hera-label) !important;
+}
+
+/* Tracks and credits are inset grouped lists, as in Settings: one label column, one value column,
+ * hairline separators, so the rows line up whatever they hold. */
+.detailPagePrimaryContent .trackSelections,
+.detailPagePrimaryContent .itemDetailsGroup {
+  display: flex;
+  flex-direction: column;
+  max-width: 720px;
+  margin: 0 0 20px;
+  border-radius: var(--hera-r-wide);
+  background: var(--hera-surface);
+  overflow: hidden;
+}
+.itemDetailsGroup > div:empty,
+.itemDetailsGroup:not(:has(.detailsGroupItem)),
+.trackSelections:not(:has(.selectContainer:not(.hide))) {
+  display: none !important;
+}
+.trackSelections .selectContainer:not(.hide),
+.detailsGroupItem {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: none;
+  min-height: 46px;
+  margin: 0 !important;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+.detailsGroupItem {
+  align-items: start;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  line-height: 22px;
+}
+.trackSelections .selectContainer:not(.hide) ~ .selectContainer:not(.hide),
+.itemDetailsGroup > div:not(:empty) ~ div:not(:empty) .detailsGroupItem {
+  box-shadow: inset 0 1px 0 var(--hera-separator);
+}
+.trackSelections .selectLabel,
 .detailsGroupItem .label {
+  margin: 0 !important;
+  padding: 0 !important;
   color: var(--hera-label-3);
+  font-size: 14px;
   font-weight: 500;
 }
 .detailsGroupItem .content,
 .detailsGroupItem .content a {
-  color: var(--hera-label-2);
-}
-
-/* Track pickers read as plain rows, not form fields. */
-.trackSelections .selectLabel {
-  color: var(--hera-label-3);
-  font-size: 13px;
+  color: var(--hera-label);
+  font-size: 14px;
   font-weight: 500;
 }
 .trackSelections .detailTrackSelect,
 .trackSelections .emby-select-withcolor {
+  width: 100%;
+  height: 44px;
+  padding: 0 28px 0 0 !important;
   background: transparent !important;
   border: 0 !important;
-  color: var(--hera-label-2) !important;
-  font-size: 13px !important;
+  box-shadow: none !important;
+  color: var(--hera-label) !important;
+  -webkit-text-fill-color: var(--hera-label);
+  font-size: 14px !important;
   font-weight: 500;
-  padding-left: 0 !important;
+  text-overflow: ellipsis;
+}
+.trackSelections .selectArrowContainer {
+  position: absolute !important;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  margin: 0 !important;
+  color: var(--hera-label-3);
+  pointer-events: none;
+}
+.trackSelections .selectArrowContainer .selectArrow {
+  font-size: 22px;
+}
+.trackSelections .detailTrackSelect[disabled] ~ .selectArrowContainer {
+  display: none;
 }
 
 /* Cast and crew: round portraits, names below, centred, as tvOS does. */
@@ -1262,6 +1379,16 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
 }
 .listItem:hover {
   background: var(--hera-hover);
+}
+/* The row's own padding is for the hover plate; the still lines up with the page edge. */
+.itemDetailPage .listItem:not(.MuiIconButton-root) {
+  margin-left: -10px;
+  margin-right: -10px;
+}
+/* A row's action buttons are MUI icon buttons, painted white. */
+.listItem .MuiIconButton-root:not(.hera-keep-colour),
+.MuiIconButton-root.listItemButton {
+  color: var(--hera-label-2);
 }
 .listItemImage,
 .listItemImage-large {
@@ -1439,6 +1566,24 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
 .formDialog.dialog-fullscreen {
   border-radius: 0 !important;
 }
+/* Legacy emby-* dialogs (library editor, folder picker, metadata editor, image picker): header
+ * and footer are plain rows on the sheet, not the stock dark bars, which stay dark in light mode. */
+.dialog .formDialogHeader,
+.dialog .formDialogFooter {
+  background: transparent !important;
+  border-color: var(--hera-separator);
+}
+.dialog .formDialogHeader {
+  border-bottom: 1px solid var(--hera-separator);
+}
+.dialog .formDialogFooter {
+  border-top: 1px solid var(--hera-separator);
+}
+.dialog .formDialogHeaderTitle {
+  color: var(--hera-label);
+  font: 700 20px/1.25 var(--hera-font-display);
+  letter-spacing: -0.02em;
+}
 .MuiMenuItem-root,
 .actionSheetMenuItem,
 .listItem-button {
@@ -1449,6 +1594,22 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
 .MuiMenuItem-root:hover,
 .actionSheetMenuItem:hover {
   background: var(--hera-hover) !important;
+}
+.MuiMenuItem-root.Mui-selected,
+.MuiMenuItem-root.Mui-selected:hover {
+  background: var(--hera-select) !important;
+  color: var(--hera-on-select) !important;
+}
+/* Menu icons and chevrons take the scheme's secondary label, not MUI's fixed white. */
+.MuiMenu-paper .MuiListItemIcon-root,
+.MuiMenu-paper .MuiSvgIcon-root,
+.MuiPopover-paper .MuiListItemIcon-root,
+.MuiPopover-paper .MuiSvgIcon-root {
+  color: var(--hera-label-2);
+}
+.MuiMenuItem-root.Mui-selected .MuiListItemIcon-root,
+.MuiMenuItem-root.Mui-selected .MuiSvgIcon-root {
+  color: inherit;
 }
 .MuiDivider-root {
   border-color: var(--hera-separator) !important;
@@ -1550,18 +1711,19 @@ html[data-hera-view="itemDetailPage"] .backdropContainer {
     linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 50%);
   pointer-events: none;
 }
-/* Light mode: the key art keeps its dark scrim under the text and dissolves into the white page
- * over a short edge; the first shelf starts below the art rather than over it. */
+/* Light mode: the key art is a contained sheet with its own dark scrim under the text and a clean
+ * rounded edge over the white page; the first shelf starts below it rather than over its foot. */
 :root[data-hera-scheme="light"] .hera-hero {
   --hera-hero-overlap: 0px;
-  --hera-hero-foot: 90px;
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 110px), transparent 100%);
-  mask-image: linear-gradient(180deg, #000 calc(100% - 110px), transparent 100%);
+  --hera-hero-foot: 48px;
+  margin-bottom: 24px;
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 16px 32px -24px rgba(0, 0, 0, 0.3);
 }
 :root[data-hera-scheme="light"] .hera-hero__slide::after {
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.3) 36%, transparent 60%),
-    linear-gradient(0deg, transparent 0, rgba(0, 0, 0, 0.6) 150px, transparent 52%);
+    linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.42) 26%, transparent 54%);
 }
 .hera-hero__content {
   position: absolute;
@@ -2485,6 +2647,14 @@ html.hera-home #homeTab {
 .layout-tv .itemBackdrop {
   margin-top: -88px;
 }
+/* The TV home page pads its top further than a detail page (134px, not 84px): drop the padding so
+ * the hero fills to the top edge instead of starting below a black band. */
+html.layout-tv.hera-home #indexPage {
+  padding-top: 0 !important;
+}
+html.layout-tv.hera-home .hera-hero {
+  margin-top: 0;
+}
 .layout-tv .sectionTitle-cards {
   font-size: 28px !important;
 }
@@ -2736,77 +2906,6 @@ progress[aria-valuenow]:before,
 .userPreferencesPage a.listItem-border .listItemIcon-transparent {
   color: var(--hera-label);
 }
-/* Jellyfin Enhanced's settings panel: glass sheet, white accent, no emoji. Most of its blue is
- * inline, so the rules match the attribute. */
-.je-emoji {
-  display: none !important;
-}
-#jellyfin-enhanced-panel {
-  --primary-accent-color: var(--hera-select);
-  background: var(--hera-surface-2) !important;
-  backdrop-filter: blur(40px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
-  border: 0 !important;
-  border-radius: 20px !important;
-  box-shadow: inset 0 1px 0 var(--hera-glass-edge), var(--hera-shadow-lift) !important;
-  font-family: var(--hera-font) !important;
-}
-#jellyfin-enhanced-panel .je-panel-body {
-  background: none !important;
-}
-#jellyfin-enhanced-panel .panel-header {
-  background: none !important;
-  border-bottom-color: var(--hera-separator) !important;
-}
-#jellyfin-enhanced-panel #jePanelTitle {
-  background: none !important;
-  -webkit-text-fill-color: var(--hera-label) !important;
-  color: var(--hera-label) !important;
-  font-family: var(--hera-font-display);
-  letter-spacing: -0.02em;
-}
-#jellyfin-enhanced-panel [style*="00a4dc" i],
-#jellyfin-enhanced-panel h3 {
-  color: var(--hera-label) !important;
-  -webkit-text-fill-color: var(--hera-label) !important;
-}
-#jellyfin-enhanced-panel [style*="accent-color"] {
-  accent-color: var(--hera-select) !important;
-}
-#jellyfin-enhanced-panel [style*="border-left"] {
-  border-left-color: var(--hera-separator) !important;
-}
-#jellyfin-enhanced-panel [style*="background:rgba(255,255,255,0.1)" i],
-#jellyfin-enhanced-panel [style*="background: rgba(255,255,255,0.1)" i] {
-  background: var(--hera-fill) !important;
-  border-radius: 12px !important;
-}
-#jellyfin-enhanced-panel:focus,
-#jellyfin-enhanced-panel:focus-visible {
-  outline: none !important;
-}
-#jellyfin-enhanced-panel .je-panel-nav .tab-button {
-  border-radius: 999px;
-}
-#jellyfin-enhanced-panel .je-panel-nav .tab-button.active {
-  background: var(--hera-select) !important;
-  color: var(--hera-on-select) !important;
-}
-#jellyfin-enhanced-panel .je-panel-nav .tab-button.active::before {
-  content: none !important;
-}
-/* The selected preset's blue border is inline and important: a white ring is drawn over it. */
-#jellyfin-enhanced-panel .preset-box[style*="rgb(0, 164, 220)"] {
-  position: relative;
-}
-#jellyfin-enhanced-panel .preset-box[style*="rgb(0, 164, 220)"]::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border: 2px solid var(--hera-focus);
-  border-radius: 8px;
-  pointer-events: none;
-}
 /* Jellyfin 12's own settings fields are MUI "filled" inputs: same rounded fill, no underline. */
 .MuiFilledInput-root::before,
 .MuiFilledInput-root::after {
@@ -2875,27 +2974,6 @@ progress[aria-valuenow]:before,
   outline: none !important;
   transform: scale(1.1);
 }
-#jellyfin-enhanced-panel .je-panel-search,
-#jellyfin-enhanced-panel .je-panel-search:focus {
-  border-radius: 999px;
-  border-color: transparent;
-  background: var(--hera-fill);
-}
-#jellyfin-enhanced-panel .je-panel-search:focus {
-  border-color: var(--hera-focus);
-}
-#jellyfin-enhanced-panel .je-panel-search-result:hover,
-#jellyfin-enhanced-panel .je-panel-search-result:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--hera-focus);
-}
-#jellyfin-enhanced-panel .je-panel-size-btn[aria-pressed="true"] {
-  background: var(--hera-select);
-  color: var(--hera-on-select);
-}
-#jellyfin-enhanced-panel kbd,
-#jellyfin-enhanced-panel .shortcut-key {
-  border-radius: 6px;
-}
 
 /* A collection's own shelf already sits on the page edge. */
 .collectionItems .sectionTitleContainer.padded-left {
@@ -2928,12 +3006,6 @@ progress[aria-valuenow]:before,
   background-color: var(--hera-fill-strong) !important;
   background-size: 54% !important;
   filter: none;
-}
-
-/* Jellyfin Enhanced's header launcher opens an empty panel once its page features are off. */
-#je-header-launcher,
-#je-header-launcher-panel {
-  display: none !important;
 }
 
 /* Without a logo there is more text to lift: the banner gives up more of its foot. */

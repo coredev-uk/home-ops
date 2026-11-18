@@ -1061,8 +1061,8 @@
       stopSeriesWatch();
       removeMissingControls();
       unmountView();
-      desktopTab?.remove();
-      tvTab?.remove();
+      // Every copy, not just this instance's: a reloaded module must not leave a second tab.
+      document.querySelectorAll(".hera-discover-tab").forEach((node) => node.remove());
       document.querySelectorAll(".hera-sheet").forEach((node) => node.remove());
       cleanups.splice(0).forEach((fn) => fn());
       delete HT.discover;

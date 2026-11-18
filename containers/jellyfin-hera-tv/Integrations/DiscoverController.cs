@@ -39,13 +39,7 @@ public class DiscoverController(UpstreamClient upstream, LibraryLookup library, 
             seerrLinked = settings.SeerrEnabled && user is not null && settings.SeerrUserFor(user.Username) is not null,
             seerrUrl = settings.SeerrPublicUrl,
             maintainerr = settings.MaintainerrEnabled,
-            features = new
-            {
-                discover = config.DiscoverEnabled,
-                leavingSoon = config.LeavingSoonEnabled,
-                requests = config.RequestsRowEnabled,
-                trending = config.TrendingRowEnabled,
-            },
+            features = IntegrationSettings.Features(config),
         });
     }
 

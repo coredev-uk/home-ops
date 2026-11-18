@@ -54,6 +54,13 @@ const SWITCHES = [
   ["trending", "trendingRowEnabled", "trending_up", "Trending to Request", "A home row of what's trending on Seerr, ready to request."],
 ];
 
+// What film and series pages add. Ratings and "Also on" come from Seerr; quality badges need nothing.
+const TITLE_SWITCHES = [
+  ["elsewhere", "elsewhereEnabled", "connected_tv", "Also on", "The streaming services that carry a title in the region below, from Seerr."],
+  ["ratings", "ratingsEnabled", "grade", "Ratings", "IMDb and Rotten Tomatoes scores beside the year and runtime, from Seerr."],
+  ["qualityBadges", "qualityBadgesEnabled", "high_quality", "Quality badges", "4K, HDR, Dolby Vision and Atmos on title pages and on posters."],
+];
+
 export default function (view) {
   const root = view.querySelector("#heraCfg");
   let server = null;
@@ -371,6 +378,28 @@ export default function (view) {
     );
   };
 
+  const titleSection = () => {
+    const rows = TITLE_SWITCHES.map(([key, , iconName, label, description]) => {
+      const node = switchRow(iconName, label, description, server.features[key]);
+      refs.switches[key] = node;
+      return node;
+    });
+    const region = el("input", { id: "heraRegion", class: "hera-set-input hera-cfg-number", type: "text", maxlength: "2", value: server.elsewhere.region, spellcheck: "false", autocomplete: "off" });
+    region.addEventListener("input", markDirty);
+    refs.region = region;
+    rows.push(
+      el("div", { class: "hera-set-row hera-set-row--static" }, [
+        el("span", { class: "hera-set-row__icon" }, icon("public")),
+        el("label", { class: "hera-set-row__text", for: "heraRegion" }, [
+          el("span", { class: "hera-set-row__label", text: "Streaming region" }),
+          el("span", { class: "hera-set-row__desc", text: "A two-letter country code, such as GB or US." }),
+        ]),
+        region,
+      ]),
+    );
+    return group("Title pages", el("div", { class: "hera-set-list" }, rows), foot("These apply to everyone on this server."));
+  };
+
   // ---------- save bar ------------------------------------------------------------------------
 
   const bar = el("div", { class: "hera-cfg-bar", role: "region", "aria-label": "Save changes" });
@@ -439,6 +468,7 @@ export default function (view) {
         group("Maintainerr", maintainerrSection()),
         homeSection(),
         rowsSection(),
+        titleSection(),
         bar,
       ].filter(Boolean),
     );
@@ -481,6 +511,10 @@ export default function (view) {
     for (const [key, bodyKey] of SWITCHES) {
       body[bodyKey] = refs.switches[key].getAttribute("aria-checked") === "true";
     }
+    for (const [key, bodyKey] of TITLE_SWITCHES) {
+      body[bodyKey] = refs.switches[key].getAttribute("aria-checked") === "true";
+    }
+    body.watchRegion = refs.region.value.trim();
     const open = (input) => !input.readOnly;
     if (open(refs.seerrUrl)) body.seerrUrl = refs.seerrUrl.value.trim();
     if (open(refs.seerrPublicUrl)) body.seerrPublicUrl = refs.seerrPublicUrl.value.trim();

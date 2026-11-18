@@ -39,6 +39,12 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
             }
         }
 
+        var region = body.WatchRegion?.Trim();
+        if (!string.IsNullOrEmpty(region) && (region.Length != 2 || !region.All(char.IsAsciiLetter)))
+        {
+            return BadRequest(new { message = "The streaming region must be a two-letter country code, such as GB." });
+        }
+
         if (seerrUrl is not null)
         {
             config.SeerrUrl = Clean(seerrUrl);
@@ -79,6 +85,13 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
         config.LeavingSoonEnabled = body.LeavingSoonEnabled ?? config.LeavingSoonEnabled;
         config.RequestsRowEnabled = body.RequestsRowEnabled ?? config.RequestsRowEnabled;
         config.TrendingRowEnabled = body.TrendingRowEnabled ?? config.TrendingRowEnabled;
+        config.ElsewhereEnabled = body.ElsewhereEnabled ?? config.ElsewhereEnabled;
+        config.RatingsEnabled = body.RatingsEnabled ?? config.RatingsEnabled;
+        config.QualityBadgesEnabled = body.QualityBadgesEnabled ?? config.QualityBadgesEnabled;
+        if (!string.IsNullOrEmpty(region))
+        {
+            config.WatchRegion = region.ToUpperInvariant();
+        }
 
         plugin.SaveConfiguration();
         upstream.ClearCache();
@@ -187,13 +200,8 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
                 count = Math.Clamp(config.HeroItemCount, 1, 20),
                 intervalSeconds = Math.Clamp(config.HeroIntervalSeconds, 4, 60),
             },
-            features = new
-            {
-                discover = config.DiscoverEnabled,
-                leavingSoon = config.LeavingSoonEnabled,
-                requests = config.RequestsRowEnabled,
-                trending = config.TrendingRowEnabled,
-            },
+            features = IntegrationSettings.Features(config),
+            elsewhere = new { region = string.IsNullOrWhiteSpace(config.WatchRegion) ? "GB" : config.WatchRegion.ToUpperInvariant() },
         };
     }
 
@@ -292,5 +300,13 @@ public class SettingsController(UpstreamClient upstream) : ControllerBase
         public bool? RequestsRowEnabled { get; set; }
 
         public bool? TrendingRowEnabled { get; set; }
+
+        public bool? ElsewhereEnabled { get; set; }
+
+        public bool? RatingsEnabled { get; set; }
+
+        public bool? QualityBadgesEnabled { get; set; }
+
+        public string? WatchRegion { get; set; }
     }
 }

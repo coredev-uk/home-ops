@@ -634,11 +634,22 @@
     }
   }
 
+  // Favourites is a second tab of the same page: the hero's dark header and the hidden page backdrop
+  // belong to the home tab alone, so the class follows which tab is showing.
+  const heroTabObserver = { observer: null };
+  const watchHomeTab = (tab) => {
+    heroTabObserver.observer?.disconnect();
+    const sync = () => root.classList.toggle("hera-home", tab.classList.contains("is-active"));
+    heroTabObserver.observer = new MutationObserver(sync);
+    heroTabObserver.observer.observe(tab, { attributes: true, attributeFilter: ["class"] });
+    sync();
+  };
+
   const mountHero = async (page) => {
     const tab = page.querySelector("#homeTab");
     const sections = tab?.querySelector(".homeSectionsContainer");
     if (!tab || !sections) return;
-    root.classList.add("hera-home");
+    watchHomeTab(tab);
     if (state.hero && state.heroUser !== userId()) {
       state.hero.destroy();
       state.hero = null;
@@ -798,12 +809,23 @@
 
   // ---------- detail pages --------------------------------------------------------------
 
-  // The banner needs artwork even when the user's "details banner" setting is off: use the
-  // item's own backdrop, else its series' or parent's.
+  // The banner needs artwork even when the user's "details banner" setting is off.
+  // Jellyfin resolves an episode's or season's backdrop to the nearest ancestor that has one, and
+  // a season's is often the studio's key art with the title baked in. Under Hera's own logo that
+  // prints the title twice, so episodes and seasons take their series' backdrop instead, and fall
+  // back to their own only when the series has none.
+  const bannerArt = async (item) => {
+    const series = item.SeriesId && (item.Type === "Episode" || item.Type === "Season") ? await api().getItem(userId(), item.SeriesId) : null;
+    if (series?.BackdropImageTags?.length) return { id: series.Id, tag: series.BackdropImageTags[0] };
+    if (item.BackdropImageTags?.length) return { id: item.Id, tag: item.BackdropImageTags[0] };
+    if (item.ParentBackdropImageTags?.length) return { id: item.ParentBackdropItemId, tag: item.ParentBackdropImageTags[0] };
+    return null;
+  };
+
   const fillBanner = async (page, itemId) => {
     const banner = page.querySelector("#itemBackdrop");
     if (!banner || banner.dataset.heraFilled === itemId) return;
-    // Jellyfin drew its own banner (the user's setting is on): leave it.
+    // Jellyfin drew its own banner (mobile layout): leave it.
     if (!banner.dataset.heraFilled && /url\(/.test(getComputedStyle(banner).backgroundImage)) {
       page.classList.remove("hera-no-backdrop");
       root.classList.add("hera-art-top");
@@ -812,26 +834,19 @@
     const item = await api().getItem(userId(), itemId);
     if (itemIdFromHash() !== itemId) return;
     page.classList.toggle("hera-person", item?.Type === "Person");
-    let id = null;
-    let tag = null;
-    if (item?.BackdropImageTags?.length) {
-      id = item.Id;
-      tag = item.BackdropImageTags[0];
-    } else if (item?.ParentBackdropImageTags?.length) {
-      id = item.ParentBackdropItemId;
-      tag = item.ParentBackdropImageTags[0];
-    }
+    const art = item ? await bannerArt(item) : null;
+    if (itemIdFromHash() !== itemId) return;
     // No artwork (people, books, bare collections): no banner; the portrait or cover shows.
-    page.classList.toggle("hera-no-backdrop", !id);
+    page.classList.toggle("hera-no-backdrop", !art);
     // Artwork under the header at the top of the page keeps the header's dark (on-art) tokens.
-    root.classList.toggle("hera-art-top", !!id);
+    root.classList.toggle("hera-art-top", !!art);
     banner.dataset.heraFilled = itemId;
-    if (!id) {
+    if (!art) {
       banner.style.backgroundImage = "";
       return;
     }
     const width = Math.min(2560, Math.round(window.innerWidth * (window.devicePixelRatio || 1)));
-    banner.style.backgroundImage = `url("${imageUrl(id, "Backdrop", { maxWidth: width, tag })}")`;
+    banner.style.backgroundImage = `url("${imageUrl(art.id, "Backdrop", { maxWidth: width, tag: art.tag })}")`;
   };
 
   // The synopsis belongs with the title and buttons, over the artwork, as on tvOS; the stock
@@ -1243,8 +1258,43 @@
     }, 400);
   };
 
+  // ---------- British copy -------------------------------------------------------------
+  // Jellyfin's React header, its menus and its section titles name things in American English
+  // ("Movies", "Favorites", "Shows"), and a CSS ::after cannot tell one title from another. Rewrite
+  // those exact words where Jellyfin draws them, and again when it redraws them.
+
+  const BRITISH = new Map([
+    ["Movies", "Films"],
+    ["Shows", "TV Shows"],
+    ["Favorites", "Favourites"],
+  ]);
+  const localiseCopy = () => {
+    for (const node of document.querySelectorAll(".MuiAppBar-root .MuiTypography-h2, #library-view-menu li, .page:not(.hide) h2.sectionTitle")) {
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+        const next = BRITISH.get(text.nodeValue.trim());
+        if (next) text.nodeValue = next;
+      }
+    }
+  };
+  const watchCopy = () => {
+    let queued = false;
+    const observer = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        localiseCopy();
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    localiseCopy();
+    state.cleanups.push(() => observer.disconnect());
+  };
+
   const start = async () => {
     keepStylesheetLast();
+    watchCopy();
     appearance.apply();
     const onDeviceScheme = () => appearance.pref === "auto" && appearance.apply();
     lightQuery?.addEventListener?.("change", onDeviceScheme);
@@ -1323,6 +1373,7 @@
     teardown() {
       state.hero?.destroy();
       stopHomeWait();
+      heroTabObserver.observer?.disconnect();
       state.cleanups.splice(0).forEach((fn) => fn());
       modules.splice(0).forEach((module) => module.teardown?.());
       document.querySelectorAll(".hera-seasons").forEach((n) => n.remove());

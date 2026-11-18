@@ -788,7 +788,9 @@
             ],
           }),
           libraries.length ? group({ title: "Libraries in Recently Added", rows: libraries }) : null,
-          group({ rows: [row({ icon: "tune", label: "More home screen options", description: "Home sections and library order", href: `${STOCK.home}?userId=${ctx.user.Id}`, chevron: true })] }),
+          // Titles hidden from Up Next or marked Not Interested, with Unhide (hera-extras.js).
+          window.HeraTV.hidden ? window.HeraTV.hidden.settingsGroup() : null,
+          group({ rows: [row({ icon: "tune", label: "More home screen options", description: "Library order", href: `${STOCK.home}?userId=${ctx.user.Id}`, chevron: true })] }),
         ];
       },
     },

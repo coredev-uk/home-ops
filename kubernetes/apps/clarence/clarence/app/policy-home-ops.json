@@ -7,7 +7,8 @@
   "fastPollSeconds": 20,
   "selfPath": "kubernetes/apps/clarence/clarence/app/policy-home-ops.json",
   "renovate": {
-    "stopUpdatingLabel": "stop-updating"
+    "stopUpdatingLabel": "stop-updating",
+    "workflow": "renovate.yaml"
   },
   "trust": {
     "after": 3,

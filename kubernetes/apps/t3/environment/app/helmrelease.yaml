@@ -17,6 +17,15 @@ spec:
   interval: 1h
   values:
     controllers:
+      t3-a:
+        containers:
+          app:
+            resources:
+              limits:
+                memory: 28608Mi
+              requests:
+                memory: 10432Mi
+                cpu: 4650m
       # T3 takes an exclusive lock on its home (a second server exits), so the old pod must be
       # gone before the new one starts.
       ${APP}:

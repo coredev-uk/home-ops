@@ -87,11 +87,13 @@
         "kubernetes/apps/cert-manager/**",
         "kubernetes/apps/external-secrets/**",
         "kubernetes/apps/kopiur-system/**",
+        "kubernetes/apps/network/**",
         "talos/**",
         "bootstrap/**"
       ],
       "hours": 72
     },
+    { "packages": ["ghcr.io/cloudnative-pg/postgresql"], "hours": 72 },
     { "updateTypes": ["patch"], "hours": 24 },
     { "updateTypes": ["minor"], "hours": 48 }
   ],

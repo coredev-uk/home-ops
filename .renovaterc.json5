@@ -82,19 +82,52 @@
   },
   // The dashboard issue, in Clarence's voice: Renovate finds updates, Clarence merges
   dependencyDashboardTitle: "📦 Renovate Dashboard",
-  dependencyDashboardHeader: "## 📦 Renovate Dashboard\n\n> 📻 **Reporting in.** Every update Renovate found in this repository is below. Renovate only opens the pull requests: Clarence rules on each one and merges what its policy passes, one at a time, then checks the deploy. Tick a box to make Renovate act on the next run.\n\n| | |\n|---|---|\n| **Merged by** | Clarence (`kubernetes/apps/clarence`), see its card on each pull request |\n| **Release age** | minor and patch updates wait 3 days before Renovate opens them |\n| **Cluster report** | [Grafana](https://grafana.hera.ac/d/clarence-report): CVEs, untracked images, volumes without a backup |\n",
+  dependencyDashboardHeader: "## 📦 Renovate Dashboard\n\n> 📻 **Reporting in.** Every update Renovate found in this repository is below. Renovate only opens the pull requests: Clarence rules on each one and merges what its policy passes, one at a time, then checks the deploy. Tick a box to make Renovate act on the next run.\n\n| | |\n|---|---|\n| **Merged by** | Clarence (`kubernetes/apps/clarence`), see its card on each pull request |\n| **Release age** | patches wait 1 day and minors 2 before Renovate opens them; core infrastructure, networking and PostgreSQL wait 3 |\n| **Cluster report** | [Grafana](https://grafana.hera.ac/d/clarence-report): CVEs, untracked images, volumes without a backup |\n",
   dependencyDashboardFooter: "<sub>📻 Renovate · runs every two hours from `.github/workflows/renovate.yaml` · merges go through Clarence</sub>",
   // Renovate never merges: Clarence (kubernetes/apps/clarence) rules on every PR,
   // merges what its policy passes one at a time and checks each deploy.
   packageRules: [
     {
-      // Only propose a minor or patch once it has been out for 3 days; Clarence also
-      // reads upstream issues opened in that time for regressions
-      description: "Let minor and patch releases settle",
-      matchUpdateTypes: ["minor", "patch"],
-      minimumReleaseAge: "3 days",
+      // Only propose a patch once it has been out a day and a minor two; core infrastructure
+      // waits 3 days (below). Clarence holds each to the same ages (policy-home-ops.json
+      // releaseAge) and reads upstream issues opened in that time for regressions.
+      description: "Let patch releases settle",
+      matchUpdateTypes: ["patch"],
+      minimumReleaseAge: "1 day",
       // Container registries publish no release timestamp: without this, Renovate holds
       // every image update as pending forever instead of proposing it.
+      minimumReleaseAgeBehaviour: "timestamp-optional",
+    },
+    {
+      description: "Let minor releases settle",
+      matchUpdateTypes: ["minor"],
+      minimumReleaseAge: "2 days",
+      minimumReleaseAgeBehaviour: "timestamp-optional",
+    },
+    {
+      description: "Let core infrastructure and database releases settle for 3 days",
+      matchUpdateTypes: ["minor", "patch"],
+      matchFileNames: [
+        "kubernetes/apps/kube-system/**",
+        "kubernetes/apps/rook-ceph/**",
+        "kubernetes/apps/flux-system/**",
+        "kubernetes/apps/cnpg-system/**",
+        "kubernetes/apps/system-upgrade/**",
+        "kubernetes/apps/cert-manager/**",
+        "kubernetes/apps/external-secrets/**",
+        "kubernetes/apps/kopiur-system/**",
+        "kubernetes/apps/network/**",
+        "talos/**",
+        "bootstrap/**",
+      ],
+      minimumReleaseAge: "3 days",
+      minimumReleaseAgeBehaviour: "timestamp-optional",
+    },
+    {
+      description: "Let PostgreSQL releases settle for 3 days",
+      matchUpdateTypes: ["minor", "patch"],
+      matchPackageNames: ["ghcr.io/cloudnative-pg/postgresql"],
+      minimumReleaseAge: "3 days",
       minimumReleaseAgeBehaviour: "timestamp-optional",
     },
     // Grouping rules

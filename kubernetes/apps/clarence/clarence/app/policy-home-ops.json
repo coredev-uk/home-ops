@@ -48,6 +48,11 @@
       "name": "tooling",
       "paths": ["flake.lock", ".renovaterc.json5"],
       "deploy": "none"
+    },
+    {
+      "name": "containers",
+      "paths": ["containers/**"],
+      "deploy": "none"
     }
   ],
   "modes": {
@@ -55,7 +60,8 @@
     "ci": "merge",
     "talos": "shadow",
     "bootstrap": "shadow",
-    "tooling": "merge"
+    "tooling": "merge",
+    "containers": "merge"
   },
   "mergeWindow": {
     "timeZone": "Europe/London",
@@ -70,6 +76,27 @@
   "requiredContexts": [],
   "stabilityContext": "",
   "minimumReleaseAgeHours": 72,
+  "releaseAge": [
+    {
+      "paths": [
+        "kubernetes/apps/kube-system/**",
+        "kubernetes/apps/rook-ceph/**",
+        "kubernetes/apps/flux-system/**",
+        "kubernetes/apps/cnpg-system/**",
+        "kubernetes/apps/system-upgrade/**",
+        "kubernetes/apps/cert-manager/**",
+        "kubernetes/apps/external-secrets/**",
+        "kubernetes/apps/kopiur-system/**",
+        "kubernetes/apps/network/**",
+        "talos/**",
+        "bootstrap/**"
+      ],
+      "hours": 72
+    },
+    { "packages": ["ghcr.io/cloudnative-pg/postgresql"], "hours": 72 },
+    { "updateTypes": ["patch"], "hours": 24 },
+    { "updateTypes": ["minor"], "hours": 48 }
+  ],
   "flux": {
     "root": "kubernetes/apps"
   },

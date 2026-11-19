@@ -39,7 +39,9 @@ spec:
     epoch:
       # Maintenance runs fine, but no epoch can close while younger than this,
       # so index blobs were never compacting (5833 vs the 1000 warn threshold).
-      # 24h (kopia's default) outpaced the backup rate here; 6h lets them compact.
-      minDuration: 6h
+      # 24h (kopia's default) outpaced the backup rate here. At 6h, ~36 hourly
+      # policies still filled an epoch to 1060-1160 blobs before it could close;
+      # 3h halves that floor.
+      minDuration: 3h
   scheduleDefaults:
     timezone: Europe/London

@@ -124,6 +124,16 @@ spec:
             target:
               kind: Deployment
               name: kustomize-controller
+          - 
+            # kustomize-controller: throttled 24-33% under the upstream 1-CPU limit
+            # (7-day max, 2026-11-20), tripping CPUThrottlingHigh; the other
+            # controllers peak at 2%. Drop the limit, like the rest of the cluster.
+            patch: |-
+              - op: remove
+                path: /spec/template/spec/containers/0/resources/limits/cpu
+            target:
+              kind: Deployment
+              name: kustomize-controller
           - # source-controller: 30-day RSS p95 107Mi, daily peak 166Mi (2026-11-13)
             patch: |-
               apiVersion: apps/v1

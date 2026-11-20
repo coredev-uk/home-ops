@@ -37,11 +37,12 @@ spec:
       metadataCacheSizeMb: 1024
   parameters:
     epoch:
-      # Maintenance runs fine, but no epoch can close while younger than this,
-      # so index blobs were never compacting (5833 vs the 1000 warn threshold).
-      # 24h (kopia's default) outpaced the backup rate here. At 6h, ~36 hourly
-      # policies still filled an epoch to 1060-1160 blobs before it could close;
-      # 3h halves that floor.
-      minDuration: 3h
+      # Kopia compacts an epoch only after the next one closes, so the index set
+      # every mover loads is the uncompacted blobs of the two newest epochs:
+      # ~2 x 140 blobs/h x epoch length. Epochs close ~1h after minDuration.
+      # 24h (kopia's default) reached 5833 blobs against the 1000 warn threshold;
+      # 3h gave 4h epochs and a steady ~1130 (2026-11-20 repo scan). 90m gives
+      # ~2.5h epochs, ~700 blobs. Floor: 3 x refreshFrequency (20m) = 60m.
+      minDuration: 90m
   scheduleDefaults:
     timezone: Europe/London

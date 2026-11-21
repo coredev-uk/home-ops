@@ -15,6 +15,11 @@ spec:
       cephConfig:
         mon:
           mon_cluster_log_level: info
+        # Ceph warns on a single BlueStore commit over 5 s in a day (threshold 1); osd.1 logs
+        # isolated ones in normal use, so only a sustained stall raises BLUESTORE_SLOW_OP_ALERT.
+        # Previously set by hand with `ceph config set`.
+        osd:
+          bluestore_slow_ops_warn_threshold: "500"
         # osd.1's DRAM-less SATA SSD (storage.nodes below) never learns which blocks BlueStore
         # freed, so under a sustained write its garbage collection stalls: the nix-cache runner's
         # first 52 GB store pushed commits past 5 s (866 slow operations in an hour) and raised

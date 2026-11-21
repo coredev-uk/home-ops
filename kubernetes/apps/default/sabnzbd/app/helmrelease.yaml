@@ -61,6 +61,16 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
+      affinity:
+        # incomplete (below) lives on the node's EPHEMERAL partition: hyperion-1's is 126 GB,
+        # too small for a full 100Gi of in-progress downloads next to images and logs.
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values: ["hyperion-1"]
     service:
       app:
         ports:
@@ -76,10 +86,13 @@ spec:
     persistence:
       config:
         existingClaim: "{{ .Release.Name }}"
-      # In-progress articles, par2 repair and direct unpack stay off NFS
-      # (52 MB/s, shared with final writes); only finished files land there.
+      # In-progress articles, par2 repair and direct unpack stay off NFS (52 MB/s, shared with
+      # final writes) and off Ceph: replicated 3x, a 30 MB/s download stalled osd.1's DRAM-less
+      # SSD into BLUESTORE_SLOW_OP_ALERT. Node-local, so a reschedule drops in-progress jobs and
+      # SAB fetches them again; only finished files land on NFS.
       incomplete:
-        existingClaim: "{{ .Release.Name }}-incomplete"
+        type: emptyDir
+        sizeLimit: 100Gi
         globalMounts:
           - path: /media/downloads/usenet/incomplete
       media:

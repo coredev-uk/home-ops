@@ -33,8 +33,9 @@ args=(serve --no-browser)
 [[ -n "${T3CODE_PORT:-}" ]] && args+=(--port "$T3CODE_PORT")
 
 # T3 prints a one-time pairing block on every start (startupAccess.ts, formatHeadlessServeOutput:
-# the ready line, then Connection string, Token, Pairing URL, App link, a blank line, the QR code
-# rows and a blank line). The token would land in the cluster's log store, so drop everything
+# the ready line, then Connection string, Token, Pairing URL, App link, for a non-loopback address
+# a blank line and a two-line plain-HTTP warning, then a blank line, the QR code rows and a blank
+# line). The token would land in the cluster's log store, so drop everything
 # from the first credential line through the end of the block, keeping the ready line. Mint
 # pairing links with `t3 auth pairing create` instead.
 #
@@ -45,6 +46,7 @@ filter() {
   mawk -W interactive '
     /^Connection string: / { skip = 1; next }
     skip && (/^Token: / || /^Pairing URL: / || /^App link: /) { next }
+    skip && (/^Warning: this address uses plain HTTP\. / || /^token and control this machine\. /) { next }
     skip && ($0 == "" || /^[ ▀▄█]+$/) { next }
     { skip = 0; print }
   '

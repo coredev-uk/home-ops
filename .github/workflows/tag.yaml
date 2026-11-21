@@ -14,26 +14,18 @@ jobs:
   main:
     name: Tag
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      # Pinned, and referenced by share and item ID, as in renovate.yaml.
-      - name: Load Secrets
-        id: load-secrets
-        uses: protonpass/load-secret-action@e51765b8ef320ff9304a1f6523737714b67c5ddf # main, after v1.1.0
-        with:
-          version: 2.7.1
-          hash: 3e9520fe79ab4698e03905c8bf0fff4889b3028975e832a5f801a9c82008b612
-        env:
-          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
-          GITHUB_BOT_APP_CLIENT_ID: pass://nHYmEj3I19Sc65PUoJdMk02hP5sbGQAY-8wMnrye6R7r_HFQ8pPhOP4ftIYTJwdMwftjC9gSCwPZamjI4nPMIg==/4j2nXzZ_q_VA7frHAlEcbKK8WUbQ-lOQIeBcH0YdUhZO4xzmMofkYvXOkTbcQZOeIvzQF8SFjWioqRy_6E3LpA==/GITHUB_BOT_APP_CLIENT_ID
-          GITHUB_BOT_APP_PRIVATE_KEY: pass://nHYmEj3I19Sc65PUoJdMk02hP5sbGQAY-8wMnrye6R7r_HFQ8pPhOP4ftIYTJwdMwftjC9gSCwPZamjI4nPMIg==/4j2nXzZ_q_VA7frHAlEcbKK8WUbQ-lOQIeBcH0YdUhZO4xzmMofkYvXOkTbcQZOeIvzQF8SFjWioqRy_6E3LpA==/GITHUB_BOT_APP_PRIVATE_KEY
-
+      # A bot-cecil token from octo-sts, as in renovate.yaml; .github/chainguard/tag.sts.yaml.
       - name: Generate Token
-        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
         id: app-token
         with:
-          client-id: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_CLIENT_ID }}
-          private-key: ${{ steps.load-secrets.outputs.GITHUB_BOT_APP_PRIVATE_KEY }}
-          permission-contents: write
+          domain: octo-sts.hera.ac
+          scope: ${{ github.repository }}
+          identity: tag
 
       - name: Get Previous Tag and Determine Next Tag
         id: determine-next-tag

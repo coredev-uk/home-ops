@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/octo-sts/app/refs/heads/main/pkg/octosts/octosts.TrustPolicy.json
+# .github/workflows/renovate.yaml on main: Renovate runs as bot-cecil[bot].
+issuer: https://token.actions.githubusercontent.com
+subject: repo:coredev-uk@64542347/home-ops@1157196515:ref:refs/heads/main
+claim_pattern:
+  workflow_ref: coredev-uk/home-ops/\.github/workflows/renovate\.yaml@refs/heads/main
+permissions:
+  checks: write
+  contents: write
+  issues: write
+  pull_requests: write
+  statuses: write
+  vulnerability_alerts: read
+  workflows: write

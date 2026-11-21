@@ -8,12 +8,12 @@
   "scopes": [
     {
       "name": "go",
-      "paths": ["go.mod", "go.sum"],
+      "paths": ["go.mod", "go.sum", "build/linux/nix/package.nix"],
       "deploy": "checks"
     },
     {
       "name": "ci",
-      "paths": [".github/workflows/**"],
+      "paths": [".github/workflows/**", ".github/actions/**"],
       "deploy": "checks"
     },
     {

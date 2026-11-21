@@ -15,7 +15,7 @@ jobs:
     name: Tag
     runs-on: ubuntu-26.04
     steps:
-      # Pinned as in renovate.yaml.
+      # Pinned, and referenced by share and item ID, as in renovate.yaml.
       - name: Load Secrets
         id: load-secrets
         uses: protonpass/load-secret-action@e51765b8ef320ff9304a1f6523737714b67c5ddf # main, after v1.1.0
@@ -24,8 +24,8 @@ jobs:
           hash: 3e9520fe79ab4698e03905c8bf0fff4889b3028975e832a5f801a9c82008b612
         env:
           PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
-          GITHUB_BOT_APP_CLIENT_ID: pass://Kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
-          GITHUB_BOT_APP_PRIVATE_KEY: pass://Kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
+          GITHUB_BOT_APP_CLIENT_ID: pass://nHYmEj3I19Sc65PUoJdMk02hP5sbGQAY-8wMnrye6R7r_HFQ8pPhOP4ftIYTJwdMwftjC9gSCwPZamjI4nPMIg==/4j2nXzZ_q_VA7frHAlEcbKK8WUbQ-lOQIeBcH0YdUhZO4xzmMofkYvXOkTbcQZOeIvzQF8SFjWioqRy_6E3LpA==/GITHUB_BOT_APP_CLIENT_ID
+          GITHUB_BOT_APP_PRIVATE_KEY: pass://nHYmEj3I19Sc65PUoJdMk02hP5sbGQAY-8wMnrye6R7r_HFQ8pPhOP4ftIYTJwdMwftjC9gSCwPZamjI4nPMIg==/4j2nXzZ_q_VA7frHAlEcbKK8WUbQ-lOQIeBcH0YdUhZO4xzmMofkYvXOkTbcQZOeIvzQF8SFjWioqRy_6E3LpA==/GITHUB_BOT_APP_PRIVATE_KEY
 
       - name: Generate Token
         uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0

@@ -48,6 +48,11 @@ jobs:
       # Pinned to main's bundled build: the action's v1 and v1.1.0 tags point at a commit before
       # dist/ was committed, so they can't run. pass-cli is pinned with its release hash
       # (pass-cli-linux-x86_64 of https://github.com/protonpass/pass-cli/releases/tag/2.7.1).
+      # PROTON_PASS_PERSONAL_ACCESS_TOKEN is the `home-ops-ci` token, granted viewer on the
+      # Proton Pass item Kubernetes/bot-cecil only. An item grant shows the token no vault, so the
+      # references are pass://<share ID>/<item ID>/<field>: the share is that grant
+      # (`pass-cli pat access list-access --personal-access-token-name home-ops-ci`), and a new
+      # token or grant needs the new share ID here and in tag.yaml.
       - name: Load Secrets
         id: load-secrets
         uses: protonpass/load-secret-action@e51765b8ef320ff9304a1f6523737714b67c5ddf # main, after v1.1.0
@@ -56,8 +61,8 @@ jobs:
           hash: 3e9520fe79ab4698e03905c8bf0fff4889b3028975e832a5f801a9c82008b612
         env:
           PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
-          GITHUB_BOT_APP_CLIENT_ID: pass://Kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
-          GITHUB_BOT_APP_PRIVATE_KEY: pass://Kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
+          GITHUB_BOT_APP_CLIENT_ID: pass://nHYmEj3I19Sc65PUoJdMk02hP5sbGQAY-8wMnrye6R7r_HFQ8pPhOP4ftIYTJwdMwftjC9gSCwPZamjI4nPMIg==/4j2nXzZ_q_VA7frHAlEcbKK8WUbQ-lOQIeBcH0YdUhZO4xzmMofkYvXOkTbcQZOeIvzQF8SFjWioqRy_6E3LpA==/GITHUB_BOT_APP_CLIENT_ID
+          GITHUB_BOT_APP_PRIVATE_KEY: pass://nHYmEj3I19Sc65PUoJdMk02hP5sbGQAY-8wMnrye6R7r_HFQ8pPhOP4ftIYTJwdMwftjC9gSCwPZamjI4nPMIg==/4j2nXzZ_q_VA7frHAlEcbKK8WUbQ-lOQIeBcH0YdUhZO4xzmMofkYvXOkTbcQZOeIvzQF8SFjWioqRy_6E3LpA==/GITHUB_BOT_APP_PRIVATE_KEY
 
       - name: Generate Token
         uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0

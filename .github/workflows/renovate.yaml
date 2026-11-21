@@ -45,13 +45,19 @@ jobs:
     permissions:
       packages: read
     steps:
+      # Pinned to main's bundled build: the action's v1 and v1.1.0 tags point at a commit before
+      # dist/ was committed, so they can't run. pass-cli is pinned with its release hash
+      # (pass-cli-linux-x86_64 of https://github.com/protonpass/pass-cli/releases/tag/2.7.1).
       - name: Load Secrets
         id: load-secrets
-        uses: 1password/load-secrets-action@70062d7a876d3eb6334754fa26efd2fbd90c32f2 # v5.0.1 # zizmor: ignore[unpinned-tools]
+        uses: protonpass/load-secret-action@e51765b8ef320ff9304a1f6523737714b67c5ddf # main, after v1.1.0
+        with:
+          version: 2.7.1
+          hash: 3e9520fe79ab4698e03905c8bf0fff4889b3028975e832a5f801a9c82008b612
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-          GITHUB_BOT_APP_CLIENT_ID: op://kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
-          GITHUB_BOT_APP_PRIVATE_KEY: op://kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
+          PROTON_PASS_PERSONAL_ACCESS_TOKEN: ${{ secrets.PROTON_PASS_PERSONAL_ACCESS_TOKEN }}
+          GITHUB_BOT_APP_CLIENT_ID: pass://Kubernetes/bot-cecil/GITHUB_BOT_APP_CLIENT_ID
+          GITHUB_BOT_APP_PRIVATE_KEY: pass://Kubernetes/bot-cecil/GITHUB_BOT_APP_PRIVATE_KEY
 
       - name: Generate Token
         uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0

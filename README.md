@@ -66,7 +66,7 @@ just talos upgrade-node hyperion-0
 just talos upgrade-k8s <version>
 ```
 
-The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane` and the git hook tools. `op` is taken from the system. Renovate keeps `flake.lock` current; CI installs Nix and runs its tools from the same flake.
+The toolchain comes from a Nix flake (`flake.nix`, loaded by direnv through `.envrc`): `just`, `kubectl`, `talosctl`, `flux`, `helm`/`helmfile`, `flate`, `crane`, `op`, `pass-cli` and the git hook tools. `op` signs in with the 1Password service account token in `.env`; `pass-cli` needs a `pass-cli login`, and resolves the Proton Pass `Kubernetes` vault's `Talos` item when rendering Talos config. Renovate keeps `flake.lock` current; CI installs Nix and runs its tools from the same flake.
 
 </details>
 

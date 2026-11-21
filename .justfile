@@ -29,6 +29,14 @@ mod oracle "oracle"
 log lvl msg *args:
     gum log -t rfc3339 -s -l "{{ lvl }}" "{{ msg }}" {{ args }}
 
+# pass:// references resolve from Proton Pass (a signed-in pass-cli), then op:// references from
+# 1Password (op, signed in by the service account token in .env). pass-cli inject only reads
+# references wrapped in double braces, which minijinja would render itself, so they're wrapped
+# after it. Output without pass:// references never calls pass-cli.
 [private]
 template file *args:
-    minijinja-cli "{{ file }}" {{ args }} | op inject
+    rendered="$(minijinja-cli "{{ file }}" {{ args }})"
+    if [[ "${rendered}" == *pass://* ]]; then
+        rendered="$(sed -E 's#pass://[^[:space:]"]+#{{{{ & }}#g' <<<"${rendered}" | pass-cli inject)"
+    fi
+    op inject <<<"${rendered}"

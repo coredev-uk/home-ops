@@ -19,6 +19,7 @@ A single Talos Kubernetes cluster, reconciled by Flux from this repository.
 [Operations](#operations) •
 [Renovate and Clarence](docs/renovate-and-clarence.md) •
 [Nix cache](docs/nix-cache.md) •
+[octo-sts](docs/octo-sts.md) •
 [T3 Code](docs/t3.md)
 
 <br clear="left">

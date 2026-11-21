@@ -12,7 +12,18 @@
         "x86_64-darwin"
         "x86_64-linux"
       ];
-      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      # 1Password's op is unfree; it's the only unfree package allowed.
+      forAllSystems =
+        f:
+        nixpkgs.lib.genAttrs systems (
+          system:
+          f (
+            import nixpkgs {
+              inherit system;
+              config.allowUnfreePredicate = pkg: nixpkgs.lib.getName pkg == "1password-cli";
+            }
+          )
+        );
 
       # Not in nixpkgs: the release binary, statically linked. Renovate does
       # not bump it (it cannot update the hashes), and CI runs this one. To
@@ -56,9 +67,9 @@
     {
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShellNoCC {
-          # 1Password's op is left to the system: NixOS's programs._1password
-          # wrapper is what the desktop app integration trusts
           packages = [
+            # op, signed in by the service account token direnv loads from .env (.envrc)
+            pkgs._1password-cli
             # git hooks (home-operations/.github lefthook.common.toml)
             pkgs.actionlint
             pkgs.lefthook

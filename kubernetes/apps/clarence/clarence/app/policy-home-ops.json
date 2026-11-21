@@ -289,8 +289,8 @@
     {
       "id": "data_risk",
       "criteria": {
-        "true": "A database schema migration, a changed on-disk or state format, or a statement that downgrading is unsupported.",
-        "false": "No change to stored data or its format is mentioned."
+        "true": "A database migration that removes, renames, retypes or rewrites existing columns, tables or rows, a changed on-disk or state format, or a statement that downgrading is unsupported.",
+        "false": "No change to stored data or its format is mentioned, or only additive schema changes the software applies itself on start (a new table, a new nullable or defaulted column, a new index), which the previous version can still read."
       },
       "reviewAbove": 0.51,
       "instructions": "Do the release notes in `release_notes` say this version changes stored data in a way the previous version may not be able to read?"

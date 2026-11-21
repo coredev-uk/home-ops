@@ -5,6 +5,9 @@
   "commanders": ["coredev-uk"],
   "pollSeconds": 300,
   "fastPollSeconds": 20,
+  "renovate": {
+    "workflow": "renovate.yaml"
+  },
   "scopes": [
     {
       "name": "go",

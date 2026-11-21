@@ -1,0 +1,87 @@
+---
+# octo-sts (https://github.com/octo-sts/app): GitHub Actions workflows trade their OIDC token for a
+# short-lived bot-cecil installation token, scoped by the trust policy the target repository keeps
+# in .github/chainguard/<identity>.sts.yaml, so no repository holds bot-cecil's private key.
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: octo-sts
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: octo-sts
+  interval: 1h
+  values:
+    controllers:
+      octo-sts:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/octo-sts/app
+              tag: 0.14.4@sha256:d679133fa8b824718f828290bdb1a6353c32989718cc31418a0bb783a20781d9
+            env:
+              PORT: &port 8080
+              # The audience workflows request their OIDC token for (octo-sts/action's domain).
+              STS_DOMAIN: &host octo-sts.hera.ac
+              # Only GitHub Actions tokens; never fetch OIDC discovery from private addresses.
+              OCTOSTS_ALLOWED_ISSUERS: https://token.actions.githubusercontent.com
+              OCTOSTS_OIDC_BLOCK_PRIVATE_IPS: "true"
+              # Metrics also start an OpenTelemetry tracer with nowhere to export to.
+              METRICS: "false"
+            envFrom:
+              - secretRef:
+                  name: octo-sts-secret
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probe
+            resources:
+              requests:
+                memory: 32Mi
+                cpu: 10m
+              limits:
+                memory: 256Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+    route:
+      app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            conditions: ["[STATUS] == 200"]
+        hostnames:
+          - *host
+        parentRefs:
+          - name: envoy-external
+            namespace: network
+        rules:
+          - backendRefs:
+              - identifier: app
+                port: *port
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

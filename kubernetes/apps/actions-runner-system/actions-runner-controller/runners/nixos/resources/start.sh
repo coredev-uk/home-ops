@@ -10,8 +10,9 @@ set -euo pipefail
 # Kata hands the VM an open-file limit of 2^30, which every build inherits. Programs that size a
 # table by it fail: gawk asks for 16 GiB for its pipe table, so glibc's Versions.def rule fails
 # and make retried it until the job's 5-hour timeout (flake-update, 2026-11-18 to 21).
-ulimit -Hn 1048576
-ulimit -Sn 1048576
+# One call sets soft and hard together: lowering the hard limit first, below the soft one, is
+# refused with "Invalid argument".
+ulimit -n 1048576
 
 STORE_IMG=/store/store.img # /store is the nixos-runner-store claim
 STORE_SIZE=110G            # sparse: Ceph only holds what the store uses

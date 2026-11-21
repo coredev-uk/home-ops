@@ -70,6 +70,8 @@
           packages = [
             # op, signed in by the service account token direnv loads from .env (.envrc)
             pkgs._1password-cli
+            # pass-cli, signed in with `pass-cli login`
+            pkgs.proton-pass-cli
             # git hooks (home-operations/.github lefthook.common.toml)
             pkgs.actionlint
             pkgs.lefthook

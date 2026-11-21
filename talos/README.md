@@ -27,7 +27,8 @@ talosctl machineconfig patch <(cluster.yaml.j2) \
 ```
 
 Each layer passes through `minijinja-cli` (strict Jinja templating; the schematic ID arrives as a
-`-D` define) and `op inject` (1Password secret resolution) before `talosctl` merges them. Later patches strategically merge into
+`-D` define), `pass-cli inject` (Proton Pass secret resolution) and `op inject` (1Password secret
+resolution) before `talosctl` merges them. Later patches strategically merge into
 earlier ones: documents with the same kind/name are deep-merged, new documents are appended.
 
 Two conventions keep the layers honest:
@@ -35,8 +36,10 @@ Two conventions keep the layers honest:
 - **Directory placement is the single source of truth for a node's role.** The role patch is chosen
   by which `nodes/<role>/` directory contains the node file, and `machine.type` is set by the role
   patch, not the node file. A node cannot claim one role by filename and another by content.
-- **Secrets never live in this repo.** All sensitive values are `op://kubernetes/...` references
-  (`talos/...`, plus `headscale/HEADSCALE_TALOS_AUTHKEY`) resolved at render time.
+- **Secrets never live in this repo.** All sensitive values are references resolved at render
+  time: the Talos secrets are `pass://Kubernetes/Talos/<section>.<field>` (Proton Pass item `Talos`,
+  sections `Machine` and `Cluster`), and the node files' `TS_AUTHKEY` is
+  `op://kubernetes/headscale/HEADSCALE_TALOS_AUTHKEY`.
 
 ## Schematics
 

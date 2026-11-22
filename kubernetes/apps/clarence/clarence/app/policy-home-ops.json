@@ -130,7 +130,8 @@
     "perDay": 20
   },
   "health": {
-    "cephBlockOn": ["HEALTH_WARN", "HEALTH_ERR"]
+    "cephBlockOn": ["HEALTH_WARN", "HEALTH_ERR"],
+    "cephIgnore": ["BLUESTORE_SLOW_OP_ALERT"]
   },
   "notes": {
     "minBytes": 40,

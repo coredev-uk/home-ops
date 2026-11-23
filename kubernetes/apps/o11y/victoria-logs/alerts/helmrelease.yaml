@@ -1,0 +1,72 @@
+---
+# vmalert on VictoriaLogs: alerts from log lines, for what no metric outlives. An ephemeral
+# runner pod is deleted within a second of failing, before kube-state-metrics' next scrape, and
+# never restarts, so the OomKilled rule (kube-prometheus-stack) cannot see it; a Kata VM's own
+# kernel kills inside the guest, where cAdvisor's container_oom_events_total stays 0. Rules run
+# every 5 minutes over the last 5 minutes of logs and fire for each row their stats return.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-logs-alerts
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: victoria-logs-alerts
+  interval: 1h
+  values:
+    global:
+      image:
+        registry: quay.io
+    serviceMonitor:
+      enabled: true
+    server:
+      fullnameOverride: victoria-logs-alerts
+      datasource:
+        url: http://victoria-logs.o11y.svc.cluster.local:9428
+      notifier:
+        url: http://alertmanager-operated.o11y.svc.cluster.local:9093
+      extraArgs:
+        rule.defaultRuleType: vlogs
+        external.url: https://vlogs.hera.ac
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+      config:
+        alerts:
+          groups:
+            - name: actions-runners
+              interval: 5m
+              rules:
+                # ARC's controller logs the exit code of a runner pod that dies with a job
+                # assigned, then deletes the pod. 137 is SIGKILL: the OOM killer, in the pod's
+                # cgroup or (Kata) its VM's kernel, or the host killing the VM.
+                - alert: ActionsRunnerKilled
+                  expr: >-
+                    {kubernetes.pod_namespace="actions-runner-system", kubernetes.container_name="manager"}
+                    "Ephemeral runner container failed"
+                    | extract '"name":"<runner>"'
+                    | extract '"exitCode": <exit_code>}'
+                    | filter exit_code:=137
+                    | stats by (runner) count() as kills
+                  labels:
+                    severity: critical
+                  annotations:
+                    summary: >-
+                      Runner {{ $labels.runner }} was killed (SIGKILL) mid-job, so GitHub has no log of
+                      the job; most likely out of memory.
+                # The nixos runner's start.sh reports the VM kernel's OOM kills (/proc/vmstat
+                # oom_kill) as the pod ends, whichever process they took.
+                - alert: NixosRunnerOomKill
+                  expr: >-
+                    {kubernetes.pod_namespace="actions-runner-system", kubernetes.container_name="runner"}
+                    "[nixos-runner] OOM:"
+                    | stats by (kubernetes.pod_name) count() as reports
+                    | rename kubernetes.pod_name as pod
+                  labels:
+                    severity: critical
+                  annotations:
+                    summary: >-
+                      The VM of {{ $labels.pod }} ran out of memory during its job and its kernel
+                      killed processes; the job's log shows which build failed.

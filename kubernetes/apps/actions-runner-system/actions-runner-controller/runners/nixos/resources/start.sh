@@ -85,12 +85,27 @@ fi
 rm -f "$CLEAN_MARKER"
 sync
 
+# The VM's kernel counts its OOM kills since boot, and the VM lives for this pod alone. Nothing on
+# the host sees them (cAdvisor's container_oom_events_total stays 0), so this line is the record:
+# victoria-logs-alerts (o11y) raises NixosRunnerOomKill on it, with the kernel's own lines below.
+# shellcheck disable=SC2329 # run by on_exit
+report_oom() {
+  local key value kills=0
+  while read -r key value; do
+    if [ "$key" = oom_kill ]; then kills=$value; fi
+  done </proc/vmstat
+  [ "$kills" -gt 0 ] || return 0
+  log "OOM: the VM's kernel killed $kills process(es) during this pod"
+  dmesg --notime 2>/dev/null | grep -E 'Killed process|out of memory' | tail -n 10 | sed 's/^/[nixos-runner]   /' || true
+}
+
 # Marks the store cleanly stopped: the one point its contents are flushed through to the Ceph
 # volume (the mount has no barriers). sync writes the image's dirty pages back, `sync FILE`
 # fsyncs the image itself.
 # shellcheck disable=SC2329 # run by the EXIT trap below
 on_exit() {
   local rc=$?
+  report_oom || true
   sync
   touch "$CLEAN_MARKER"
   sync

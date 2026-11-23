@@ -68,8 +68,8 @@ spec:
               claims:
                 - name: gpu
               requests:
-                cpu: 100m
-                memory: 512Mi
+                cpu: 250m
+                memory: 1856Mi
               limits:
                 memory: 8Gi
     defaultPodOptions:

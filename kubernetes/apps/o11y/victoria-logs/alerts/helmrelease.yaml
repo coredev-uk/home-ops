@@ -59,11 +59,13 @@ spec:
                       Runner {{ $labels.runner }} was killed (SIGKILL) mid-job, so GitHub has no log of
                       the job; most likely out of memory.
                 # The nixos runner's start.sh reports the VM kernel's OOM kills (/proc/vmstat
-                # oom_kill) as the pod ends, whichever process they took.
+                # oom_kill) as the pod ends, whichever process they took. Only nixos-runner pods,
+                # and only a line that starts with the marker: a job's log quoting it (the runner
+                # prints commit messages) is not a report.
                 - alert: NixosRunnerOomKill
                   expr: >-
-                    {kubernetes.pod_namespace="actions-runner-system", kubernetes.container_name="runner"}
-                    "[nixos-runner] OOM:"
+                    {kubernetes.pod_namespace="actions-runner-system", kubernetes.pod_labels.app.kubernetes.io/name="nixos-runner", kubernetes.container_name="runner"}
+                    _msg:~"^\\[nixos-runner\\] OOM:"
                     | stats by (kubernetes.pod_name) count() as reports
                     | rename kubernetes.pod_name as pod
                   labels:

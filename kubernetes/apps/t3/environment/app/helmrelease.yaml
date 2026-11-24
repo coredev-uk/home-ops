@@ -126,8 +126,14 @@ spec:
                 memory: 4Gi
                 # The emptyDir caches and /tmp; the Nix store is on its volume.
                 ephemeral-storage: 5Gi
+              # Inside what a node can give: hyperion-0 (32 GB) has about 16 GB free with t3 at its
+              # usual 0.4-2.4 GB, and heavy work peaked at 6.75 GB over 12 days. A higher limit is
+              # never reached: a runaway process (script fed /dev/zero, 2026-11-24) starved the node
+              # for an hour instead, and the Talos OOM handler leaves pods with a limit alone. The
+              # kernel kills the whole container at the limit (memory.oom.group); t3-memguard
+              # (containers/t3/memguard.sh) kills the biggest process before that.
               limits:
-                memory: 20Gi
+                memory: 10Gi
                 ephemeral-storage: 30Gi
     defaultPodOptions:
       # T3 labels the environment with the host name, which clients show: the release name

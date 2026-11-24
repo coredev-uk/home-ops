@@ -43,7 +43,7 @@ spec:
         terminationGracePeriodSeconds: 300
         containers:
           - name: runner
-            image: docker.io/nixos/nix:2.35.6@sha256:b49cb33f3a7e5cf3933ad8774529de0e3807ec5cf54987aa7ccdfb49f2fc55ed
+            image: docker.io/nixos/nix:2.36.0@sha256:746280551ddc1c72177d1a597c05eacac86dfaa18d5d649bf86411278bcd5470
             command: ["bash", "/config/start.sh"]
             # resources/nix.conf. Not mounted at /etc/nix/nix.conf: the image's /etc/nix is a link
             # into its base-system store path, which the mount would modify.

@@ -28,6 +28,11 @@ cp /opt/omp/AGENTS.md "$PI_CODING_AGENT_DIR/AGENTS.md"
 rm -rf "${PI_CODING_AGENT_DIR:?}/skills"
 cp -r /opt/omp/skills "$PI_CODING_AGENT_DIR/skills"
 
+# One runaway command must not cost the whole environment: t3-memguard kills the biggest process
+# before the container reaches its memory limit, where the kernel would kill all of them (see the
+# script). It stays a child of t3 after the exec below.
+t3-memguard &
+
 args=(serve --no-browser)
 [[ -n "${T3CODE_HOST:-}" ]] && args+=(--host "$T3CODE_HOST")
 [[ -n "${T3CODE_PORT:-}" ]] && args+=(--port "$T3CODE_PORT")

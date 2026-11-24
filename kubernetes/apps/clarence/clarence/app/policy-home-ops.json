@@ -343,7 +343,14 @@
         "reviewAbove": 0.7,
         "instructions": "Does the issue in `issue`, opened in `project` after `version` was released, report that something in `package` which worked in `previous_version` broke in `version` (a crash, a failed start or migration, lost data, a feature that stopped working), in a way that would hit an existing deployment?"
       }
-    ]
+    ],
+    "components": {
+      "home-assistant/core": {
+        "labelPrefix": "integration: ",
+        "url": "http://home-assistant.default.svc.cluster.local:8123/api/config",
+        "tokenFile": "home-assistant-token"
+      }
+    }
   },
   "manualSteps": {
     "paths": [

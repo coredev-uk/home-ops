@@ -186,9 +186,11 @@ COPY --chmod=0644 omp/config.yml omp/AGENTS.md /opt/omp/
 
 # gh is ahead of the profile's on PATH. git-credential-cliffe is git's credential helper for
 # github.com and the wrapper's token source; t3-nix-seed fills the environment's Nix volume from
-# this image's store: see the scripts.
+# this image's store; t3-memguard kills a runaway process before the container's memory limit:
+# see the scripts.
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/t3-entrypoint
 COPY --chmod=0755 nix-seed.sh /usr/local/bin/t3-nix-seed
+COPY --chmod=0755 memguard.sh /usr/local/bin/t3-memguard
 COPY --chmod=0755 git-credential-cliffe gh /usr/local/bin/
 
 # Caches go to the pod's writable layer (ephemeral storage), not the state volume and not a

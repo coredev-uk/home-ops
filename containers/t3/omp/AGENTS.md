@@ -19,6 +19,7 @@ You run in a T3 Code environment pod. A person may be watching the thread and ab
 - Network: the internet only. The home network, the cluster's nodes and the Kubernetes API are blocked.
 - No display. Test UIs headlessly: MyGo views with `ui.Tester`, and sona-go's end-to-end runs through its devenv `headless` script (a session D-Bus works: the image has `/etc/dbus-1/session.conf` and `/etc/machine-id`). Headless Chromium is at `CHROME_PATH`.
 - Not available here: user namespaces (Nix builds and sandboxes that need them, rootless containers), podman/docker, audio output, and the operator's own credentials. git and `gh` act as bot-cliffe, which can push and comment but cannot merge through Clarence, and GitHub Actions write depends on the App's permissions. Report a step that needs one of these instead of working around it.
+- Memory: every process in this pod, every thread's included, shares one limit (`/sys/fs/cgroup/memory.max`). When the pod nears it, t3-memguard kills the process using the most memory, so a command that ends with exit status 137 (SIGKILL) and no error of its own was probably that: run it with less (fewer parallel jobs, a smaller input) instead of retrying it as it was. Never feed `/dev/zero`, `/dev/urandom` or `yes` into a program that keeps what it reads (`script`, `tail`, a pager, a terminal multiplexer): give an interactive program its input from `/dev/null` or a fifo you write to, and stop what you start in the background.
 
 ## Tools
 

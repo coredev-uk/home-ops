@@ -416,6 +416,22 @@ views:
                   target:
                     entity_id: button.bravia_k_55xr80_terminate_apps
 
+      # ── Bedroom ───────────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Bedroom
+            heading_style: title
+            icon: mdi:bed-outline
+          - type: tile
+            entity: light.bedside_lamp
+            name: Bedside lamp
+            icon: mdi:lamp-outline
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: 12
+
       # ── Energy today ──────────────────────────────────────────────────
       - type: grid
         cards:

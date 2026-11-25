@@ -9,25 +9,6 @@ spec:
     - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   interval: 1h
-  # Back up Plex's database and settings, not what it regenerates: thumbnails and previews
-  # (Media), posters and metadata (Metadata) and downloads. After a restore Plex refetches
-  # these over a few hours; custom posters uploaded by hand are the one thing lost.
-  patches:
-    - target:
-        kind: SnapshotPolicy
-      patch: |-
-        - op: add
-          path: /spec/files
-          value:
-            ignoreRules:
-              - /lost+found
-              - /Library/Application Support/Plex Media Server/Cache/
-              - /Library/Application Support/Plex Media Server/Codecs/
-              - /Library/Application Support/Plex Media Server/Crash Reports/
-              - /Library/Application Support/Plex Media Server/Drivers/
-              - /Library/Application Support/Plex Media Server/Logs/
-              - /Library/Application Support/Plex Media Server/Media/
-              - /Library/Application Support/Plex Media Server/Metadata/
   path: ./kubernetes/apps/default/plex/app
   postBuild:
     substitute:

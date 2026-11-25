@@ -7,3 +7,18 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./resourceclaimtemplate.yaml
+# Back up Jellyfin's database and settings, not what it regenerates: images and metadata
+# (metadata) and seek previews (trickplay), refetched after a restore. The SnapshotPolicy comes
+# from the kopiur/backup component in ks.yaml (a patch there would be replaced by flux-system's own).
+patches:
+  - target:
+      kind: SnapshotPolicy
+    patch: |-
+      - op: add
+        path: /spec/files
+        value:
+          ignoreRules:
+            - /lost+found
+            - /data/trickplay/
+            - /log/
+            - /metadata/

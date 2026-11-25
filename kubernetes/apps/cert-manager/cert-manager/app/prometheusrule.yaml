@@ -30,6 +30,18 @@ spec:
           labels:
             severity: critical
 
+        # Certificates last 160h and renew about 53h before expiry, so under 36h left means
+        # renewal has been failing for most of a day.
+        - alert: CertManagerCertExpiringSoon
+          expr: |-
+            max by (name, exported_namespace) (certmanager_certificate_expiration_timestamp_seconds) - time() < 129600
+          for: 15m
+          annotations:
+            summary: >-
+              The cert {{ $labels.name }} expires in under 36 hours and has not renewed
+          labels:
+            severity: critical
+
         - alert: CertManagerHittingRateLimits
           expr: |-
             sum by (host) (rate(certmanager_http_acme_client_request_count{status="429"}[5m])) > 0

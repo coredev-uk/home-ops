@@ -53,8 +53,8 @@ spec:
                 name: kube-prometheus-stack-k8s-coredns
   valuesFrom:
     - kind: ConfigMap
-      name: flux-metrics-configmap
-      valuesKey: flux-metrics.yaml
+      name: kube-state-metrics-configmap
+      valuesKey: kube-state-metrics.yaml
   values:
     cleanPrometheusOperatorObjectNames: true
     alertmanager:

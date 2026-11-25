@@ -8,6 +8,18 @@ spec:
   instances: 1
   # One instance: a PDB would block every node drain (Talos upgrades). Drains move the primary instead.
   enablePDB: false
+  # A single instance goes down with its node, so keep the databases on different nodes: one
+  # node outage then takes out a few apps, not all of them.
+  affinity:
+    additionalPodAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                cnpg.io/podRole: instance
+            namespaceSelector: {}
+            topologyKey: kubernetes.io/hostname
   imageName: ghcr.io/cloudnative-pg/postgresql:18.7-standard-bookworm
   primaryUpdateStrategy: unsupervised
   primaryUpdateMethod: restart

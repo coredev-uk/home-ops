@@ -1,0 +1,32 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kopiur-repository-rules
+spec:
+  groups:
+    - name: kopiur-repository.rules
+      rules:
+        # From kube-state-metrics (kube-prometheus-stack/app/resources/kube-state-metrics.yaml);
+        # 0 until the first run succeeds, so a copy that never completed fires too.
+        - alert: KopiurOffsiteCopyStale
+          expr: |-
+            time() - kopiur_repositoryreplication_last_replicated_timestamp_seconds > 129600
+          for: 1h
+          annotations:
+            summary: >-
+              The off-site backup copy {{ $labels.name }} has not completed in over 36 hours
+          labels:
+            severity: warning
+
+        # The chart's rules alert on stale backups, not on backups that stopped being verified.
+        - alert: KopiurVerificationStale
+          expr: |-
+            time() - kopiur_snapshot_verified_timestamp_seconds > 259200
+          for: 1h
+          annotations:
+            summary: >-
+              Backups of {{ $labels.namespace }}/{{ $labels.name }} have not been verified in over 3 days
+          labels:
+            severity: warning

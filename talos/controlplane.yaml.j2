@@ -120,7 +120,8 @@ image: registry.k8s.io/kube-scheduler:v1.37.2
 apiVersion: v1alpha1
 kind: KubeTalosAPIAccessConfig
 allowedRoles:
-  - os:admin
+  - os:admin # tuppr (system-upgrade) upgrades nodes
+  - os:operator # the home-ops CI runner's image pull
 allowedKubernetesNamespaces:
   - actions-runner-system
   - system-upgrade

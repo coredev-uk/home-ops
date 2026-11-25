@@ -262,6 +262,22 @@ views:
               - condition: state
                 entity: media_player.plex_plex_for_android_tv_living_room_tv
                 state: [playing, paused, buffering]
+          - type: tile
+            entity: light.window_lamp
+            name: Window lamp
+            icon: mdi:floor-lamp-outline
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: light.door_lamp
+            name: Door lamp
+            icon: mdi:floor-lamp-outline
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: 6
           - type: custom:bubble-card
             card_type: pop-up
             hash: "#tv"

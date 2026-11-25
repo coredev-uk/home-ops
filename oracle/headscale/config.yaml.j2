@@ -59,7 +59,10 @@ dns:
 unix_socket: /var/run/headscale/headscale.sock
 unix_socket_permission: "0770"
 oidc:
-  only_start_if_oidc_is_available: true
+  # The issuer (Pocket ID) runs in the cluster: if Headscale refused to start without it, a
+  # VPS reboot during a cluster outage would also take away the remote access needed to fix it.
+  # Registered devices keep working; only new logins wait for Pocket ID.
+  only_start_if_oidc_is_available: false
   issuer: https://id.hera.ac
   client_id: d67e904f-d1ea-401b-9112-52731878fd70 # Pocket ID client "Headscale", shared with Headplane
   client_secret: op://kubernetes/headscale/HEADSCALE_OIDC_CLIENT_SECRET

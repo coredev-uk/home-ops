@@ -22,11 +22,6 @@ spec:
           - name: alertname
             value: Watchdog
             matchType: =
-      - receiver: pushover
-        matchers:
-          - name: severity
-            value: critical
-            matchType: =
     groupBy:
       - alertname
       - cluster
@@ -80,8 +75,10 @@ spec:
                 </small>
               {{- end }}
             {{- end }}
+          # Critical alerts bypass quiet hours, warnings notify normally, and info alerts and
+          # resolved notices arrive silently.
           priority: |-
-            {{ if eq .Status "firing" }}1{{ else }}0{{ end }}
+            {{ if and (eq .Status "firing") (eq .CommonLabels.severity "critical") }}1{{ else if and (eq .Status "firing") (eq .CommonLabels.severity "warning") }}0{{ else }}-1{{ end }}
           sound: gamelan
           title: >-
             [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}

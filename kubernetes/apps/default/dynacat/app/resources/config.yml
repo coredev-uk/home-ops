@@ -190,7 +190,7 @@ pages:
               {{ end }}
 
           # The UniFi gateway's view of the ProtonVPN WireGuard client (which
-          # carries the VPN VLAN: qBittorrent and Prowlarr) and the WAN.
+          # carries the VPN VLAN: Prowlarr) and the WAN.
           # unifi.internal serves a self-signed cert.
           - type: custom-api
             title: Network

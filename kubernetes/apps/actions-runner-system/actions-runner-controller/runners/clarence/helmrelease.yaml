@@ -1,8 +1,9 @@
 ---
-# GitHub Actions runners for coredev-uk/clarence (`runs-on: clarence-runner`): its Go test job
-# runs here instead of on GitHub's runners, whose minutes a private repository pays for. The
-# image job stays on GitHub (it needs a Docker daemon). Steps run in the runner container itself;
-# the job needs no cluster access, so the pod gets no service account token.
+# GitHub Actions runners for coredev-uk/clarence (`runs-on: clarence-runner`): its Go test and
+# image jobs run here instead of on GitHub's runners, whose minutes a private repository pays
+# for. The image is built without a Docker daemon (crane appends a layer to the base). Steps run
+# in the runner container itself; the jobs need no cluster access, so the pod gets no service
+# account token.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease

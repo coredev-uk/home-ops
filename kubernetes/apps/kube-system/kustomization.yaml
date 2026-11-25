@@ -13,7 +13,6 @@ resources:
   - ./coredns/ks.yaml
   - ./descheduler/ks.yaml
   - ./drm-exporter/ks.yaml
-  - ./gvisor/ks.yaml
   - ./intel-gpu-resource-driver/ks.yaml
   - ./kata/ks.yaml
   - ./metrics-server/ks.yaml

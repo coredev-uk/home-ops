@@ -58,6 +58,18 @@ spec:
           labels:
             severity: critical
 
+        # NVMe wear (percentage of rated endurance used). hyperion-1's boot disk reached 74%
+        # unnoticed; at 100% the drive is past its rating and may go read-only.
+        - alert: SmartDeviceWearHigh
+          expr: |-
+            smartctl_device_percentage_used > 80
+          for: 1h
+          annotations:
+            summary: >-
+              Device {{ $labels.device }} on instance {{ $labels.instance }} has used {{ $value }}% of its rated endurance
+          labels:
+            severity: warning
+
         - alert: SmartDeviceInterfaceSlow
           expr: |-
             smartctl_device_interface_speed{speed_type="current"} != on(device, instance, namespace, pod) smartctl_device_interface_speed{speed_type="max"}

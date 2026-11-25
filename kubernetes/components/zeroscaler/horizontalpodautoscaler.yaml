@@ -27,7 +27,9 @@ spec:
         - type: Pods
           value: 1
           periodSeconds: 15
-      stabilizationWindowSeconds: 0
+      # One failed NFS probe must not stop every media app: scale down only after two minutes
+      # of the NAS being unreachable.
+      stabilizationWindowSeconds: 120
     scaleUp:
       policies:
         - type: Pods

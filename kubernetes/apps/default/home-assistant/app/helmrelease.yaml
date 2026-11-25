@@ -55,12 +55,49 @@ spec:
                 cpu: 10m
               limits:
                 memory: 1Gi
+          # Sidecar so the WebSocket stays on the pod's localhost (Matter integration URL:
+          # ws://localhost:5580/ws). Fabric data lives on the config volume and is backed up with it.
+          matter:
+            image:
+              repository: ghcr.io/matter-js/matterjs-server
+              tag: 1.6.0@sha256:9eb98c839d0b4b07f9230b96ad52de570f7f2a7c286c5992b4c04b6b26c08a3f
+            env:
+              STORAGE_PATH: /config/matter
+              LISTEN_ADDRESS: 127.0.0.1
+              PRIMARY_INTERFACE: net1
+              MATTER_LOG_FORMAT: plain
+              NODE_OPTIONS: --max-old-space-size=384
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command: ["/usr/local/bin/healthcheck.sh"]
+                  periodSeconds: 60
+                  timeoutSeconds: 10
+                  failureThreshold: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                memory: 128Mi
+                cpu: 10m
+              limits:
+                memory: 512Mi
     defaultPodOptions:
-      # On the node's own network (the Cluster VLAN), where the UniFi gateway reflects mDNS from
-      # the Default network: discovery (Cast, HomeKit, ESPHome) and the HomeKit bridge's
-      # advertised address then work. Nothing else on the nodes uses HA's ports (8123, 5353, 21063).
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      # A second interface (net1) on the IoT VLAN, beside the HomePod and the IoT devices: mDNS,
+      # IPv6 link-local and the HomePod's Thread routes for Matter, HomeKit and discovery.
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |-
+          [{
+            "name": "iot",
+            "namespace": "kube-system",
+            "ips": ["192.168.130.20/24"],
+            "mac": "02:bd:e6:84:38:74"
+          }]
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

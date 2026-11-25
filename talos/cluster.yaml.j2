@@ -44,6 +44,16 @@ provisioning:
     match: disk.model == "MK000480GWCEV"
   wipe: false
 ---
+# The IoT VLAN for the Multus `iot` network (Home Assistant's Matter/HomeKit leg). No address:
+# the host itself stays off this network.
+apiVersion: v1alpha1
+kind: VLANConfig
+name: net0.4
+vlanID: 4
+vlanMode: 802.1q
+parent: net0
+up: true
+---
 apiVersion: v1alpha1
 kind: FilesystemTrimConfig
 interval: 168h0m0s
@@ -84,6 +94,7 @@ params:
   # The physical NIC's real kernel name differs per node (net0 is only a Talos-level alias, not a
   # real procfs entry) - see the per-node hyperion-N.yaml.j2 files for that half of this.
   net/ipv6/conf/net0.3/disable_ipv6: "1"
+  net/ipv6/conf/net0.4/disable_ipv6: "1"
   user.max_user_namespaces: "11255"
 ---
 apiVersion: v1alpha1

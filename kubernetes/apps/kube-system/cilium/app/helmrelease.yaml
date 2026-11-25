@@ -18,6 +18,10 @@ spec:
       datapathMode: veth
       masquerade: true
       preallocateMaps: true
+      # bpf_host drops tagged frames on the NIC for VLANs that are not Cilium devices (net0.3 is one
+      # through its node address). VLAN 4 (IoT) has no node address: it carries the Multus `iot`
+      # macvlan only.
+      vlanBypass: [4]
     bpfClockProbe: true
     bgpControlPlane:
       enabled: false

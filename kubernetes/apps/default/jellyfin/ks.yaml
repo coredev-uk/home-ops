@@ -9,6 +9,20 @@ spec:
     - ../../../../components/kopiur/backup
     - ../../../../components/zeroscaler
   interval: 1h
+  # Back up Jellyfin's database and settings, not what it regenerates: images and metadata
+  # (metadata) and seek previews (trickplay), refetched after a restore.
+  patches:
+    - target:
+        kind: SnapshotPolicy
+      patch: |-
+        - op: add
+          path: /spec/files
+          value:
+            ignoreRules:
+              - /lost+found
+              - /data/trickplay/
+              - /log/
+              - /metadata/
   path: ./kubernetes/apps/default/jellyfin/app
   postBuild:
     substitute:

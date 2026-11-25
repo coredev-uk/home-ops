@@ -37,7 +37,7 @@ metadata:
   name: qui
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/volume # qui's data is in qui-postgres; this holds a session secret and icons
     - ../../../../components/zeroscaler
   dependsOn:
     - name: qui-database

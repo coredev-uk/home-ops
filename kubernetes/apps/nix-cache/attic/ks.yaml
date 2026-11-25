@@ -8,8 +8,6 @@ spec:
   dependsOn:
     - name: cloudnative-pg
       namespace: cnpg-system
-    - name: kopiur
-      namespace: kopiur-system
     - name: rook-ceph-cluster
       namespace: rook-ceph
   healthChecks:

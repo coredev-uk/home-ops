@@ -37,7 +37,7 @@ metadata:
   name: atuin
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/volume # history is in atuin-postgres; this holds a generated server.toml
   dependsOn:
     - name: atuin-database
     - name: rook-ceph-cluster

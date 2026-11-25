@@ -746,7 +746,7 @@
       "id": 31,
       "type": "timeseries",
       "title": "Attic Database",
-      "description": "Used space against capacity on attic-postgres's volume (backed up by kopiur). The chunks live on the NAS.",
+      "description": "Used space against capacity on attic-postgres's volume. The chunks live on the NAS.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"

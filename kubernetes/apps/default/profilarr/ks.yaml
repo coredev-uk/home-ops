@@ -6,7 +6,7 @@ metadata:
   name: profilarr
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/volume # profiles come from the Dictionarry database
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph

@@ -6,7 +6,7 @@ metadata:
   name: headplane
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/volume # config is in git; tailnet state lives in Headscale
   dependsOn:
     - name: envoy-gateway
       namespace: network
@@ -17,7 +17,7 @@ spec:
   postBuild:
     substitute:
       APP: headplane
-      KOPIUR_CAPACITY: 1Gi
+      VOLUME_CAPACITY: 1Gi
   prune: true
   sourceRef:
     kind: GitRepository

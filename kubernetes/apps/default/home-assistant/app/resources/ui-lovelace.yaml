@@ -438,6 +438,53 @@ views:
             color: deep-orange
             grid_options:
               columns: 6
+          - type: heading
+            heading: Power strip
+            heading_style: subtitle
+            icon: mdi:power-socket-uk
+            tap_action:
+              action: navigate
+              navigation_path: /lovelace/energy
+          - type: custom:mushroom-template-card
+            entity: sensor.power_strip_rack_power
+            primary: Rack
+            secondary: >-
+              {{ states('sensor.power_strip_rack_power') | float(0) | round(0) | int }} W ·
+              £{{ '%.2f' | format(states('sensor.octopus_energy_cost_tracker_rack') | float(0)) }} today
+            icon: mdi:server
+            color: "{{ 'orange' if states('sensor.power_strip_rack_power') | float(0) > 1 else 'grey' }}"
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-template-card
+            entity: sensor.power_strip_poe_switch_power
+            primary: PoE switch
+            secondary: >-
+              {{ states('sensor.power_strip_poe_switch_power') | float(0) | round(0) | int }} W ·
+              £{{ '%.2f' | format(states('sensor.octopus_energy_cost_tracker_poe_switch') | float(0)) }} today
+            icon: mdi:lan
+            color: "{{ 'orange' if states('sensor.power_strip_poe_switch_power') | float(0) > 1 else 'grey' }}"
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-template-card
+            entity: sensor.power_strip_laptop_charger_power
+            primary: Laptop charger
+            secondary: >-
+              {{ states('sensor.power_strip_laptop_charger_power') | float(0) | round(0) | int }} W ·
+              £{{ '%.2f' | format(states('sensor.octopus_energy_cost_tracker_laptop_charger') | float(0)) }} today
+            icon: mdi:laptop
+            color: "{{ 'orange' if states('sensor.power_strip_laptop_charger_power') | float(0) > 1 else 'grey' }}"
+            grid_options:
+              columns: 6
+          - type: custom:mushroom-template-card
+            entity: sensor.power_strip_ipad_charger_power
+            primary: iPad charger
+            secondary: >-
+              {{ states('sensor.power_strip_ipad_charger_power') | float(0) | round(0) | int }} W ·
+              £{{ '%.2f' | format(states('sensor.octopus_energy_cost_tracker_ipad_charger') | float(0)) }} today
+            icon: mdi:tablet
+            color: "{{ 'orange' if states('sensor.power_strip_ipad_charger_power') | float(0) > 1 else 'grey' }}"
+            grid_options:
+              columns: 6
 
       # ── Bins ──────────────────────────────────────────────────────────
       - type: grid
@@ -783,6 +830,96 @@ views:
             days_to_show: 14
             chart_type: bar
             hide_legend: true
+            grid_options:
+              columns: 24
+
+      # Per-outlet cost: Octopus cost trackers price each outlet's energy at the half-hour rate.
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Power strip
+            heading_style: title
+            icon: mdi:power-socket-uk
+          - type: tile
+            entity: sensor.power_strip_rack_power
+            name: Rack
+            icon: mdi:server
+            color: orange
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.power_strip_poe_switch_power
+            name: PoE switch
+            icon: mdi:lan
+            color: orange
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.power_strip_laptop_charger_power
+            name: Laptop charger
+            icon: mdi:laptop
+            color: orange
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.power_strip_ipad_charger_power
+            name: iPad charger
+            icon: mdi:tablet
+            color: orange
+            features:
+              - type: trend-graph
+                hours_to_show: 24
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_cost_tracker_rack_month
+            name: Rack · month
+            icon: mdi:currency-gbp
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_cost_tracker_poe_switch_month
+            name: PoE switch · month
+            icon: mdi:currency-gbp
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_cost_tracker_laptop_charger_month
+            name: Laptop · month
+            icon: mdi:currency-gbp
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.octopus_energy_cost_tracker_ipad_charger_month
+            name: iPad · month
+            icon: mdi:currency-gbp
+            grid_options:
+              columns: 6
+          - type: statistics-graph
+            title: Daily cost by outlet, last 2 weeks
+            entities:
+              - entity: sensor.octopus_energy_cost_tracker_rack
+                name: Rack
+              - entity: sensor.octopus_energy_cost_tracker_poe_switch
+                name: PoE switch
+              - entity: sensor.octopus_energy_cost_tracker_laptop_charger
+                name: Laptop charger
+              - entity: sensor.octopus_energy_cost_tracker_ipad_charger
+                name: iPad charger
+            stat_types: [change]
+            period: day
+            days_to_show: 14
+            chart_type: bar
             grid_options:
               columns: 24
 
@@ -1298,58 +1435,6 @@ views:
     max_columns: 4
     dense_section_placement: true
     sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Tiguan
-            heading_style: title
-            icon: mdi:car-side
-            badges:
-              - type: entity
-                entity: sensor.garage_volkswagen_579126_last_update
-                icon: mdi:update
-          - type: tile
-            entity: lock.garage_volkswagen_579126_central_locking
-            name: Doors
-            icon: mdi:car-door-lock
-            color: green
-            features:
-              - type: lock-commands
-            grid_options:
-              columns: 12
-          - type: tile
-            entity: climate.garage_volkswagen_579126_climate_control
-            name: Climate
-            features:
-              - type: target-temperature
-            grid_options:
-              columns: 12
-          - type: tile
-            entity: switch.garage_volkswagen_579126_window_heating
-            name: Window heating
-            icon: mdi:car-defrost-front
-            color: deep-orange
-            grid_options:
-              columns: 6
-          - type: tile
-            entity: switch.garage_volkswagen_579126_active_ventilation
-            name: Ventilation
-            icon: mdi:fan
-            color: cyan
-            grid_options:
-              columns: 6
-          - type: tile
-            entity: button.garage_volkswagen_579126_refresh_data
-            name: Refresh from VW
-            icon: mdi:refresh
-            tap_action:
-              action: perform-action
-              perform_action: button.press
-              target:
-                entity_id: button.garage_volkswagen_579126_refresh_data
-            grid_options:
-              columns: 12
-
       - type: grid
         column_span: 2
         cards:

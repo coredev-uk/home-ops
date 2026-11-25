@@ -7,6 +7,21 @@ metadata:
 spec:
   compression:
     compressor: zstd
+  # What apps regenerate, at the top of the volume only (a leading `/` anchors to the volume
+  # root): logs, caches, crash reports and the *arr apps' cover art. This list replaces Kopiur's
+  # defaults, so /lost+found is repeated. Plex and Jellyfin replace it with their own
+  # (app/kustomization.yaml).
+  files:
+    ignoreRules:
+      - /lost+found
+      - /*.log
+      - /*.log.*
+      - /.cache/
+      - /cache/
+      - /log/
+      - /logs/
+      - /MediaCover/
+      - /Sentry/
   mover:
     cache:
       capacity: ${KOPIUR_CAPACITY:=5Gi}

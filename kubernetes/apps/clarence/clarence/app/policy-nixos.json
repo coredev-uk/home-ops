@@ -60,7 +60,6 @@
   "failureNotes": {
     "repository": "coredev-uk/nixos",
     "workflows": ["hosts.yml"],
-    "model": "deepseek/deepseek-v4.1-flash",
     "perDay": 20
   },
   "questions": [

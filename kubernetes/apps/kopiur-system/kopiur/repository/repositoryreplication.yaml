@@ -24,4 +24,6 @@ spec:
     # forever. The bucket's lifecycle rule keeps deleted files for 30 days, which is the undo
     # window if the NAS repository is ever emptied by mistake and this run copies that.
     deleteExtra: true
-    parallel: 4
+    # 4 at once drew B2's per-account "too_many_requests" until kopia gave up on a blob
+    # (2026-11-25, three runs); the nightly delta is small, so 2 costs nothing in practice.
+    parallel: 2

@@ -27,9 +27,13 @@ on:
           - info
         required: true
       version:
-        description: Renovate Version
-        default: latest
-        required: true
+        description: Renovate Version (empty for the pinned RENOVATE_VERSION)
+        default: ""
+        required: false
+
+env:
+  # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
+  RENOVATE_VERSION: 44.262.1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
@@ -41,7 +45,7 @@ permissions:
 jobs:
   main:
     name: Renovate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       id-token: write
       packages: read
@@ -74,4 +78,4 @@ jobs:
           RENOVATE_PLATFORM_COMMIT: true
         with:
           token: ${{ steps.app-token.outputs.token }}
-          renovate-version: ${{ inputs.version || 'latest' }}
+          renovate-version: ${{ inputs.version || env.RENOVATE_VERSION }}

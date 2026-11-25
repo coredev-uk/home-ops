@@ -25,7 +25,14 @@ spec:
               BASE_URL: https://changes.hera.ac
               HIDE_REFERER: "true"
               ALLOW_IANA_RESTRICTED_ADDRESSES: "true"
-              PLAYWRIGHT_DRIVER_URL: ws://browserless.default.svc.cluster.local:3000
+              BROWSERLESS_TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: browserless-token
+                    key: TOKEN
+              PLAYWRIGHT_DRIVER_URL:
+                value: ws://browserless.default.svc.cluster.local:3000?token=$(BROWSERLESS_TOKEN)
+                dependsOn: BROWSERLESS_TOKEN
             probes:
               liveness:
                 enabled: true

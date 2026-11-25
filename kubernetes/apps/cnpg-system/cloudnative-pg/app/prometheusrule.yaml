@@ -1,0 +1,52 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cloudnative-pg-rules
+spec:
+  groups:
+    - name: cloudnative-pg.rules
+      rules:
+        # Every database is a single instance, so one not ready is that app's database down.
+        - alert: CNPGInstanceNotReady
+          expr: |-
+            kube_pod_container_status_ready{container="postgres"} == 0
+          for: 5m
+          annotations:
+            summary: >-
+              Postgres {{ $labels.namespace }}/{{ $labels.pod }} has not been ready for 5 minutes
+          labels:
+            severity: critical
+
+        - alert: CNPGCollectorDown
+          expr: |-
+            cnpg_collector_up == 0
+          for: 5m
+          annotations:
+            summary: >-
+              The CloudNativePG exporter in {{ $labels.namespace }}/{{ $labels.pod }} can't reach Postgres
+          labels:
+            severity: critical
+
+        - alert: CNPGHighConnections
+          expr: |-
+            sum by (namespace, pod) (cnpg_backends_total)
+              / max by (namespace, pod) (cnpg_pg_settings_setting{name="max_connections"}) > 0.8
+          for: 10m
+          annotations:
+            summary: >-
+              Postgres {{ $labels.namespace }}/{{ $labels.pod }} is using {{ $value | humanizePercentage }} of its connections
+          labels:
+            severity: warning
+
+        # Postgres stops accepting writes near 2 billion; autovacuum normally keeps this far lower.
+        - alert: CNPGTransactionIDAgeHigh
+          expr: |-
+            max by (namespace, pod) (cnpg_pg_database_xid_age) > 300000000
+          for: 1h
+          annotations:
+            summary: >-
+              Postgres {{ $labels.namespace }}/{{ $labels.pod }} has a transaction ID age of {{ $value }}; autovacuum may be stuck
+          labels:
+            severity: warning

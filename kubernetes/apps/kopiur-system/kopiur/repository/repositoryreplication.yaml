@@ -20,9 +20,11 @@ spec:
   schedule:
     cron: 0 5 * * *
   sync:
-    # Blobs maintenance removes from the NAS are removed from B2 too, so the copy doesn't grow
-    # forever. The bucket's lifecycle rule keeps deleted files for 30 days, which is the undo
-    # window if the NAS repository is ever emptied by mistake and this run copies that.
+    # Blobs maintenance removes from the NAS are removed from B2 too. Kopia "deletes" on B2 by
+    # hiding the file, so the bucket (private, set through the B2 API on 2026-11-25) has a
+    # lifecycle rule removing hidden files after 7 days: without it B2 would keep every deleted
+    # blob forever. Those 7 days are the undo window if the NAS repository is ever emptied by
+    # mistake and this run copies that; KopiurOffsiteCopyStale fires well inside it.
     deleteExtra: true
     # 4 at once drew B2's per-account "too_many_requests" until kopia gave up on a blob
     # (2026-11-25, three runs); the nightly delta is small, so 2 costs nothing in practice.

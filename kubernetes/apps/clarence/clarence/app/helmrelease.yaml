@@ -114,6 +114,28 @@ spec:
             probes: *probes
             securityContext: *securityContext
             resources: *resources
+      # nixos serves coredev-uk/nixos, Paul's Nix flake: nothing deploys (a merge counts once the
+      # host builds pass on main), so no Kubernetes API access. Its Hosts workflow failures are
+      # explained too (failureNotes in policy-nixos.json).
+      nixos:
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        serviceAccount:
+          identifier: nixos
+        pod:
+          automountServiceAccountToken: false
+          terminationGracePeriodSeconds: 300
+        containers:
+          app:
+            image: *image
+            args:
+              - -policy=/etc/clarence/config/policy.json
+              - -secrets=/etc/clarence/secret
+              - -state=/var/lib/clarence/state.db
+            probes: *probes
+            securityContext: *securityContext
+            resources: *resources
     defaultPodOptions:
       imagePullSecrets:
         - name: clarence-ghcr-pull
@@ -132,6 +154,9 @@ spec:
         automountServiceAccountToken: false
       self:
         forceRename: clarence-self
+        automountServiceAccountToken: false
+      nixos:
+        forceRename: clarence-nixos
         automountServiceAccountToken: false
     # Read-only: Clarence maps changed files onto the Kustomizations and HelmReleases that deploy
     # them, gates merges on node, Ceph and tuppr health, and checks the deploy afterwards.
@@ -193,6 +218,11 @@ spec:
         ports:
           http:
             port: *port
+      nixos:
+        controller: nixos
+        ports:
+          http:
+            port: *port
     # GitHub's webhook deliveries for every repository arrive at the home-ops controller, which
     # checks the signature and forwards other repositories' deliveries to their controller
     # (webhook.peers in policy-home-ops.json). Only /webhook is public; /metrics stays inside.
@@ -244,6 +274,14 @@ spec:
             relabelings:
               - targetLabel: repo
                 replacement: clarence
+      nixos:
+        service:
+          identifier: nixos
+        endpoints:
+          - port: http
+            relabelings:
+              - targetLabel: repo
+                replacement: nixos
     persistence:
       config-home-ops:
         type: configMap
@@ -266,6 +304,14 @@ spec:
         name: clarence-self-policy
         advancedMounts:
           self:
+            app:
+              - path: /etc/clarence/config
+                readOnly: true
+      config-nixos:
+        type: configMap
+        name: clarence-nixos-policy
+        advancedMounts:
+          nixos:
             app:
               - path: /etc/clarence/config
                 readOnly: true
@@ -300,6 +346,12 @@ spec:
         existingClaim: clarence-self-state
         advancedMounts:
           self:
+            app:
+              - path: /var/lib/clarence
+      state-nixos:
+        existingClaim: clarence-nixos-state
+        advancedMounts:
+          nixos:
             app:
               - path: /var/lib/clarence
       # The Trivy client's cache (security.cacheDir): the Java index, fetched on the first image

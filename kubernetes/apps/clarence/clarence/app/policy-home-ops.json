@@ -120,14 +120,9 @@
   "webhook": {
     "peers": {
       "coredev-uk/sona-go": "http://clarence-sona-go.clarence.svc.cluster.local:8080",
-      "coredev-uk/clarence": "http://clarence-self.clarence.svc.cluster.local:8080"
+      "coredev-uk/clarence": "http://clarence-self.clarence.svc.cluster.local:8080",
+      "coredev-uk/nixos": "http://clarence-nixos.clarence.svc.cluster.local:8080"
     }
-  },
-  "failureNotes": {
-    "repository": "coredev-uk/nixos",
-    "workflows": ["hosts.yml"],
-    "model": "deepseek/deepseek-v4.1-flash",
-    "perDay": 20
   },
   "health": {
     "cephBlockOn": ["HEALTH_WARN", "HEALTH_ERR"],

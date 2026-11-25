@@ -69,10 +69,11 @@ spec:
                 QBT = "http://localhost/api/v2/app"
 
                 def lease(op):
-                    # Public port 1 for private port 0: Proton assigns the port.
+                    # Private port 1, no suggested public port: Proton assigns it.
+                    # Private port 0 would mean "delete mappings" (RFC 6886).
                     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                         s.settimeout(5)
-                        s.sendto(struct.pack("!BBHHHI", 0, op, 0, 0, 1, 60), ("10.2.0.1", 5351))
+                        s.sendto(struct.pack("!BBHHHI", 0, op, 0, 1, 0, 60), ("10.2.0.1", 5351))
                         _, _, result, _, _, port, _ = struct.unpack("!BBHIHHI", s.recv(16))
                     if result:
                         raise RuntimeError(f"NAT-PMP result code {result}")

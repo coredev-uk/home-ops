@@ -1,0 +1,27 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/repositoryreplication_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: RepositoryReplication
+metadata:
+  name: expanse-b2
+spec:
+  # The off-site copy: the NAS repository's encrypted blobs, mirrored nightly to Backblaze B2.
+  sourceRef:
+    kind: ClusterRepository
+    name: expanse
+  destination:
+    b2:
+      bucket: coredev-home-ops-kopiur
+      auth:
+        secretRef:
+          name: kopiur-b2-secret
+  # After the 03:00 full maintenance (up to 1h jitter); timezone from the repository's
+  # scheduleDefaults (Europe/London).
+  schedule:
+    cron: 0 5 * * *
+  sync:
+    # Blobs maintenance removes from the NAS are removed from B2 too, so the copy doesn't grow
+    # forever. The bucket's lifecycle rule keeps deleted files for 30 days, which is the undo
+    # window if the NAS repository is ever emptied by mistake and this run copies that.
+    deleteExtra: true
+    parallel: 4

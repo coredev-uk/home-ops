@@ -21,6 +21,13 @@ kube-state-metrics:
         verbs:
           - list
           - watch
+      - apiGroups:
+          - kopiur.home-operations.com
+        resources:
+          - repositoryreplications
+        verbs:
+          - list
+          - watch
   customResourceState:
     enabled: true
     config:
@@ -362,3 +369,27 @@ kube-state-metrics:
                   webhook_path:
                     - status
                     - webhookPath
+          # Kopiur exports no per-replication timestamp, so the off-site copy's last success
+          # comes from the CR's status (KopiurOffsiteCopyStale in kopiur-system).
+          - groupVersionKind:
+              group: kopiur.home-operations.com
+              version: v1alpha1
+              kind: RepositoryReplication
+            metricNamePrefix: kopiur_repositoryreplication
+            metrics:
+              - name: last_replicated_timestamp_seconds
+                help: When a Kopiur RepositoryReplication last completed a run successfully.
+                each:
+                  type: Gauge
+                  gauge:
+                    path:
+                      - status
+                      - lastReplicated
+                    nilIsZero: true
+                labelsFromPath:
+                  name:
+                    - metadata
+                    - name
+                  exported_namespace:
+                    - metadata
+                    - namespace

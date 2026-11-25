@@ -26,4 +26,15 @@ spec:
   sources:
     - pvc:
         name: ${APP}
+  # Quick checks the repository's blobs nightly; deep restores the latest snapshot into a
+  # throwaway volume once a month, the closest thing to a real recovery.
+  verification:
+    deep:
+      capacity: ${KOPIUR_CAPACITY:=5Gi}
+      storageClassName: ceph-block
+      schedule:
+        cron: H 5 1 * *
+    quick:
+      schedule:
+        cron: H 3 * * *
   volumeSnapshotClassName: ${KOPIUR_SNAPSHOTCLASS:=csi-ceph-blockpool}

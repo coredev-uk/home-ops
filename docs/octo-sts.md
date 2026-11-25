@@ -15,7 +15,7 @@ A workflow job asks for a token with `id-token: write` and:
 
 `identity` names a trust policy in the same repository, `.github/chainguard/<identity>.sts.yaml`, read from its default branch, so a policy works only once it's merged. Each one pins the OIDC `subject` (with immutable subject claims, `repo:coredev-uk@64542347/<repo>@<repo id>:ref:refs/heads/main`, or `...:environment:<name>` for a job in an environment, which keeps the environment's protection rules as the gate) and the `workflow_ref` of the one workflow it serves, and lists the permissions the token gets. bot-cecil must also be installed on the repository and hold those permissions.
 
-Policies: `.github/chainguard/{renovate,tag}.sts.yaml` here, `update-flake-lock` in coredev-uk/nixos, `renovate` in coredev-uk/clarence and coredev-uk/jellyfin-hera-tv, and one per workflow in coredev-uk/sona-go.
+Policies: `.github/chainguard/{renovate,tag}.sts.yaml` here, `flake-update` in coredev-uk/nixos (its `flake-update.yml` opens the per-input update pull requests that Clarence merges), `renovate` in coredev-uk/clarence and coredev-uk/jellyfin-hera-tv, and one per workflow in coredev-uk/sona-go.
 
 One-time setup:
 

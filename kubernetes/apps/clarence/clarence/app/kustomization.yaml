@@ -19,6 +19,9 @@ configMapGenerator:
   - name: clarence-self-policy
     files:
       - policy.json=./policy-clarence.json
+  - name: clarence-nixos-policy
+    files:
+      - policy.json=./policy-nixos.json
   - name: clarence-dashboard
     files:
       - clarence.json=./resources/clarence.json

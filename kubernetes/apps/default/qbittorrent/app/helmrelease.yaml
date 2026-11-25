@@ -84,6 +84,10 @@ spec:
         ports:
           bittorrent-tcp:
             port: *torrentPort
+          # uTP and DHT: qBittorrent listens for both on the same port.
+          bittorrent-udp:
+            port: *torrentPort
+            protocol: UDP
     route:
       app:
         hostnames:

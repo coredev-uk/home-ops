@@ -12,6 +12,8 @@ spec:
   values:
     controllers:
       browserless:
+        annotations:
+          reloader.stakater.com/auto: "true"
         containers:
           app:
             image:
@@ -19,6 +21,12 @@ spec:
               tag: v2.64.3@sha256:f53b8d1dedf3dce0cc738ae4d5cb82a72cb895914364bc36345215da7b7b785c
             env:
               TZ: Europe/London
+              # Any pod in the cluster could otherwise drive a browser; changedetection has it.
+              TOKEN:
+                valueFrom:
+                  secretKeyRef:
+                    name: browserless-token
+                    key: TOKEN
               # Browsers running at once; beyond this, up to QUEUED connections wait.
               CONCURRENT: "4"
               QUEUED: "10"
@@ -30,13 +38,12 @@ spec:
               # changedetection's Browser Steps.
               TIMEOUT: "120000"
             probes:
+              # A port check: /active would need the token, which a probe can't carry.
               liveness: &probes
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    # 204 while the server is up. No TOKEN is set, so it needs no auth.
-                    path: /active
+                  tcpSocket:
                     port: &port 3000
                   periodSeconds: 30
                   timeoutSeconds: 5
@@ -46,8 +53,7 @@ spec:
                 enabled: true
                 custom: true
                 spec:
-                  httpGet:
-                    path: /active
+                  tcpSocket:
                     port: *port
                   timeoutSeconds: 5
                   failureThreshold: 30

@@ -18,7 +18,7 @@ spec:
           app:
             image:
               repository: panonim/dynacat
-              tag: 3.0.3
+              tag: 3.0.3@sha256:b822ccc2e0646bf8d1e99b7e1fa257a91e01392859d798f2547cce0ae4e60f69
             env:
               TZ: Europe/London
               QBITTORRENT_URL: https://qbittorrent.hera.ac

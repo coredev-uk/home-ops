@@ -6,7 +6,7 @@ metadata:
   name: kometa
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/volume # config is the ConfigMap; the volume is Kometa's cache
   dependsOn:
     - name: rook-ceph-cluster
       namespace: rook-ceph

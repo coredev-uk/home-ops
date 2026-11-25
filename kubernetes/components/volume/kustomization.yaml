@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# A volume with no backup, for apps whose config lives in git or whose data rebuilds itself.
+# Apps with data worth keeping use kopiur/backup instead.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./pvc.yaml

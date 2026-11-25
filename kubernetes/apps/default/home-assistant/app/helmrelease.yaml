@@ -56,7 +56,11 @@ spec:
               limits:
                 memory: 1Gi
     defaultPodOptions:
-      annotations:
+      # On the node's own network (the Cluster VLAN), where the UniFi gateway reflects mDNS from
+      # the Default network: discovery (Cast, HomeKit, ESPHome) and the HomeKit bridge's
+      # advertised address then work. Nothing else on the nodes uses HA's ports (8123, 5353, 21063).
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

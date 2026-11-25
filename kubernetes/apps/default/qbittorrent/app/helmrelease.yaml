@@ -20,7 +20,6 @@ spec:
             env:
               TZ: Europe/London
               QBT_WEBUI_PORT: &port 80
-              QBT_TORRENTING_PORT: &torrentPort 31288
             probes:
               liveness:
                 enabled: true
@@ -52,6 +51,56 @@ spec:
                 memory: 1216Mi
               limits:
                 memory: 2Gi
+          # ProtonVPN only forwards a port while a NAT-PMP lease on 10.2.0.1
+          # is held. Proton picks the port, so this renews the 60s lease and
+          # points qBittorrent's listen port at it. Relies on qBittorrent's
+          # localhost auth bypass. The UniFi gateway DNATs tunnel ports
+          # 1024-65535 to this pod's VPN address.
+          port-forward:
+            image:
+              repository: docker.io/library/python
+              tag: 3.13.18-alpine3.24@sha256:9ef1a599f863231c3d91e941389bfdc4a2d6070557243d54df1a4e57015b960e
+            command:
+              - python
+              - -c
+              - |
+                import json, socket, struct, time, urllib.parse, urllib.request
+
+                QBT = "http://localhost/api/v2/app"
+
+                def lease(op):
+                    # Public port 1 for private port 0: Proton assigns the port.
+                    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                        s.settimeout(5)
+                        s.sendto(struct.pack("!BBHHHI", 0, op, 0, 0, 1, 60), ("10.2.0.1", 5351))
+                        _, _, result, _, _, port, _ = struct.unpack("!BBHIHHI", s.recv(16))
+                    if result:
+                        raise RuntimeError(f"NAT-PMP result code {result}")
+                    return port
+
+                while True:
+                    try:
+                        port = lease(1)
+                        if lease(2) != port:
+                            raise RuntimeError("UDP and TCP leases got different ports")
+                        current = json.load(urllib.request.urlopen(f"{QBT}/preferences", timeout=5))["listen_port"]
+                        if current != port:
+                            body = urllib.parse.urlencode({"json": json.dumps({"listen_port": port})}).encode()
+                            urllib.request.urlopen(f"{QBT}/setPreferences", body, timeout=5)
+                            print(f"listen port {current} -> {port}", flush=True)
+                        time.sleep(45)
+                    except Exception as e:
+                        print(f"port forward: {e}", flush=True)
+                        time.sleep(10)
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 5m
+              limits:
+                memory: 64Mi
     defaultPodOptions:
       annotations:
         k8s.v1.cni.cncf.io/networks: |-
@@ -76,18 +125,6 @@ spec:
         ports:
           http:
             port: *port
-      bittorrent:
-        type: LoadBalancer
-        annotations:
-          lbipam.cilium.io/ips: 192.168.110.244
-        externalTrafficPolicy: Local
-        ports:
-          bittorrent-tcp:
-            port: *torrentPort
-          # uTP and DHT: qBittorrent listens for both on the same port.
-          bittorrent-udp:
-            port: *torrentPort
-            protocol: UDP
     route:
       app:
         hostnames:

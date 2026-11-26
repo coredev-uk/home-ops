@@ -40,17 +40,18 @@ spec:
               OIDC_BUTTON_LABEL: HyperionID
               AUTH_LOCAL_LOGIN_ENABLED: "false"
               AUTH_LOCAL_ADMIN_OVERRIDE_ENABLED: "false"
-              # link_only blocks JIT creation of the very first user (there is
-              # no invitation and local login is off), so the first OIDC login
-              # needs create_and_link. After your account exists, switch this
-              # to `link_only` to close signups.
-              AUTH_JIT_MODE: create_and_link
+              # OIDC logins only link to existing users; nobody new can sign up.
+              AUTH_JIT_MODE: link_only
               AUTO_SYNC_TIME: "06:30"
               AUTO_SYNC_TIMEZONE: Europe/London
               MARKET_DATA_SYNC_TIME: "17:30"
               MARKET_DATA_SYNC_TIMEZONE: Europe/London
               EXCHANGE_RATE_PROVIDER: yahoo_finance
               SECURITIES_PROVIDER: yahoo_finance
+              # AI chat, categorisation and merchant detection (which finds the
+              # websites Brandfetch needs for merchant logos) via OpenRouter.
+              OPENAI_URI_BASE: https://openrouter.ai/api/v1
+              OPENAI_MODEL: google/gemini-3.8-flash
             envFrom: &envFrom
               - secretRef:
                   name: sure-secret

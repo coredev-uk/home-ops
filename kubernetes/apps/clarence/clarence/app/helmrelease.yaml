@@ -65,7 +65,7 @@ spec:
             resources:
               requests:
                 cpu: 20m
-                memory: 304Mi
+                memory: 384Mi
               limits:
                 memory: 1Gi
       # sona-go deploys nowhere: no Kubernetes API access at all.

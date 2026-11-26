@@ -107,6 +107,28 @@ spec:
               limits:
                 memory: 1472Mi
             securityContext: *securityContext
+      # Brandfetch shows a letter for brands it has no icon for; swap those
+      # merchant logos for the site's favicon via Google's favicon service.
+      logo-fallback:
+        type: cronjob
+        cronjob:
+          # After the 06:30 sync and the rules run that follows it.
+          schedule: 0 7 * * *
+          backoffLimit: 0
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            image: *image
+            args: ["./bin/rails", "runner", "/app/logo-fallback.rb"]
+            env: *env
+            envFrom: *envFrom
+            resources:
+              requests:
+                cpu: 50m
+                memory: 512Mi
+              limits:
+                memory: 1Gi
+            securityContext: *securityContext
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -116,6 +138,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
     service:
       app:
+        controller: sure
         ports:
           http:
             port: *port
@@ -129,8 +152,13 @@ spec:
     persistence:
       storage:
         existingClaim: "{{ .Release.Name }}"
-        globalMounts:
-          - path: /rails/storage
+        # RWO: only the web/worker pod mounts it, never the cronjob.
+        advancedMounts:
+          sure:
+            app:
+              - path: /rails/storage
+            worker:
+              - path: /rails/storage
       # Ruby's Dir.tmpdir rejects a world-writable dir without the sticky
       # bit. A disk emptyDir lacks it; a tmpfs (Memory) one has it.
       tmp:
@@ -148,3 +176,11 @@ spec:
         type: emptyDir
         globalMounts:
           - path: /rails/tmp/sockets
+      logo-fallback:
+        type: configMap
+        name: sure-logo-fallback
+        advancedMounts:
+          logo-fallback:
+            app:
+              - path: /app/logo-fallback.rb
+                subPath: logo-fallback.rb

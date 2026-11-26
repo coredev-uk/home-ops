@@ -10,5 +10,8 @@ configMapGenerator:
   - name: sure-logo-fallback
     files:
       - ./resources/logo-fallback.rb
+  - name: sure-initials-avatar
+    files:
+      - ./resources/initials_avatar.rb
 generatorOptions:
   disableNameSuffixHash: true

@@ -184,3 +184,10 @@ spec:
             app:
               - path: /app/logo-fallback.rb
                 subPath: logo-fallback.rb
+      # Coloured initials for anything without a logo; see the file's header.
+      initials-avatar:
+        type: configMap
+        name: sure-initials-avatar
+        globalMounts:
+          - path: /rails/config/initializers/initials_avatar.rb
+            subPath: initials_avatar.rb

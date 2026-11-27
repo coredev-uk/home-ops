@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: unas
+spec:
+  allowCrossNamespaceImport: true
+  # Without this the operator caches the fetched JSON forever; main-branch URLs would never update
+  contentCacheDuration: 24h
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  # Upstream's canonical dashboard, CI-checked against the exporter's metrics. It references the
+  # datasource as uid "prometheus", which Grafana resolves by name like the substituted inputs elsewhere.
+  url: https://raw.githubusercontent.com/sharkops-io/unas-protect-exporter/refs/heads/main/dashboards/unas.json

@@ -155,7 +155,7 @@ spec:
         # answers 200; this counter is the only sign of it.
         - alert: UNASExporterGatheringErrors
           expr: |-
-            increase(promhttp_metric_handler_errors_total{job="unas-exporter", cause="gathering"}[15m]) > 0
+            increase(promhttp_metric_handler_errors_total{job="unas-protect-exporter", cause="gathering"}[15m]) > 0
           annotations:
             summary: >-
               The UNAS exporter dropped series from /metrics in the last 15 minutes

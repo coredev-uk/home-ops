@@ -60,3 +60,8 @@ spec:
             interval: 1m
             # Above the exporter's 25s per-collector timeout.
             scrapeTimeout: 30s
+            # Upstream's dashboard matches the exporter's own metrics on this job name.
+            relabelings:
+              - action: replace
+                targetLabel: job
+                replacement: unas-protect-exporter

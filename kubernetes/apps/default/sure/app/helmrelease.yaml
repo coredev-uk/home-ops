@@ -122,12 +122,28 @@ spec:
             args: ["./bin/rails", "runner", "/app/logo-fallback.rb"]
             env: *env
             envFrom: *envFrom
-            resources:
+            resources: &jobResources
               requests:
                 cpu: 50m
                 memory: 512Mi
               limits:
                 memory: 1Gi
+            securityContext: *securityContext
+      # Sure can't model the PCP's interest or final payment; after each
+      # monthly payment this sets the finance balance from the agreement.
+      pcp-schedule:
+        type: cronjob
+        cronjob:
+          schedule: 30 7 * * *
+          backoffLimit: 0
+          ttlSecondsAfterFinished: 86400
+        containers:
+          app:
+            image: *image
+            args: ["./bin/rails", "runner", "/app/pcp-schedule.rb"]
+            env: *env
+            envFrom: *envFrom
+            resources: *jobResources
             securityContext: *securityContext
     defaultPodOptions:
       securityContext:
@@ -191,3 +207,11 @@ spec:
         globalMounts:
           - path: /rails/config/initializers/initials_avatar.rb
             subPath: initials_avatar.rb
+      pcp-schedule:
+        type: configMap
+        name: sure-pcp-schedule
+        advancedMounts:
+          pcp-schedule:
+            app:
+              - path: /app/pcp-schedule.rb
+                subPath: pcp-schedule.rb

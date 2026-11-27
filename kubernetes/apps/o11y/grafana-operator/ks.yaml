@@ -22,7 +22,7 @@ metadata:
   name: grafana-database
 spec:
   dependsOn:
-    - name: cloudnative-pg
+    - name: cloudnative-pg-catalog
       namespace: cnpg-system
     - name: rook-ceph-cluster
       namespace: rook-ceph

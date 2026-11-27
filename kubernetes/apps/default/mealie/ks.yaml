@@ -6,7 +6,7 @@ metadata:
   name: mealie-database
 spec:
   dependsOn:
-    - name: cloudnative-pg
+    - name: cloudnative-pg-catalog
       namespace: cnpg-system
     - name: kopiur
       namespace: kopiur-system

@@ -1,0 +1,12 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/postgresql.cnpg.io/clusterimagecatalog_v1.json
+# The Postgres image of every Cluster (imageCatalogRef major 18). Renovate bumps it here once,
+# and a major upgrade adds the next major's entry before the Clusters move to it.
+apiVersion: postgresql.cnpg.io/v1
+kind: ClusterImageCatalog
+metadata:
+  name: postgresql
+spec:
+  images:
+    - major: 18
+      image: ghcr.io/cloudnative-pg/postgresql:18.7-standard-bookworm

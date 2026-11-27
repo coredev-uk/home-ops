@@ -90,6 +90,12 @@ spec:
           rotation:
             enabled: false
         controllerPlugin:
+          # kopiur's Central movers create PVCs in kopiur-system from VolumeSnapshots in app
+          # namespaces. With this gate the provisioner needs the ReferenceGrant CRD (Gateway API,
+          # from envoy-gateway) and the RBAC in rbac.yaml, or it never becomes ready.
+          containerExtraArgs:
+            csi-provisioner:
+              - --feature-gates=CrossNamespaceVolumeDataSource=true
           replicas: 2
       # No CephFS filesystem (rook-ceph-cluster), so no driver for it.
       cephfs:

@@ -62,6 +62,9 @@ spec:
                             target:
                               group: helm.toolkit.fluxcd.io
                               kind: HelmRelease
+                        # A Kustomization whose ExternalArtifact the ArtifactGenerator has not produced
+                        # yet (a new app) retries in minutes, not at its 1h interval.
+                        retryInterval: 2m
                     target:
                       group: kustomize.toolkit.fluxcd.io
                       kind: Kustomization

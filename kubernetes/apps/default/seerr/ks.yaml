@@ -25,8 +25,8 @@ spec:
   path: ./kubernetes/apps/default/seerr/database
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: seerr
     namespace: flux-system
   targetNamespace: default
 ---
@@ -49,8 +49,8 @@ spec:
       CONTROLLER: StatefulSet
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: seerr
     namespace: flux-system
   targetNamespace: default
 ---
@@ -64,7 +64,7 @@ spec:
   path: ./kubernetes/apps/default/seerr/exporter
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: seerr
     namespace: flux-system
   targetNamespace: default

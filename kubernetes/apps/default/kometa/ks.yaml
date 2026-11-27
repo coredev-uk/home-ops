@@ -17,7 +17,7 @@ spec:
       APP: kometa
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: kometa
     namespace: flux-system
   targetNamespace: default

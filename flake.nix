@@ -32,23 +32,24 @@
       flate =
         pkgs:
         let
-          version = "0.6.5";
+          # 0.8.0: renders Kustomizations sourced from an ArtifactGenerator's ExternalArtifacts
+          version = "0.8.0";
           platforms = {
             aarch64-darwin = {
               name = "darwin_arm64";
-              sha256 = "76274be5ef8b016e80ea0abf7b6f612adc76a89f7613d2e7f7e3550af5b9e186";
+              sha256 = "b881cfbef651084d0c9b97c6c2d60103022b43a2caeddc1d06febf93c065dd7d";
             };
             aarch64-linux = {
               name = "linux_arm64";
-              sha256 = "7f514814890df4a095887943ae606be1a8af878606b7bd0575efe75402cd38dc";
+              sha256 = "4ae502e56054ee9c5019995554856c1f6f8f44b3f6fef087704b2d31c27ab9c6";
             };
             x86_64-darwin = {
               name = "darwin_amd64";
-              sha256 = "4b1dcefb4613b4c02f3374c8fc8d4082d42d893f4303daa16e24e37d58bccb78";
+              sha256 = "cf78f16c81df6d399558a4e9db8cfc30d16bdf8f18647abd6e04e0e329982cc1";
             };
             x86_64-linux = {
               name = "linux_amd64";
-              sha256 = "37eb0cd91a6752340754375743aa616c263cd8367ce594abd42ee955e1ec0099";
+              sha256 = "76940fb6ff060e09a40e1a835fc9c5cd24e18fdd29e4e79382852821e0ac01c2";
             };
           };
           platform = platforms.${pkgs.stdenv.hostPlatform.system};

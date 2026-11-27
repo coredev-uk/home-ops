@@ -17,7 +17,7 @@ spec:
   path: ./kubernetes/apps/network/pihole/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: pihole
     namespace: flux-system
   targetNamespace: network

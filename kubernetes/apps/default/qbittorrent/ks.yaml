@@ -19,7 +19,7 @@ spec:
       CONTROLLER: StatefulSet
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: qbittorrent
     namespace: flux-system
   targetNamespace: default

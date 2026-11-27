@@ -12,7 +12,7 @@ spec:
   path: ./kubernetes/apps/t3/shared/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: shared
     namespace: flux-system
   targetNamespace: t3

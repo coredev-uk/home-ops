@@ -19,8 +19,8 @@ spec:
   path: ./kubernetes/apps/o11y/victoria-metrics/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: victoria-metrics
     namespace: flux-system
   targetNamespace: o11y
 ---
@@ -37,7 +37,7 @@ spec:
   path: ./kubernetes/apps/o11y/victoria-metrics/logs-alerts
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: victoria-metrics
     namespace: flux-system
   targetNamespace: o11y

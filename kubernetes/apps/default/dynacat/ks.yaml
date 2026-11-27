@@ -11,6 +11,8 @@ spec:
   interval: 1h
   path: ./kubernetes/apps/default/dynacat/app
   prune: true
+  # Git, not the dynacat ExternalArtifact: source-watcher packs artifacts with Flux's default
+  # ignore rules, which drop *.png whatever .sourceignore says, and the theme ships app-icon.png.
   sourceRef:
     kind: GitRepository
     name: flux-system

@@ -32,8 +32,8 @@ spec:
       KOPIUR_SCHEDULE: "H * * * *"
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: environment
     namespace: flux-system
   targetNamespace: t3
 ---
@@ -61,7 +61,7 @@ spec:
       KOPIUR_SCHEDULE: "H * * * *"
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: environment
     namespace: flux-system
   targetNamespace: t3

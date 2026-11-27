@@ -20,7 +20,7 @@ spec:
       VOLUME_CAPACITY: 1Gi
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: headplane
     namespace: flux-system
   targetNamespace: network

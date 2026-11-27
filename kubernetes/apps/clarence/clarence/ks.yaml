@@ -12,7 +12,7 @@ spec:
   path: ./kubernetes/apps/clarence/clarence/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: clarence
     namespace: flux-system
   targetNamespace: clarence

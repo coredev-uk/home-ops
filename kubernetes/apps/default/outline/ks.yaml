@@ -25,8 +25,8 @@ spec:
   path: ./kubernetes/apps/default/outline/database
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: outline
     namespace: flux-system
   targetNamespace: default
 ---
@@ -45,8 +45,8 @@ spec:
   path: ./kubernetes/apps/default/outline/valkey
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: outline
     namespace: flux-system
   targetNamespace: default
 ---
@@ -71,7 +71,7 @@ spec:
       KOPIUR_CAPACITY: 10Gi
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: outline
     namespace: flux-system
   targetNamespace: default

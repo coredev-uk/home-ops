@@ -25,8 +25,8 @@ spec:
   path: ./kubernetes/apps/default/pocket-id/database
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: pocket-id
     namespace: flux-system
   targetNamespace: default
 ---
@@ -48,6 +48,8 @@ spec:
     substitute:
       APP: pocket-id
   prune: true
+  # Git, not the pocket-id ExternalArtifact: source-watcher packs artifacts with Flux's default
+  # ignore rules, which drop *.png and *.jpg whatever .sourceignore says, and the branding ships both.
   sourceRef:
     kind: GitRepository
     name: flux-system

@@ -33,7 +33,7 @@ A single Talos Kubernetes cluster, reconciled by Flux from this repository.
 | Beelink SEi14 (`hyperion-0`)            |   1 | Intel Core Ultra 5 125H | 32GB DDR5 | 1TB NVMe M.2 (Ceph), 256GB NVMe M.2 (Talos) | Kubernetes node | Google Coral TPU A+E |
 | Lenovo ThinkCentre M720q (`hyperion-1`) |   1 | Intel Core i5-8400T     | 32GB DDR4 | 1TB SSD (Ceph), 128GB SSD (Talos)           | Kubernetes node | -                    |
 | Lenovo ThinkCentre M920q (`hyperion-2`) |   1 | Intel Core i5-8500T     | 32GB DDR4 | 1TB SSD (Ceph), 500GB SSD (Talos)           | Kubernetes node | -                    |
-| UniFi UNAS 2                            |   1 | -                       | -         | 2x 2TB Seagate IronWolf HDD                 | NAS             | -                    |
+| UniFi UNAS 2                            |   1 | -                       | -         | 1x 4TB Seagate IronWolf HDD (slot 2 empty)  | NAS             | -                    |
 
 </details>
 

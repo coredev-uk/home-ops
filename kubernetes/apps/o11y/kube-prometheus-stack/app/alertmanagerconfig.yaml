@@ -14,7 +14,9 @@ spec:
           - name: alertname
             value: InfoInhibitor
             matchType: =
-      - receiver: buddy-heartbeat
+      # The always-firing Watchdog alert as a heartbeat: to the buddy's Gatus, and to hermes'
+      # (coredev-uk/nixos hosts/hermes/watchdog.nix), which alerts here when it stops.
+      - receiver: heartbeats
         groupInterval: 2m
         groupWait: 0s
         repeatInterval: 2m30s
@@ -44,7 +46,7 @@ spec:
 
   receivers:
     - name: blackhole
-    - name: buddy-heartbeat
+    - name: heartbeats
       webhookConfigs:
         - httpConfig:
             bearerTokenSecret:
@@ -53,6 +55,11 @@ spec:
           urlSecret:
             name: alertmanager-secret
             key: BUDDY_HEARTBEAT_URL
+        - httpConfig:
+            bearerTokenSecret:
+              name: alertmanager-secret
+              key: HERMES_HEARTBEAT_TOKEN
+          url: http://192.168.130.15:8080/api/v1/endpoints/cluster_alertmanager/external?success=true
     - name: pushover
       pushoverConfigs:
         - html: true

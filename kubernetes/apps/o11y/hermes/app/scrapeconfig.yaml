@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/scrapeconfig_v1alpha1.json
+# hermes, the Raspberry Pi on the IoT VLAN (coredev-uk/nixos hosts/hermes): node_exporter with its
+# SD card and throttling metrics. Its firewall lets the nodes' network in on 9100.
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: hermes
+spec:
+  jobName: hermes
+  scrapeInterval: 1m
+  staticConfigs:
+    - targets:
+        - 192.168.130.15:9100
+      labels:
+        instance: hermes

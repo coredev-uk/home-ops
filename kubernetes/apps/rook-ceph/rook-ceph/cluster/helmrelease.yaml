@@ -40,7 +40,7 @@ spec:
       dashboard:
         urlPrefix: /
         ssl: false
-        prometheusEndpoint: http://prometheus-operated.o11y.svc.cluster.local:9090
+        prometheusEndpoint: http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428
       mgr:
         modules:
           - name: pg_autoscaler
@@ -103,7 +103,7 @@ spec:
       prometheusRuleOverrides:
         # It extrapolates two days of every node filesystem five days ahead, so a one-off step
         # (images landing on a node) reads as a full disk. node-exporter's NodeFilesystemSpaceFillingUp
-        # and NodeFilesystemAlmostOutOfSpace (kube-prometheus-stack) cover local disks by free space.
+        # and NodeFilesystemAlmostOutOfSpace (victoria-metrics) cover local disks by free space.
         CephNodeDiskspaceWarning:
           disabled: true
     toolbox:

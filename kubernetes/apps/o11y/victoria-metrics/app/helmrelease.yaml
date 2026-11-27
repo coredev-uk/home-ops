@@ -1,0 +1,527 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/helm.toolkit.fluxcd.io/helmrelease_v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-metrics
+spec:
+  chartRef:
+    kind: OCIRepository
+    name: victoria-metrics
+  interval: 1h
+  valuesFrom:
+    - kind: ConfigMap
+      name: kube-state-metrics-configmap
+      valuesKey: kube-state-metrics.yaml
+  values:
+    fullnameOverride: victoria-metrics
+    global:
+      image:
+        registry: quay.io
+    victoria-metrics-operator:
+      # The chart ships its CRDs as templates; the cleanup hook would delete them (and every
+      # VMRule and scrape object) on uninstall.
+      crds:
+        cleanup:
+          enabled: false
+      operator:
+        # Converted Prometheus objects (ServiceMonitor, PodMonitor, PrometheusRule, Probe,
+        # ScrapeConfig) are owned by their source, so deleting the source removes the copy.
+        enable_converter_ownership: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 96Mi
+        limits:
+          memory: 256Mi
+    grafana:
+      enabled: false
+    # The kube-prometheus dashboards the chart syncs, minus the ones with nothing to show here.
+    defaultDashboards:
+      grafanaOperator:
+        enabled: true
+        spec:
+          folder: o11y
+      dashboards:
+        # Talos nodes only: no second cluster, no Windows, AIX or macOS nodes, no Prometheus.
+        k8s-resources-multicluster:
+          enabled: false
+        k8s-resources-windows-cluster:
+          enabled: false
+        k8s-resources-windows-namespace:
+          enabled: false
+        k8s-resources-windows-pod:
+          enabled: false
+        k8s-windows-cluster-rsrc-use:
+          enabled: false
+        k8s-windows-node-rsrc-use:
+          enabled: false
+        nodes-aix:
+          enabled: false
+        nodes-darwin:
+          enabled: false
+        prometheus:
+          enabled: false
+        prometheus-remote-write:
+          enabled: false
+      sources:
+        # grafanadashboard.yaml already imports these from grafana.com.
+        kubernetes-views-global:
+          enabled: false
+        kubernetes-views-namespaces:
+          enabled: false
+        kubernetes-views-pods:
+          enabled: false
+        kubernetes-views-nodes:
+          enabled: false
+        kubernetes-system-api-server:
+          enabled: false
+        kubernetes-system-coredns:
+          enabled: false
+        node-exporter-full:
+          enabled: false
+    defaultRules:
+      rules:
+        # Replaced by hpa-rules below, which skips the zeroscaler HPAs.
+        KubeHpaMaxedOut:
+          enabled: false
+        # Asks whether every request fits once the largest node is gone. hyperion-0 is 60% of the
+        # cluster's CPU, so it never can; a real shortfall shows as Pending pods (KubePodNotReady).
+        KubeCPUOvercommit:
+          enabled: false
+        RecordingRulesNoData:
+          spec:
+            # The kube-scheduler quantile rules often have no samples
+            expr: sum(vmalert_recording_rules_last_evaluation_samples{group!="kube-scheduler.rules"}) without(id) < 1
+    external:
+      grafana:
+        host: https://grafana.hera.ac
+        datasource: prometheus
+    alertmanager:
+      config:
+        route:
+          receiver: pushover
+          group_by: ["alertname", "cluster", "job"]
+          group_interval: 5m
+          group_wait: 1m
+          repeat_interval: 12h
+          routes:
+            - receiver: blackhole
+              matchers: ['alertname = "InfoInhibitor"']
+            # The always-firing Watchdog alert as a heartbeat: to the buddy's Gatus, and to hermes'
+            # (coredev-uk/nixos hosts/hermes/watchdog.nix), which alerts here when it stops.
+            - receiver: heartbeats
+              matchers: ['alertname = "Watchdog"']
+              group_interval: 2m
+              group_wait: 0s
+              repeat_interval: 2m30s
+        inhibit_rules:
+          - equal: ["alertname", "namespace"]
+            source_matchers: ['severity = "critical"']
+            target_matchers: ['severity = "warning"']
+        receivers:
+          - name: blackhole
+          - name: heartbeats
+            webhook_configs:
+              - url_file: /etc/vm/secrets/alertmanager-secret/BUDDY_HEARTBEAT_URL
+                http_config:
+                  authorization:
+                    credentials_file: /etc/vm/secrets/alertmanager-secret/BUDDY_HEARTBEAT_TOKEN
+              - url: http://192.168.130.15:8080/api/v1/endpoints/cluster_alertmanager/external?success=true
+                http_config:
+                  authorization:
+                    credentials_file: /etc/vm/secrets/alertmanager-secret/HERMES_HEARTBEAT_TOKEN
+          - name: pushover
+            pushover_configs:
+              - html: true
+                message: |-
+                  {{- range .Alerts }}
+                    {{- if ne .Annotations.description "" }}
+                      {{ .Annotations.description }}
+                    {{- else if ne .Annotations.summary "" }}
+                      {{ .Annotations.summary }}
+                    {{- else if ne .Annotations.message "" }}
+                      {{ .Annotations.message }}
+                    {{- else }}
+                      Alert description not available
+                    {{- end }}
+                    {{- if gt (len .Labels.SortedPairs) 0 }}
+                      <small>
+                        {{- range .Labels.SortedPairs }}
+                          <b>{{ .Name }}:</b> {{ .Value }}
+                        {{- end }}
+                      </small>
+                    {{- end }}
+                  {{- end }}
+                # Critical alerts bypass quiet hours, warnings notify normally, and info alerts and
+                # resolved notices arrive silently.
+                priority: |-
+                  {{ if and (eq .Status "firing") (eq .CommonLabels.severity "critical") }}1{{ else if and (eq .Status "firing") (eq .CommonLabels.severity "warning") }}0{{ else }}-1{{ end }}
+                sound: gamelan
+                title: >-
+                  [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+                token_file: /etc/vm/secrets/alertmanager-secret/ALERTMANAGER_PUSHOVER_TOKEN
+                ttl: 24h
+                url_title: View in Alertmanager
+                user_key_file: /etc/vm/secrets/alertmanager-secret/PUSHOVER_USER_KEY
+      monzoTemplate:
+        enabled: false
+      route:
+        enabled: true
+        hostnames:
+          - alertmanager.hera.ac
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+      spec:
+        externalURL: https://alertmanager.hera.ac
+        image:
+          repository: prometheus/alertmanager
+        # 30-day RSS p95 24Mi, daily peak 26Mi (2026-11-13).
+        resources:
+          requests:
+            memory: 32Mi
+        secrets:
+          - alertmanager-secret
+        storage:
+          volumeClaimTemplate:
+            spec:
+              storageClassName: ceph-block
+              resources:
+                requests:
+                  storage: 1Gi
+        useStrictSecurity: true
+    # Keeps the log rules (vmalert-logs.yaml) off this vmalert: it evaluates against vmsingle, which
+    # cannot run a LogsQL query. Everything else, converted PrometheusRules included, still matches.
+    vmalert:
+      spec:
+        evaluationInterval: 30s
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        ruleNamespaceSelector: {}
+        ruleSelector:
+          matchExpressions:
+            - key: rules.hera.ac/engine
+              operator: NotIn
+              values: [victorialogs]
+        selectAllByDefault: false
+        useStrictSecurity: true
+    vmagent:
+      spec:
+        # On another node, vmagent keeps scraping into its queue while the vmsingle node restarts
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: vmsingle
+                  topologyKey: kubernetes.io/hostname
+        extraArgs:
+          # Hides dropped targets and pre-relabel labels on the targets page
+          promscrape.dropOriginalLabels: "true"
+          # kube-apiserver serves about 13 MB of metrics, close to the 16 MiB default
+          promscrape.maxScrapeSize: 32MiB
+        # The interval Prometheus scraped at; monitors that set their own keep it.
+        scrapeInterval: 30s
+        # A CPU request stops the operator from adding its default CPU limit
+        resources:
+          requests:
+            cpu: 50m
+            memory: 384Mi
+          limits:
+            memory: 1Gi
+        useStrictSecurity: true
+    vmsingle:
+      route:
+        enabled: true
+        hostnames:
+          - prometheus.hera.ac
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+      spec:
+        # About 215k active series and 2.7k samples/s as of 2026-11-27; Prometheus held 30 days
+        # of that in 26 GB. Kept for 180 days on a 100Gi volume: check vm_data_size_bytes after
+        # a month and move either number.
+        extraArgs:
+          # Clarence runs 30-day subqueries with a two-minute client timeout; the default is 30s.
+          search.maxQueryDuration: 2m
+        resources:
+          requests:
+            cpu: 150m
+            memory: 1Gi
+          limits:
+            memory: 3Gi
+        retentionPeriod: 180d
+        storage:
+          storageClassName: ceph-block
+          resources:
+            requests:
+              storage: 100Gi
+          dataSourceRef:
+            apiGroup: kopiur.home-operations.com
+            kind: Restore
+            name: vmsingle
+        useStrictSecurity: true
+    vlsingle:
+      enabled: true
+      route:
+        enabled: true
+        hostnames:
+          - vlogs.hera.ac
+        parentRefs:
+          - name: envoy-internal
+            namespace: network
+      spec:
+        # About 40 rows/s, 2 GB for 90 days as of 2026-11-27, before the Talos logs are added.
+        resources:
+          requests:
+            cpu: 25m
+            memory: 384Mi
+          limits:
+            memory: 1Gi
+        retentionMaxDiskSpaceUsageBytes: 24GiB
+        retentionPeriod: 180d
+        storage:
+          storageClassName: ceph-block
+          resources:
+            requests:
+              storage: 30Gi
+          dataSourceRef:
+            apiGroup: kopiur.home-operations.com
+            kind: Restore
+            name: vlsingle
+        useStrictSecurity: true
+    # Pod logs from every node. The agent reads /var/log/pods as root.
+    vlagent:
+      enabled: true
+      spec:
+        k8sCollector:
+          decolorizeFields:
+            - _msg
+          streamFields:
+            - kubernetes.pod_name
+            - kubernetes.pod_namespace
+            - kubernetes.container_name
+            - kubernetes.pod_labels.app.kubernetes.io/name
+        remoteWriteSettings:
+          maxDiskUsagePerURL: 10GB
+        resources:
+          requests:
+            cpu: 15m
+            memory: 96Mi
+          limits:
+            memory: 384Mi
+    # Metric trims below drop only families no dashboard, rule, alert, kromgo badge, adapter rule or
+    # Clarence query references. Overriding a list replaces the chart's default, so the defaults
+    # that still matter are restated.
+    kubelet:
+      vmScrapes:
+        # /metrics/probes only carries prober_* series, none of which are used.
+        probes:
+          enabled: false
+        cadvisor:
+          spec:
+            # Replaces the chart's list, which also drops the id and name labels (the id rule below needs id).
+            metricRelabelConfigs:
+              - action: drop
+                regex: "container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)"
+                sourceLabels: [__name__]
+              - action: drop
+                regex: "container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)"
+                sourceLabels: [__name__]
+              - action: drop
+                regex: "container_memory_mapped_file"
+                sourceLabels: [__name__]
+              - action: drop
+                regex: "container_(file_descriptors|tasks_state|threads_max)"
+                sourceLabels: [__name__]
+              - action: drop
+                regex: "container_memory_failures_total;hierarchy"
+                sourceLabels: [__name__, scope]
+              - action: drop
+                regex: "container_network_.*;(cali|cilium|cni|lxc|nodelocaldns|tunl).*"
+                sourceLabels: [__name__, interface]
+              - action: drop
+                regex: "container_spec.*"
+                sourceLabels: [__name__]
+              - action: drop
+                regex: ".+;"
+                sourceLabels: [id, pod]
+              # Unused cAdvisor families (blkio, PSI pressure, memory events/failcnt, process counts...).
+              - action: drop
+                regex: "container_(blkio_device_usage_total|creation_time_seconds|health_state|memory_(events_.*|failures_total|failcnt|file_dirty_bytes|file_writeback_bytes|kernel_usage|max_usage_bytes|pgscan_total|pgsteal_total|total_active_file_bytes|total_inactive_file_bytes|workingset_refault_.*)|pressure_.*|processes|sockets|start_time_seconds|threads)"
+                sourceLabels: [__name__]
+      vmScrape:
+        spec:
+          # This list replaces the chart's rules, which also copy every node label onto each series
+          relabelConfigs:
+            - sourceLabels: [__metrics_path__]
+              targetLabel: metrics_path
+            - targetLabel: job
+              replacement: kubelet
+          metricRelabelConfigs:
+            - action: drop
+              regex: (csi_operations|storage_operation_duration)_seconds_bucket;(0.25|2.5|15|25|120|600)(\.0)?
+              sourceLabels: [__name__, le]
+            - action: drop
+              regex: "kubernetes_feature_enabled|kubelet_(http_requests_duration_seconds_bucket|image_pull_duration_seconds_bucket|container_log_filesystem_used_bytes|volume_metric_collection_duration_seconds_bucket|pod_start_(total|sli)_duration_seconds_bucket)|(csi_operations|volume_operation_total)_seconds_bucket|rest_client_(rate_limiter_duration_seconds|request_size_bytes|response_size_bytes)_bucket|dra_operations_duration_seconds_bucket|workqueue_work_duration_seconds_bucket"
+              sourceLabels: [__name__]
+            - action: drop
+              regex: (rest_client_request_duration_seconds_bucket|rest_client_request_duration_seconds_sum|rest_client_request_duration_seconds_count)
+              sourceLabels: [__name__]
+    kubeApiServer:
+      vmScrape:
+        spec:
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              metricRelabelConfigs:
+                # chart default, restated
+                - action: drop
+                  regex: (etcd_request|apiserver_request_slo|apiserver_request_sli|apiserver_request)_duration_seconds_bucket;(0\.15|0\.2|0\.3|0\.35|0\.4|0\.45|0\.6|0\.7|0\.8|0\.9|1\.25|1\.5|1\.75|2|3|3\.5|4|4\.5|6|7|8|9|15|20|40|45|50)(\.0)?
+                  sourceLabels: [__name__, le]
+                # Unused apiserver histograms/counters: ~163k of the ~200k series this job produced.
+                - action: drop
+                  regex: "apiserver_(watch_events_.*|watch_list_.*|watch_cache_.*|storage_(list_.*|consistency_checks_total|events_received_total|transformation_duration_seconds_bucket)|request_body_size_bytes_.*|response_sizes_.*|flowcontrol_.*|admission_webhook_.*|admission_step_.*|init_events_total|selfrequest_total|resource_objects|resource_size_estimate_bytes|request_sli_duration_seconds_sum|request_filter_duration_seconds_bucket|watch_events_total)|etcd_(request_duration_seconds_.*|requests_total|bookmark_total)|(informer_(processing_latency_seconds_.*|queued_items|store_resource_version)|workqueue_work_duration_seconds_bucket|kubernetes_feature_enabled|apiextensions_openapi_v[23]_regeneration_count|watch_cache_capacity|rest_client_(request|response)_size_bytes_bucket|node_authorizer_graph_actions_duration_seconds_bucket|field_validation_request_duration_seconds_bucket)"
+                  sourceLabels: [__name__]
+              port: https
+              scheme: https
+              tlsConfig:
+                caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                serverName: kubernetes
+    kubeScheduler:
+      vmScrape:
+        spec:
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              metricRelabelConfigs:
+                - action: drop
+                  regex: "scheduler_(plugin_execution_duration_seconds_.*|event_handling_duration_seconds_.*|queueing_hint_execution_duration_seconds_bucket|framework_extension_point_duration_seconds_bucket|plugin_evaluation_total)|informer_processing_latency_seconds_.*|rest_client_(rate_limiter_duration|request_size_bytes|response_size_bytes)_.*bucket|workqueue_work_duration_seconds_bucket|kubernetes_feature_enabled"
+                  sourceLabels: [__name__]
+              port: http-metrics
+              scheme: https
+              tlsConfig:
+                insecureSkipVerify: true
+    kubeControllerManager:
+      vmScrape:
+        spec:
+          endpoints:
+            - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+              metricRelabelConfigs:
+                - action: drop
+                  regex: "informer_processing_latency_seconds_bucket|rest_client_(rate_limiter_duration_seconds|request_size_bytes|response_size_bytes)_bucket|workqueue_work_duration_seconds_bucket|kubernetes_feature_enabled"
+                  sourceLabels: [__name__]
+              port: http-metrics
+              scheme: https
+              tlsConfig:
+                insecureSkipVerify: true
+    kubeEtcd:
+      service:
+        port: 2381
+        targetPort: 2381
+        selector:
+          component: kube-apiserver # etcd runs on control plane nodes
+      vmScrape:
+        spec:
+          endpoints:
+            - metricRelabelConfigs:
+                - action: drop
+                  regex: "etcd_(server_apply_duration_seconds_bucket|server_request_duration_seconds_bucket|server_range_duration_seconds_bucket|debugging_lease_ttl_total_bucket)|grpc_server_msg_(received|sent)_total"
+                  sourceLabels: [__name__]
+              port: http-metrics
+              scheme: http
+    coreDns:
+      service:
+        labels:
+          # The chart derives the job name from this label ("core-dns"); the kubernetes-coredns
+          # dashboard queries job="coredns".
+          app.kubernetes.io/component: coredns
+    kubeProxy:
+      enabled: false
+    prometheus-node-exporter:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+      vmScrape:
+        spec:
+          endpoints:
+            - port: metrics
+              metricRelabelConfigs:
+                - action: drop
+                  source_labels: [mountpoint]
+                  regex: "/var/lib/kubelet/pods.+"
+                # NIC link-state/identity and NFS request series nothing reads.
+                - action: drop
+                  regex: "node_(nfs_requests_total|network_(address_assign_type|carrier_changes_total|carrier_up_changes_total|device_id|flags|iface_id|iface_link|iface_link_mode|info|net_dev_group|protocol_type|transmit_queue_length|name_assign_type|dormant)|cpu_scaling_governor)"
+                  source_labels: [__name__]
+    kube-state-metrics:
+      # Denied at the source so kube-state-metrics stops rendering unused families (one anchored regex).
+      metricDenylist:
+        - "kube_replicaset_(created|status_.*|spec_replicas|metadata_generation)|kube_pod_(tolerations|created|ips|restart_policy|start_time|status_initialized_time|status_scheduled_time|status_ready_time|status_container_ready_time|service_account|scheduler|init_container_.*)|kube_pod_container_state_started|kube_secret_(type|created|metadata_resource_version|owner)|kube_persistentvolumeclaim_(status_.*|created|resource_requests_storage_bytes)|kube_persistentvolume_(claim_ref|info|capacity_bytes|created|volume_mode|access_mode)|kube_endpointslice_.*|kube_(service|configmap)_created|kube_service_spec_type|kube_configmap_metadata_resource_version|kube_deployment_(owner|created|status_replicas|status_replicas_ready|status_terminating_replicas|spec_paused|spec_strategy_.*)|kube_volumeattachment_.*|kube_lease_.*|kube_job_(complete|info|created|spec_.*|status_succeeded|status_ready|status_completion_time)|kube_horizontalpodautoscaler_(status_condition|info|metadata_generation|spec_target_metric|status_target_metric|created)"
+      # The chart's scrape also drops uid; Clarence joins kube_pod_* series on it. container_id and
+      # image_id stay dropped (churn on every restart).
+      vmScrape:
+        spec:
+          endpoints:
+            - port: http
+              honorLabels: true
+              metricRelabelConfigs:
+                - action: labeldrop
+                  regex: (container_id|image_id)
+      # Observed 2026-11-27: 88Mi at rest, a 280Mi peak across restarts.
+      resources:
+        requests:
+          cpu: 10m
+          memory: 192Mi
+        limits:
+          memory: 384Mi
+    extraRules:
+      dockerhub-rules:
+        groups:
+          - name: dockerhub
+            rules:
+              - alert: DockerhubRateLimitRisk
+                annotations:
+                  summary: There are {{ $value }} containers pulling from Dockerhub. This may lead to rate limiting.
+                expr: count(time() - container_last_seen{image=~"(docker.io).*",container!=""} < 30) > 100
+                labels:
+                  severity: critical
+      # The default KubeHpaMaxedOut, limited to HPAs that can scale past one replica. The zeroscaler
+      # HPAs (components/zeroscaler) go from 0 to 1 on the NFS probe, so they sit at their maximum
+      # whenever NFS is up and said nothing by firing.
+      hpa-rules:
+        groups:
+          - name: hpa
+            rules:
+              - alert: KubeHpaMaxedOut
+                annotations:
+                  description: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} has been running at max replicas for longer than 15 minutes.
+                  runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpamaxedout
+                  summary: HPA is running at max replicas
+                expr: |-
+                  kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics"}
+                    == kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"}
+                  and on (namespace, horizontalpodautoscaler)
+                  kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics"} > 1
+                for: 15m
+                labels:
+                  severity: warning
+      oom-rules:
+        groups:
+          - name: oom
+            rules:
+              - alert: OomKilled
+                annotations:
+                  summary: Container {{ $labels.container }} in pod {{ $labels.namespace }}/{{ $labels.pod }} has been OOMKilled {{ $value }} times in the last 10 minutes.
+                expr: (kube_pod_container_status_restarts_total - kube_pod_container_status_restarts_total offset 10m >= 1) and ignoring (reason) min_over_time(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[10m]) == 1
+                labels:
+                  severity: critical

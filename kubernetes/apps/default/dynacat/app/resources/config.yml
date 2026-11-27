@@ -99,7 +99,7 @@ pages:
             title: Cluster Nodes
             title-url: https://grafana.hera.ac
             cache: 1m
-            url: &prometheus http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+            url: &prometheus http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428/api/v1/query
             parameters:
               query: node_uname_info{job="node-exporter"}
             subrequests:
@@ -488,9 +488,9 @@ pages:
                   - title: Grafana
                     url: https://grafana.hera.ac
                     icon: di:grafana
-                  - title: Prometheus
+                  - title: VictoriaMetrics
                     url: https://prometheus.hera.ac
-                    icon: di:prometheus
+                    icon: di:victoriametrics
                   - title: Alertmanager
                     url: https://alertmanager.hera.ac
                     icon: di:alertmanager
@@ -568,22 +568,22 @@ pages:
             title: Health
             title-url: https://alertmanager.hera.ac
             cache: 1m
-            url: http://kube-prometheus-stack-alertmanager.o11y.svc.cluster.local:9093/api/v2/alerts
+            url: http://vmalertmanager-victoria-metrics.o11y.svc.cluster.local:9093/api/v2/alerts
             parameters:
               active: "true"
               silenced: "false"
               inhibited: "false"
             subrequests:
               flux-failing:
-                url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+                url: http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428/api/v1/query
                 parameters:
                   query: gotk_resource_info{ready="False"}
               flux-ready:
-                url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+                url: http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428/api/v1/query
                 parameters:
                   query: count(gotk_resource_info{ready="True"})
               source:
-                url: http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090/api/v1/query
+                url: http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428/api/v1/query
                 parameters:
                   query: gotk_resource_info{customresource_kind="GitRepository",exported_namespace="flux-system",name="flux-system"}
               pulls:

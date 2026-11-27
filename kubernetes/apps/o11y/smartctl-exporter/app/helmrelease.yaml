@@ -13,3 +13,28 @@ spec:
     fullnameOverride: *app
     serviceMonitor:
       enabled: true
+    common:
+      config:
+        # resources/smartctl.sh: adds the ATA extended error log the exporter doesn't read itself.
+        smartctl_location: /opt/smartctl/smartctl.sh
+  # The chart has no extra-volume values, so mount the wrapper with a patch.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: DaemonSet
+              name: smartctl-exporter-0
+            patch: |
+              - op: add
+                path: /spec/template/spec/volumes/-
+                value:
+                  name: smartctl-wrapper
+                  configMap:
+                    name: smartctl-exporter-wrapper
+                    defaultMode: 365 # 0555
+              - op: add
+                path: /spec/template/spec/containers/0/volumeMounts/-
+                value:
+                  name: smartctl-wrapper
+                  mountPath: /opt/smartctl
+                  readOnly: true

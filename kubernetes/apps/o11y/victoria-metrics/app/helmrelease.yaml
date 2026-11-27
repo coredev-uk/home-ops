@@ -80,6 +80,14 @@ spec:
           enabled: false
         node-exporter-full:
           enabled: false
+    # Renders the dashboards and rules above into GrafanaDashboards and VMRules on install and upgrade.
+    syncJob:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
     defaultRules:
       rules:
         # Replaced by hpa-rules below, which skips the zeroscaler HPAs.

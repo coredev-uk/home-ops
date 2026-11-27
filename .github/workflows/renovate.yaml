@@ -33,7 +33,7 @@ on:
 
 env:
   # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
-  RENOVATE_VERSION: 44.262.2
+  RENOVATE_VERSION: 45.1.2
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}

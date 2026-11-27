@@ -1,0 +1,28 @@
+---
+# A second vmalert, on VictoriaLogs: alerts from log lines, for what no metric outlives. The
+# metrics vmalert (victoria-metrics HelmRelease) evaluates against vmsingle and skips the rules
+# labelled rules.hera.ac/engine=victorialogs; this one takes only those.
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/operator.victoriametrics.com/vmalert_v1beta1.json
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMAlert
+metadata:
+  name: logs
+spec:
+  datasource:
+    url: http://vlsingle-victoria-metrics.o11y.svc.cluster.local:9428
+  extraArgs:
+    external.url: https://vlogs.hera.ac
+  notifier:
+    url: http://vmalertmanager-victoria-metrics.o11y.svc.cluster.local:9093
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+  ruleNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      rules.hera.ac/engine: victorialogs
+  selectAllByDefault: false
+  useStrictSecurity: true

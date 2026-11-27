@@ -87,7 +87,7 @@ sync
 
 # The VM's kernel counts its OOM kills since boot, and the VM lives for this pod alone. Nothing on
 # the host sees them (cAdvisor's container_oom_events_total stays 0), so this line is the record:
-# victoria-logs-alerts (o11y) raises NixosRunnerOomKill on it, with the kernel's own lines below.
+# the victoria-metrics logs vmalert (o11y) raises NixosRunnerOomKill on it, with the kernel's own lines below.
 # shellcheck disable=SC2329 # run by on_exit
 report_oom() {
   local key value kills=0

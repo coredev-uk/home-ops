@@ -8,7 +8,7 @@ spec:
   groups:
     - name: kopiur-repository.rules
       rules:
-        # From kube-state-metrics (kube-prometheus-stack/app/resources/kube-state-metrics.yaml);
+        # From kube-state-metrics (victoria-metrics/app/resources/kube-state-metrics.yaml);
         # 0 until the first run succeeds, so a copy that never completed fires too.
         - alert: KopiurOffsiteCopyStale
           expr: |-

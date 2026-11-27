@@ -1,0 +1,23 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: vmsingle
+spec:
+  policyRef:
+    name: vmsingle
+  # Daily, at night: history older than a day is immutable parts, so each run uploads little.
+  schedule:
+    cron: H 2 * * *
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: vlsingle
+spec:
+  policyRef:
+    name: vlsingle
+  schedule:
+    cron: H 2 * * *

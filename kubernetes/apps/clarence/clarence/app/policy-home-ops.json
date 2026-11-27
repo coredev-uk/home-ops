@@ -121,7 +121,7 @@
     },
     "logs": {
       "enabled": true,
-      "url": "http://victoria-logs.o11y.svc.cluster.local:9428"
+      "url": "http://vlsingle-victoria-metrics.o11y.svc.cluster.local:9428"
     }
   },
   "webhook": {
@@ -147,7 +147,9 @@
     "ghcr.io/spegel-org/helm-charts/spegel": "spegel-org/spegel",
     "ghcr.io/prometheus-community/charts/prometheus-adapter": "prometheus-community/helm-charts",
     "ghcr.io/prometheus-community/charts/prometheus-blackbox-exporter": "prometheus-community/helm-charts",
-    "ghcr.io/prometheus-community/charts/kube-prometheus-stack": "prometheus-community/helm-charts",
+    "ghcr.io/prometheus-community/charts/prometheus-operator-crds": "prometheus-community/helm-charts",
+    "ghcr.io/fluent/helm-charts/fluent-bit": "fluent/helm-charts",
+    "ghcr.io/victoriametrics/helm-charts/victoria-metrics-k8s-stack": "VictoriaMetrics/helm-charts",
     "siderolabs/talos": "siderolabs/talos"
   },
   "checks": {
@@ -166,7 +168,7 @@
     }
   },
   "rightSizing": {
-    "prometheusUrl": "http://kube-prometheus-stack-prometheus.o11y.svc.cluster.local:9090",
+    "prometheusUrl": "http://vmsingle-victoria-metrics.o11y.svc.cluster.local:8428",
     "everyHours": 24,
     "refreshHours": 168,
     "lookbackDays": 30,
@@ -206,11 +208,9 @@
       "default/sure-valkey",
       "network/headplane",
       "nix-cache/attic-postgres-1",
-      "o11y/alertmanager-kube-prometheus-stack-db-*",
       "o11y/gatus-sidecar",
       "o11y/grafana-postgres-1",
-      "o11y/prometheus-kube-prometheus-stack-db-*",
-      "o11y/server-volume-victoria-logs-0",
+      "o11y/vmalertmanager-victoria-metrics-db-*",
       "t3/t3-hyperion-0-nix",
       "t3/t3-hyperion-0-work",
       "t3/t3-hyperion-2-nix",

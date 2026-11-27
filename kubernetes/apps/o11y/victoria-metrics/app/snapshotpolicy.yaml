@@ -1,0 +1,91 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: vmsingle
+spec:
+  compression:
+    compressor: zstd
+  # /lost+found is repeated because this list replaces Kopiur's defaults. /snapshots holds the
+  # hardlinks of snapshots taken through VictoriaMetrics' own API, which nothing here makes.
+  files:
+    ignoreRules:
+      - /lost+found
+      - /snapshots/
+  mover:
+    # Created for each run and deleted after, sized for the repository's cache budgets
+    # (clusterrepository.yaml), not for the volume.
+    cache:
+      capacity: 4Gi
+      mode: Ephemeral
+      storageClassName: ceph-block
+    securityContext:
+      runAsUser: 65534
+      runAsGroup: 65534
+  repository:
+    kind: ClusterRepository
+    name: expanse
+  retention:
+    keepLatest: 3
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: vmsingle-victoria-metrics
+      # The Restore finds snapshots by this path.
+      sourcePathOverride: /pvc/vmsingle
+  # Quick checks the repository's blobs nightly; deep restores the latest snapshot into a
+  # throwaway volume once a month, the closest thing to a real recovery. The capacity matches
+  # the volume's size in helmrelease.yaml.
+  verification:
+    deep:
+      capacity: 100Gi
+      storageClassName: ceph-block
+      schedule:
+        cron: H 5 1 * *
+    quick:
+      schedule:
+        cron: H 3 * * *
+  volumeSnapshotClassName: csi-ceph-blockpool
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotpolicy_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotPolicy
+metadata:
+  name: vlsingle
+spec:
+  compression:
+    compressor: zstd
+  files:
+    ignoreRules:
+      - /lost+found
+  mover:
+    cache:
+      capacity: 4Gi
+      mode: Ephemeral
+      storageClassName: ceph-block
+    securityContext:
+      runAsUser: 65534
+      runAsGroup: 65534
+  repository:
+    kind: ClusterRepository
+    name: expanse
+  retention:
+    keepLatest: 3
+    keepDaily: 7
+    keepWeekly: 4
+  sources:
+    - pvc:
+        name: vlsingle-victoria-metrics
+      sourcePathOverride: /pvc/vlsingle
+  verification:
+    deep:
+      capacity: 30Gi
+      storageClassName: ceph-block
+      schedule:
+        cron: H 5 1 * *
+    quick:
+      schedule:
+        cron: H 3 * * *
+  volumeSnapshotClassName: csi-ceph-blockpool

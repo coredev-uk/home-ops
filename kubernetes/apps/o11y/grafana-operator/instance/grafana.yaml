@@ -53,6 +53,8 @@ spec:
       news_feed_enabled: "false"
     plugins:
       plugin_admin_enabled: "false"
+      # Stops Grafana updating its preinstalled plugins on every start.
+      preinstall_auto_update: "false"
     security:
       angular_support_enabled: "true"
       disable_initial_admin_creation: "false"

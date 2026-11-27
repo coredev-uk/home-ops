@@ -9,8 +9,9 @@ spec:
     matchNames:
       - flux-system
   podMetricsEndpoints:
-    - honorLabels: true
-      port: http-prom
+    # No honorLabels: the controllers' own `namespace` (the object's) must land in exported_namespace,
+    # leaving `namespace` as flux-system, which is what the Flux Cluster Stats dashboard joins on.
+    - port: http-prom
       metricRelabelings:
         # Dashboards read gotk_reconcile_duration_seconds_count/_sum, never the buckets.
         - action: drop

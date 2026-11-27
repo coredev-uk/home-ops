@@ -45,8 +45,10 @@ jobs:
         id: extract
         # The nodes pull ghcr.io/coredev-uk/* (private) with the workload's imagePullSecrets;
         # talosctl image pull has no credentials, so those are left out of the pull test.
+        # Secrets that exist only in the cluster (cloudflare-tunnel's substituteFrom) are tolerated:
+        # flate 0.8 fails a Kustomization whose substitution Secret it cannot read.
         run: |
-          images=$(nix develop --command flate diff images -p ./kubernetes/apps -o json)
+          images=$(nix develop --command flate diff images -p ./kubernetes/apps -o json --allow-missing-kinds Secret)
           echo 'images<<EOF' >> $GITHUB_OUTPUT
           jq -c '[.[] | select(startswith("ghcr.io/coredev-uk/") | not)]' <<< "$images" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT

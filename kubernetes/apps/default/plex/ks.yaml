@@ -18,8 +18,8 @@ spec:
       KOPIUR_SCHEDULE: "H H * * *"
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: plex
     namespace: flux-system
   targetNamespace: default
 ---
@@ -33,7 +33,7 @@ spec:
   path: ./kubernetes/apps/default/plex/tools
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: plex
     namespace: flux-system
   targetNamespace: default

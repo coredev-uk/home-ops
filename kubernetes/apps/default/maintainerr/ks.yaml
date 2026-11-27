@@ -20,7 +20,7 @@ spec:
       KOPIUR_SCHEDULE: "H H * * *"
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: maintainerr
     namespace: flux-system
   targetNamespace: default

@@ -9,7 +9,7 @@ spec:
   path: ./kubernetes/apps/network/unifi-vpn-restarter/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: unifi-vpn-restarter
     namespace: flux-system
   targetNamespace: network

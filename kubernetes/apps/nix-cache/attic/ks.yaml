@@ -25,8 +25,8 @@ spec:
   path: ./kubernetes/apps/nix-cache/attic/database
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: attic
     namespace: flux-system
   targetNamespace: nix-cache
 ---
@@ -42,7 +42,7 @@ spec:
   path: ./kubernetes/apps/nix-cache/attic/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: attic
     namespace: flux-system
   targetNamespace: nix-cache

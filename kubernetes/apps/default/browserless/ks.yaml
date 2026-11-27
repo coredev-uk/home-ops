@@ -9,7 +9,7 @@ spec:
   path: ./kubernetes/apps/default/browserless/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: browserless
     namespace: flux-system
   targetNamespace: default

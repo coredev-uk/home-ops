@@ -12,7 +12,7 @@ spec:
   path: ./kubernetes/apps/actions-runner-system/octo-sts/app
   prune: true
   sourceRef:
-    kind: GitRepository
-    name: flux-system
+    kind: ExternalArtifact
+    name: octo-sts
     namespace: flux-system
   targetNamespace: actions-runner-system

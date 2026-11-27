@@ -263,6 +263,9 @@ spec:
         extraArgs:
           # Clarence runs 30-day subqueries with a two-minute client timeout; the default is 30s.
           search.maxQueryDuration: 2m
+          # Clarence's soak check ORs a restart query per workload a pull request touches; repo-wide
+          # pull requests exceed the 16KiB default (Prometheus had no limit).
+          search.maxQueryLen: "65536"
         resources:
           requests:
             cpu: 150m

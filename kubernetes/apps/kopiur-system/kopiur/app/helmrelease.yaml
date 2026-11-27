@@ -33,3 +33,35 @@ spec:
         memory: 240Mi
       limits:
         memory: 2Gi
+    # Web console at kopiur.hera.ac (envoy-internal only). Every request runs as one fixed,
+    # read-only identity: browsing policies, snapshots and restores needs no sign-in, and the
+    # action buttons stay off until the console sits behind Pocket ID in header mode.
+    ui:
+      enabled: true
+      # Chart's requests; the limit leaves room for streaming downloads (1Gi max file, chunked).
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 512Mi
+      auth:
+        anonymous:
+          enabled: true
+          user: &uiUser kopiur-ui-anonymous
+      networkPolicy:
+        enabled: true
+        proxySelector:
+          namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: network
+          podSelector:
+            matchLabels:
+              gateway.envoyproxy.io/owning-gateway-name: envoy-internal
+      rbac:
+        bindings:
+          - role: viewer
+            users:
+              - *uiUser
+      serviceMonitor:
+        enabled: true

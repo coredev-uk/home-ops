@@ -19,6 +19,13 @@ spec:
       name: kopiur-repository-secret
       namespace: kopiur-system
       key: KOPIA_PASSWORD
+  # Movers run in kopiur-system: no mover pod or repository credential enters an app's
+  # namespace. A backup reaches the app's VolumeSnapshot through a cross-namespace
+  # dataSourceRef, which needs the CrossNamespaceVolumeDataSource feature gate on
+  # kube-apiserver, kube-controller-manager (talos/controlplane.yaml.j2) and the RBD
+  # provisioner (rook-ceph/ceph-csi-drivers).
+  execution:
+    mode: Central
   maintenance:
     schedule:
       quick:
@@ -29,12 +36,16 @@ spec:
         jitter: 1h
   moverDefaults:
     cache:
-      # App backups get a 4Gi cache volume (components/kopiur/backup). Kopia's
+      # Each backup mover gets a 4Gi cache volume (components/kopiur). Kopia's
       # own defaults are 5000 MiB per budget, larger than the whole volume, so
       # the sweeper never runs and the cache fills it. The metadata budget
       # applies twice: kopia caps the index-blobs cache at the same size.
       contentCacheSizeMb: 512
       metadataCacheSizeMb: 1024
+    # A label to group the movers by: Cilium's Hubble metrics name a flow's
+    # source and destination by the app label.
+    podLabels:
+      app.kubernetes.io/name: kopiur-mover
   parameters:
     epoch:
       # Kopia compacts an epoch only after the next one closes, so the index set

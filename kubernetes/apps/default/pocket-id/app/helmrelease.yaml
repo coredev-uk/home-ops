@@ -12,6 +12,7 @@ spec:
   values:
     controllers:
       pocket-id:
+        type: statefulset
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -87,6 +88,19 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 5Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
+              globalMounts:
+                - path: /app/data
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -149,10 +163,6 @@ spec:
                     replaceFullPath: /api/application-images/logo
           - backendRefs: *backendRefs
     persistence:
-      config:
-        existingClaim: "{{ .Release.Name }}"
-        globalMounts:
-          - path: /app/data
       # The HyperionID mark (resources/branding): the letters ID, with a gilt
       # half sun rising inside the D (Hyperion, Titan of light). Mounted over the PVC's
       # application-images so the images live in git; Pocket ID only falls back

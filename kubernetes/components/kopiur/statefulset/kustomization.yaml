@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+# Backup and restore for an app that runs as a StatefulSet. There is no PVC here: the app's
+# `config` volumeClaimTemplate (helmrelease.yaml) creates `config-${APP}-0` with a dataSourceRef to
+# the Restore below, so the first pod waits, Pending, until the restore mover has filled the volume.
+# The template must be named `config` (or set KOPIUR_CLAIM to its name) and its size should match
+# KOPIUR_CAPACITY, which sizes the monthly deep verification's throwaway volume.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - ./snapshotpolicy.yaml
+  - ./snapshotschedule.yaml
+  - ./restore.yaml

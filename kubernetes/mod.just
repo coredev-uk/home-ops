@@ -39,10 +39,10 @@ sync resource:
             "reconcile.fluxcd.io/forceAt=$(date +%s)"
     done
 
-[arg('env', pattern='t3-[a-z]')]
+[arg('env', pattern='t3-hyperion-[0-9]+')]
 [doc('Mint a one-time T3 Code pairing code and link')]
-t3-pair env='t3-a' ttl='1h':
-    kubectl -n t3 exec deploy/{{ env }} -- t3 auth pairing create --log-level warn --json \
+t3-pair env='t3-hyperion-0' ttl='1h':
+    kubectl -n t3 exec sts/{{ env }} -- t3 auth pairing create --log-level warn --json \
         --ttl "{{ ttl }}" --label "just kube t3-pair" --base-url "https://{{ env }}.hera.ac" \
         | jq -r '"Code:    \(.credential)", "Link:    \(.pairUrl)", "Expires: \(.expiresAt)"'
 

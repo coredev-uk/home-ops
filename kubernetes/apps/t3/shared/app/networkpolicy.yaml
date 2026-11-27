@@ -6,7 +6,7 @@
 # Nothing else in the cluster, the home network or the nodes.
 # The selector is the environments' pod label, not every pod: kopiur's mover pods run in this
 # namespace and need egress of their own (to the backup repository and the Kubernetes API).
-# A LoadBalancer address such as t3-a.hera.ac's 192.168.110.247 reaches a gateway pod, because
+# A LoadBalancer address such as t3-hyperion-0.hera.ac's 192.168.110.247 reaches a gateway pod, because
 # Cilium translates it before policy applies, and the deny below keeps these pods from reaching
 # it: envoy-internal's apps and every other pod and Service stay out of reach.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/cilium.io/ciliumnetworkpolicy_v2.json

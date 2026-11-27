@@ -37,7 +37,7 @@ metadata:
   name: sportarr
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
     - ../../../../components/zeroscaler
   dependsOn:
     - name: sportarr-database
@@ -48,6 +48,7 @@ spec:
   postBuild:
     substitute:
       APP: sportarr
+      CONTROLLER: StatefulSet
   prune: true
   sourceRef:
     kind: GitRepository

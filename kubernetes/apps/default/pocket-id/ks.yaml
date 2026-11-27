@@ -37,7 +37,7 @@ metadata:
   name: pocket-id
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
   dependsOn:
     - name: pocket-id-database
     - name: rook-ceph-cluster

@@ -12,6 +12,7 @@ spec:
   values:
     controllers:
       home-assistant:
+        type: statefulset
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -87,6 +88,17 @@ spec:
                 cpu: 10m
               limits:
                 memory: 512Mi
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 5Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
     defaultPodOptions:
       # A second interface (net1) on the IoT VLAN, beside the HomePod and the IoT devices: mDNS,
       # IPv6 link-local and the HomePod's Thread routes for Matter, HomeKit and discovery.
@@ -122,8 +134,6 @@ spec:
           - name: envoy-external
             namespace: network
     persistence:
-      config:
-        existingClaim: "{{ .Release.Name }}"
       config-file:
         type: configMap
         name: "{{ .Release.Name }}-configmap"

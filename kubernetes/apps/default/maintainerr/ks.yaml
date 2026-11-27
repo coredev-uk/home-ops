@@ -6,7 +6,7 @@ metadata:
   name: maintainerr
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
     - ../../../../components/zeroscaler
   dependsOn:
     - name: rook-ceph-cluster
@@ -16,6 +16,7 @@ spec:
   postBuild:
     substitute:
       APP: maintainerr
+      CONTROLLER: StatefulSet
       KOPIUR_SCHEDULE: "H H * * *"
   prune: true
   sourceRef:

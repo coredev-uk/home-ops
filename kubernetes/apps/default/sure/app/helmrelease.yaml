@@ -12,9 +12,8 @@ spec:
   values:
     controllers:
       sure:
-        # Web and worker share the RWO storage PVC, so they live in one pod
-        # and the pod must be replaced rather than surged.
-        strategy: Recreate
+        type: statefulset
+        # Web and worker share the RWO storage claim, so they live in one pod.
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -107,6 +106,22 @@ spec:
               limits:
                 memory: 1472Mi
             securityContext: *securityContext
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 2Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
+              advancedMounts:
+                app:
+                  - path: /rails/storage
+                worker:
+                  - path: /rails/storage
       # Brandfetch shows a letter for brands it has no icon for; swap those
       # merchant logos for the site's favicon via Google's favicon service.
       logo-fallback:
@@ -166,15 +181,6 @@ spec:
           - name: envoy-internal
             namespace: network
     persistence:
-      storage:
-        existingClaim: "{{ .Release.Name }}"
-        # RWO: only the web/worker pod mounts it, never the cronjob.
-        advancedMounts:
-          sure:
-            app:
-              - path: /rails/storage
-            worker:
-              - path: /rails/storage
       # Ruby's Dir.tmpdir rejects a world-writable dir without the sticky
       # bit. A disk emptyDir lacks it; a tmpfs (Memory) one has it.
       tmp:

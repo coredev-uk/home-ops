@@ -13,11 +13,11 @@ spec:
         # Migrations can hold the startup probe for up to 10 minutes, hence 15.
         - alert: T3EnvironmentDown
           expr: |-
-            max by (deployment) (kube_deployment_status_condition{namespace="t3", condition="Available", status="true"}) == 0
+            max by (statefulset) (kube_statefulset_status_replicas_ready{namespace="t3"}) == 0
           for: 15m
           annotations:
             summary: >-
-              T3 environment {{ $labels.deployment }} has had no ready server for 15 minutes
+              T3 environment {{ $labels.statefulset }} has had no ready server for 15 minutes
           labels:
             severity: critical
         - alert: T3EnvironmentOOMKilled

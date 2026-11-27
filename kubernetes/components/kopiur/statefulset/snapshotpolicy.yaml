@@ -44,7 +44,10 @@ spec:
     keepWeekly: 4
   sources:
     - pvc:
-        name: ${APP}
+        name: ${KOPIUR_CLAIM:=config}-${APP}-0
+      # The Restore finds snapshots by this path, and a StatefulSet claim's path differs from the
+      # standalone claim's that the existing snapshots were taken from.
+      sourcePathOverride: /pvc/${APP}
   # Quick checks the repository's blobs nightly; deep restores the latest snapshot into a
   # throwaway volume once a month, the closest thing to a real recovery.
   verification:

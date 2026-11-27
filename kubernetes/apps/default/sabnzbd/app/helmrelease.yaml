@@ -12,6 +12,7 @@ spec:
   values:
     controllers:
       sabnzbd:
+        type: statefulset
         containers:
           app:
             image:
@@ -54,6 +55,17 @@ spec:
                 cpu: 100m
               limits:
                 memory: 8Gi
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 5Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -84,8 +96,6 @@ spec:
           - name: envoy-internal
             namespace: network
     persistence:
-      config:
-        existingClaim: "{{ .Release.Name }}"
       # In-progress articles, par2 repair and direct unpack stay off NFS (52 MB/s, shared with
       # final writes) and off Ceph: replicated 3x, a 30 MB/s download stalled osd.1's DRAM-less
       # SSD into BLUESTORE_SLOW_OP_ALERT. Node-local, so a reschedule drops in-progress jobs and

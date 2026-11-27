@@ -1,7 +1,7 @@
 ---
 # T3 exports no Prometheus metrics and grafana.com has no dashboard for it, so this one is built
 # from what the cluster already scrapes: the kubelet, kube-state-metrics, envoy-t3 and kopiur. The
-# environment variable picks t3-a, t3-b or both.
+# environment variable picks one environment (t3-<node>) or all.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/grafana.integreatly.org/grafanadashboard_v1beta1.json
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard

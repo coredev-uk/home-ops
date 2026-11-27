@@ -17,6 +17,7 @@ spec:
           - [controllers, qbittorrent, initContainers, gluetun, env, VPN_PORT_FORWARDING_UP_COMMAND]
     controllers:
       qbittorrent:
+        type: statefulset
         initContainers:
           # ProtonVPN WireGuard tunnel for qBittorrent alone; Prowlarr stays on
           # the UniFi VPN VLAN, whose gateway tunnel tops out near 170 Mbit/s.
@@ -106,6 +107,17 @@ spec:
                 memory: 1216Mi
               limits:
                 memory: 2Gi
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 5Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
     defaultPodOptions:
       # gluetun's DNS server, which resolves through the tunnel.
       dnsPolicy: None
@@ -136,8 +148,6 @@ spec:
           - backendRefs:
               - identifier: app
     persistence:
-      config:
-        existingClaim: "{{ .Release.Name }}"
       media:
         type: nfs
         server: expanse.internal

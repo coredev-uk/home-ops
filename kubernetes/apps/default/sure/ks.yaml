@@ -60,7 +60,7 @@ metadata:
   name: sure
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
   dependsOn:
     - name: sure-database
     - name: sure-valkey

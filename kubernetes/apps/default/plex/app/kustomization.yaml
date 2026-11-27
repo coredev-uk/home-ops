@@ -10,7 +10,7 @@ resources:
 # Back up Plex's database and settings, not what it regenerates: thumbnails and previews (Media),
 # posters and metadata (Metadata) and downloads. After a restore Plex refetches these over a few
 # hours; custom posters uploaded by hand are the one thing lost. The SnapshotPolicy comes from the
-# kopiur/backup component in ks.yaml (a patch there would be replaced by flux-system's own).
+# kopiur/statefulset component in ks.yaml (a patch there would be replaced by flux-system's own).
 patches:
   - target:
       kind: SnapshotPolicy

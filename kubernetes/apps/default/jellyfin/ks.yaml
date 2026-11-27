@@ -6,13 +6,14 @@ metadata:
   name: jellyfin
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
     - ../../../../components/zeroscaler
   interval: 1h
   path: ./kubernetes/apps/default/jellyfin/app
   postBuild:
     substitute:
       APP: jellyfin
+      CONTROLLER: StatefulSet
       KOPIUR_CAPACITY: 20Gi
       KOPIUR_SCHEDULE: "H H * * *"
   prune: true

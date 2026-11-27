@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "T3 Code (kubernetes/apps/t3): the t3-a and t3-b environment servers, their state and work volumes, their backups, and their traffic through envoy-t3. T3 exports no Prometheus metrics, so everything here comes from the kubelet, kube-state-metrics, Envoy and kopiur.",
+  "description": "T3 Code (kubernetes/apps/t3): the environment servers (t3-<node>, one per node), their state and work volumes, their backups, and their traffic through envoy-t3. T3 exports no Prometheus metrics, so everything here comes from the kubelet, kube-state-metrics, Envoy and kopiur.",
   "editable": false,
   "graphTooltip": 1,
   "panels": [
@@ -194,7 +194,7 @@
             "type": "prometheus",
             "uid": "${promDatasource}"
           },
-          "expr": "max(kubelet_volume_stats_used_bytes{namespace=\"t3\", persistentvolumeclaim=~\"($environment)\"} / kubelet_volume_stats_capacity_bytes{namespace=\"t3\", persistentvolumeclaim=~\"($environment)\"})",
+          "expr": "max(kubelet_volume_stats_used_bytes{namespace=\"t3\", persistentvolumeclaim=~\"config-($environment)-0\"} / kubelet_volume_stats_capacity_bytes{namespace=\"t3\", persistentvolumeclaim=~\"config-($environment)-0\"})",
           "instant": true,
           "range": false
         }
@@ -650,7 +650,7 @@
             "type": "prometheus",
             "uid": "${promDatasource}"
           },
-          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"t3\", persistentvolumeclaim=~\"($environment)\"})",
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"t3\", persistentvolumeclaim=~\"config-($environment)-0\"})",
           "legendFormat": "{{persistentvolumeclaim}} used"
         },
         {
@@ -668,7 +668,7 @@
             "type": "prometheus",
             "uid": "${promDatasource}"
           },
-          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"t3\", persistentvolumeclaim=~\"($environment)\"})",
+          "expr": "max by (persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"t3\", persistentvolumeclaim=~\"config-($environment)-0\"})",
           "legendFormat": "{{persistentvolumeclaim}} capacity"
         }
       ],
@@ -858,7 +858,7 @@
       "id": 13,
       "type": "timeseries",
       "title": "Environments by node",
-      "description": "The node each environment's pod runs on. A required anti-affinity keeps the two on different nodes; t3-a prefers hyperion-0.",
+      "description": "The node each environment's pod runs on. A required anti-affinity keeps the two on different nodes; each prefers the node it is named after.",
       "datasource": {
         "type": "prometheus",
         "uid": "${promDatasource}"
@@ -1497,10 +1497,10 @@
         "name": "environment",
         "label": "Environment",
         "type": "custom",
-        "query": "t3-a,t3-b",
+        "query": "t3-hyperion-0,t3-hyperion-2",
         "multi": true,
         "includeAll": true,
-        "allValue": "t3-a|t3-b",
+        "allValue": "t3-hyperion-0|t3-hyperion-2",
         "current": {
           "text": "All",
           "value": "$__all"
@@ -1513,13 +1513,13 @@
           },
           {
             "selected": false,
-            "text": "t3-a",
-            "value": "t3-a"
+            "text": "t3-hyperion-0",
+            "value": "t3-hyperion-0"
           },
           {
             "selected": false,
-            "text": "t3-b",
-            "value": "t3-b"
+            "text": "t3-hyperion-2",
+            "value": "t3-hyperion-2"
           }
         ]
       }

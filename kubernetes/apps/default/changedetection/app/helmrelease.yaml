@@ -12,6 +12,7 @@ spec:
   values:
     controllers:
       changedetection:
+        type: statefulset
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -72,6 +73,19 @@ spec:
                 memory: 128Mi
               limits:
                 memory: 768Mi
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 5Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
+              globalMounts:
+                - path: /datastore
     defaultPodOptions:
       hostname: hyperion
       securityContext:
@@ -97,11 +111,5 @@ spec:
               - identifier: app
                 port: *port
     persistence:
-      data:
-        existingClaim: "{{ .Release.Name }}"
-        advancedMounts:
-          changedetection:
-            app:
-              - path: /datastore
       tmp:
         type: emptyDir

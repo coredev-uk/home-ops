@@ -119,8 +119,8 @@ spec:
 # T3's own gateway, LAN only. No OIDC sits in front of it: T3 signs clients in with its own
 # pairing and session tokens, and an OIDC redirect in front of the host breaks T3's phone and
 # desktop apps, which cannot complete a browser login flow. Only routes from the t3 namespace
-# attach. t3-a.hera.ac and t3-b.hera.ac resolve through Pi-hole only (the gateway's name is
-# local there, kubernetes/apps/network/pihole/app/helmrelease.yaml).
+# attach. The environments' names (t3-<node>.hera.ac) resolve through Pi-hole only (the gateway's
+# name is local there, kubernetes/apps/network/pihole/app/helmrelease.yaml).
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.networking.k8s.io/gateway_v1.json
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway

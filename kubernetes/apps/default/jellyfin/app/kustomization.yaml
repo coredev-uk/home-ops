@@ -9,7 +9,7 @@ resources:
   - ./resourceclaimtemplate.yaml
 # Back up Jellyfin's database and settings, not what it regenerates: images and metadata
 # (metadata) and seek previews (trickplay), refetched after a restore. The SnapshotPolicy comes
-# from the kopiur/backup component in ks.yaml (a patch there would be replaced by flux-system's own).
+# from the kopiur/statefulset component in ks.yaml (a patch there would be replaced by flux-system's own).
 patches:
   - target:
       kind: SnapshotPolicy

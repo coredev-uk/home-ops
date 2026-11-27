@@ -37,7 +37,7 @@ metadata:
   name: seerr
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
     - ../../../../components/zeroscaler
   dependsOn:
     - name: seerr-database
@@ -46,6 +46,7 @@ spec:
   postBuild:
     substitute:
       APP: seerr
+      CONTROLLER: StatefulSet
   prune: true
   sourceRef:
     kind: GitRepository

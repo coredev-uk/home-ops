@@ -5,6 +5,14 @@ kind: Restore
 metadata:
   name: ${APP}
 spec:
+  # The mover writes the files as the app's user, with the group on the directories, so the
+  # app can read and write what was restored without a chown.
+  mover:
+    podSecurityContext:
+      fsGroup: ${KOPIUR_PGID:=1000}
+    securityContext:
+      runAsUser: ${KOPIUR_PUID:=1000}
+      runAsGroup: ${KOPIUR_PGID:=1000}
   policy:
     onMissingSnapshot: Continue
   source:

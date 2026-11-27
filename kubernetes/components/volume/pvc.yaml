@@ -4,8 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: ${APP}
   annotations:
-    # Created once, then left alone: a claim the kopiur/backup component made (whose restore
-    # source can't be changed) is kept as it is when an app moves to this component.
+    # Created once, then left alone: a claim that was created with a restore source (which can't
+    # be changed) is kept as it is when an app moves to this component.
     kustomize.toolkit.fluxcd.io/ssa: IfNotPresent
 spec:
   accessModes:

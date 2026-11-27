@@ -2,8 +2,9 @@
 # One T3 Code environment (github.com/pingdotgg/t3code). The server, its agents (omp over ACP,
 # Claude Code for titles, commit messages and PR text), terminals, git and the headless browser
 # are all children of this one process, and one server owns its home exclusively: one replica,
-# Recreate, and more capacity means another environment (environment/ks.yaml), not more
-# replicas. The image is built from containers/t3; its managed policy (providers, updates,
+# stopped before its successor starts (a StatefulSet), and more capacity means another
+# environment (environment/ks.yaml), not more replicas. The image is built from containers/t3; its
+# managed policy (providers, updates,
 # telemetry) is the t3-policy ConfigMap (shared/app/resources/policy.json).
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -18,9 +19,9 @@ spec:
   values:
     controllers:
       # T3 takes an exclusive lock on its home (a second server exits), so the old pod must be
-      # gone before the new one starts.
+      # gone before the new one starts, which a StatefulSet does.
       ${APP}:
-        strategy: Recreate
+        type: statefulset
         annotations:
           reloader.stakater.com/auto: "true"
         pod:
@@ -135,6 +136,20 @@ spec:
               limits:
                 memory: 10Gi
                 ephemeral-storage: 30Gi
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            # T3's home and the agent's home (HOME): backed up by kopiur.
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 20Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: ${APP}
+              globalMounts:
+                - path: /data
     defaultPodOptions:
       # T3 labels the environment with the host name, which clients show: the release name
       # instead of the pod's generated one, so it stays the same across restarts.
@@ -153,8 +168,9 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile: { type: RuntimeDefault }
       affinity:
-        # One environment per node, so two never compete for the same cores or disk. No node
-        # is required: an outage or a full node must not strand an environment.
+        # One environment per node, so two never compete for the same cores or disk. Each prefers
+        # the node it is named after (NODE in ks.yaml) but none is required: an outage or a full
+        # node must not strand an environment.
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
@@ -166,12 +182,10 @@ spec:
             - weight: 100
               preference:
                 matchExpressions:
-                  # hyperion-0 has 18 cores against the other nodes' 6: t3-a prefers it (In),
-                  # t3-b avoids it (NotIn).
                   - key: kubernetes.io/hostname
-                    operator: ${NODE_OPERATOR}
+                    operator: In
                     values:
-                      - hyperion-0
+                      - ${NODE}
     service:
       app:
         forceRename: ${APP}
@@ -191,11 +205,6 @@ spec:
           - name: envoy-t3
             namespace: network
     persistence:
-      # T3's home and the agent's home (HOME): backed up by kopiur.
-      data:
-        existingClaim: ${APP}
-        globalMounts:
-          - path: /data
       # Clones and worktrees, on a volume of their own that is not backed up (pvc-work.yaml). It
       # is mounted beside /data, not inside it: the runtime would create nested mount points such as
       # /data/t3/worktrees as root, leaving /data/t3 unwritable for UID 1000. The entrypoint links

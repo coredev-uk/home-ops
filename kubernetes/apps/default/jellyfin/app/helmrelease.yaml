@@ -12,6 +12,7 @@ spec:
   values:
     controllers:
       jellyfin:
+        type: statefulset
         annotations:
           reloader.stakater.com/auto: "true"
         # Hera TV is installed and updated from its own plugin repository, added in Dashboard >
@@ -72,6 +73,17 @@ spec:
                 memory: 1856Mi
               limits:
                 memory: 8Gi
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 20Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
     defaultPodOptions:
       affinity:
         nodeAffinity:
@@ -110,8 +122,6 @@ spec:
           - backendRefs:
               - port: *port
     persistence:
-      config:
-        existingClaim: "{{ .Release.Name }}"
       cache:
         type: emptyDir
       media:

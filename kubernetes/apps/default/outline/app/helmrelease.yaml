@@ -12,6 +12,7 @@ spec:
   values:
     controllers:
       outline:
+        type: statefulset
         annotations:
           reloader.stakater.com/auto: "true"
         containers:
@@ -72,6 +73,19 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
+        statefulset:
+          podManagementPolicy: Parallel
+          volumeClaimTemplates:
+            - name: config
+              accessMode: ReadWriteOnce
+              size: 10Gi
+              storageClass: ceph-block
+              dataSourceRef:
+                apiGroup: kopiur.home-operations.com
+                kind: Restore
+                name: "{{ .Release.Name }}"
+              globalMounts:
+                - path: /var/lib/outline/data
     defaultPodOptions:
       securityContext:
         runAsNonRoot: true
@@ -96,9 +110,5 @@ spec:
           - name: envoy-external
             namespace: network
     persistence:
-      data:
-        existingClaim: "{{ .Release.Name }}"
-        globalMounts:
-          - path: /var/lib/outline/data
       tmp:
         type: emptyDir

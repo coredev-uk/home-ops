@@ -8,6 +8,7 @@ spec:
   maxReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
+    # The scaled workload's kind: the apps that keep their data on a StatefulSet's claim set it.
     kind: ${CONTROLLER:=Deployment}
     name: ${APP}
   metrics:

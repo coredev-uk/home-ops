@@ -37,7 +37,7 @@ metadata:
   name: mealie
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
   dependsOn:
     - name: mealie-database
     - name: rook-ceph-cluster

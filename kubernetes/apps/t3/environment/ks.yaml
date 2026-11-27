@@ -2,16 +2,16 @@
 # One Flux Kustomization per T3 environment over the same manifests (environment/app): the
 # environment is the unit of scale, because one T3 server owns its home exclusively and runs
 # every agent, terminal and git process of its threads (see environment/app/helmrelease.yaml).
-# Adding an environment is another document here with a new APP; a required anti-affinity in
-# the HelmRelease allows one environment per node.
+# Each environment is named after the node it prefers (NODE); adding one is another document
+# here with a free node, and a required anti-affinity in the HelmRelease allows one per node.
 # yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: t3-a
+  name: t3-hyperion-0
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
   dependsOn:
     - name: kopiur
       namespace: kopiur-system
@@ -22,9 +22,9 @@ spec:
   path: ./kubernetes/apps/t3/environment/app
   postBuild:
     substitute:
-      APP: t3-a
-      # The main environment prefers hyperion-0, which has 18 cores against the other nodes' 6.
-      NODE_OPERATOR: In
+      APP: t3-hyperion-0
+      # hyperion-0 has 18 cores against the other nodes' 6: the main environment.
+      NODE: hyperion-0
       # T3's database, its secrets and settings, and the home directory (omp's sessions and
       # agent.db, Claude Code's and gh's state). Clones and worktrees live on the unbacked
       # ${APP}-work volume (pvc-work.yaml); caches go to emptyDirs (helmrelease.yaml).
@@ -41,10 +41,10 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: t3-b
+  name: t3-hyperion-2
 spec:
   components:
-    - ../../../../components/kopiur/backup
+    - ../../../../components/kopiur/statefulset
   dependsOn:
     - name: kopiur
       namespace: kopiur-system
@@ -55,9 +55,8 @@ spec:
   path: ./kubernetes/apps/t3/environment/app
   postBuild:
     substitute:
-      APP: t3-b
-      # Any node but hyperion-0, so the two environments do not compete for the same cores.
-      NODE_OPERATOR: NotIn
+      APP: t3-hyperion-2
+      NODE: hyperion-2
       KOPIUR_CAPACITY: 20Gi
       KOPIUR_SCHEDULE: "H * * * *"
   prune: true

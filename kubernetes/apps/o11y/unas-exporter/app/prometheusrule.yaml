@@ -1,0 +1,163 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: unas-exporter-rules
+spec:
+  groups:
+    # Adapted from the exporter's examples/rules.yaml for a one-disk pool: slot 2 is empty
+    # (state "empty", health 0), the pool's resting status is noDataProtectionYet, and its
+    # current protection (0) is always below the expected (1), so no rule keys on redundancy.
+    # With no second copy on the NAS, anything that says the disk is failing is critical:
+    # the response is restoring Kopiur from B2 and re-fetching the rest.
+    - name: unas.rules
+      rules:
+        - alert: UNASDiskNotOptimal
+          expr: |-
+            unas_disk_state{state!~"optimal|empty"} == 1
+          for: 5m
+          annotations:
+            summary: >-
+              UNAS disk {{ $labels.serial }} in slot {{ $labels.slot }} is {{ $labels.state }}
+          labels:
+            severity: critical
+
+        - alert: UNASDiskHealthDegraded
+          expr: |-
+            unas_disk_health_score < 5
+              unless on (slot) unas_disk_state{state="empty"} == 1
+          for: 10m
+          annotations:
+            summary: >-
+              UNAS disk {{ $labels.serial }} in slot {{ $labels.slot }} reports health {{ $value }}/5
+          labels:
+            severity: critical
+
+        # increase() over 24h fires on new sectors only, so a count that has stopped
+        # growing clears instead of alerting forever.
+        - alert: UNASDiskUncorrectableSectors
+          expr: |-
+            increase(unas_disk_uncorrectable_sector_count_total[24h]) > 0
+          annotations:
+            summary: >-
+              UNAS disk {{ $labels.serial }} in slot {{ $labels.slot }} gained uncorrectable sectors in the last 24h
+          labels:
+            severity: critical
+
+        - alert: UNASDiskBadSectors
+          expr: |-
+            increase(unas_disk_bad_sector_count_total[24h]) > 0
+          annotations:
+            summary: >-
+              UNAS disk {{ $labels.serial }} in slot {{ $labels.slot }} gained bad sectors in the last 24h
+          labels:
+            severity: warning
+
+        # Not unas_disk_read_error_rate: Seagate's raw read-error-rate attribute is a packed
+        # value in the tens of millions on a healthy disk.
+        - alert: UNASDiskReadErrors
+          expr: |-
+            increase(unas_disk_smart_read_error_count_total[24h]) > 0
+          annotations:
+            summary: >-
+              UNAS disk {{ $labels.serial }} in slot {{ $labels.slot }} reported SMART read errors in the last 24h
+          labels:
+            severity: warning
+
+        - alert: UNASDiskHighTemperature
+          expr: |-
+            unas_disk_temperature_celsius > 55
+          for: 30m
+          annotations:
+            summary: >-
+              UNAS disk {{ $labels.serial }} in slot {{ $labels.slot }} has been above 55°C for 30 minutes
+          labels:
+            severity: warning
+
+        # Known-good states only, so a status this file has never seen alerts.
+        - alert: UNASPoolUnhealthy
+          expr: |-
+            unas_pool_status{status!~"fullyOperational|noDataProtectionYet|scrubbing|scrubbingPaused"} == 1
+          for: 5m
+          annotations:
+            summary: >-
+              UNAS pool {{ $labels.pool }} is {{ $labels.status }}
+          labels:
+            severity: critical
+
+        - alert: UNASPoolFillingUp
+          expr: |-
+            unas_pool_used_bytes / unas_pool_capacity_bytes > 0.85
+          for: 1h
+          annotations:
+            summary: >-
+              UNAS pool {{ $labels.pool }} is {{ $value | humanizePercentage }} full
+          labels:
+            severity: warning
+
+        - alert: UNASPoolAlmostFull
+          expr: |-
+            unas_pool_used_bytes / unas_pool_capacity_bytes > 0.95
+          for: 30m
+          annotations:
+            summary: >-
+              UNAS pool {{ $labels.pool }} is {{ $value | humanizePercentage }} full
+          labels:
+            severity: critical
+
+    # Every rule above needs unas_* series to evaluate; these fire when they stop arriving.
+    - name: unas-exporter.rules
+      rules:
+        - alert: UNASCollectorFailing
+          expr: |-
+            unas_scrape_collector_success == 0
+          for: 15m
+          annotations:
+            summary: >-
+              The UNAS exporter has failed to read the UNAS for 15 minutes; check the API key
+          labels:
+            severity: warning
+
+        - alert: UNASCollectorAbsent
+          expr: |-
+            absent(unas_scrape_collector_success)
+          for: 15m
+          annotations:
+            summary: >-
+              The UNAS exporter's collector is not running; check UNAS_URL and UNAS_API_KEY
+          labels:
+            severity: warning
+
+        # A firmware update that renames a payload key still decodes cleanly: the scrape
+        # succeeds and the disk or pool series vanish, silencing every rule above.
+        - alert: UNASDiskSeriesAbsent
+          expr: |-
+            absent(unas_disk_state) and on () unas_scrape_collector_success == 1
+          for: 15m
+          annotations:
+            summary: >-
+              The UNAS exporter scrapes successfully but reports no disks; the API payload may have changed
+          labels:
+            severity: warning
+
+        - alert: UNASPoolSeriesAbsent
+          expr: |-
+            absent(unas_pool_status) and on () unas_scrape_collector_success == 1
+          for: 15m
+          annotations:
+            summary: >-
+              The UNAS exporter scrapes successfully but reports no pools; the API payload may have changed
+          labels:
+            severity: warning
+
+        # /metrics is served with ContinueOnError, so a collector that drops series still
+        # answers 200; this counter is the only sign of it.
+        - alert: UNASExporterGatheringErrors
+          expr: |-
+            increase(promhttp_metric_handler_errors_total{job="unas-exporter", cause="gathering"}[15m]) > 0
+          annotations:
+            summary: >-
+              The UNAS exporter dropped series from /metrics in the last 15 minutes
+          labels:
+            severity: warning

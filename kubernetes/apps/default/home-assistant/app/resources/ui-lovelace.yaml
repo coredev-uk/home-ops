@@ -432,6 +432,134 @@ views:
             grid_options:
               columns: 12
 
+      # ── Office ────────────────────────────────────────────────────────
+      # The MAGRGB desk strip over Bluetooth (hermes, the IoT VLAN's proxy). Its scenes are the
+      # light's effects; each tile below starts one.
+      - type: grid
+        cards:
+          - type: heading
+            heading: Office
+            heading_style: title
+            icon: mdi:desk
+          - type: tile
+            entity: light.desk_strip
+            name: Desk strip
+            icon: mdi:led-strip-variant
+            features:
+              - type: light-brightness
+            grid_options:
+              columns: 12
+          - type: tile
+            entity: light.desk_strip
+            name: Northern Lights
+            icon: mdi:palette-outline
+            color: purple
+            hide_state: true
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Northern Lights
+            icon_tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Northern Lights
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: light.desk_strip
+            name: Cloud9
+            icon: mdi:palette-outline
+            color: purple
+            hide_state: true
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Cloud9
+            icon_tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Cloud9
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: light.desk_strip
+            name: Secretlab Signature
+            icon: mdi:palette-outline
+            color: purple
+            hide_state: true
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Secretlab Signature
+            icon_tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Secretlab Signature
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: light.desk_strip
+            name: Team Liquid
+            icon: mdi:palette-outline
+            color: purple
+            hide_state: true
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Team Liquid
+            icon_tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Team Liquid
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: light.desk_strip
+            name: Hip Hop
+            icon: mdi:palette-outline
+            color: purple
+            hide_state: true
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Hip Hop
+            icon_tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.desk_strip
+              data:
+                effect: Hip Hop
+            grid_options:
+              columns: 6
+
       # ── Energy today ──────────────────────────────────────────────────
       - type: grid
         cards:

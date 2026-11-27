@@ -38,6 +38,13 @@ spec:
     # action buttons stay off until the console sits behind Pocket ID in header mode.
     ui:
       enabled: true
+      # Chart's requests; the limit leaves room for streaming downloads (1Gi max file, chunked).
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 512Mi
       auth:
         anonymous:
           enabled: true

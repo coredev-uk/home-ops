@@ -13,6 +13,13 @@ spec:
     commonAnnotations:
       fluxcd.controlplane.io/reconcileArtifactEvery: 1h
     instance:
+      # source-watcher serves the ArtifactGenerator (flux-system/artifactgenerator.yaml)
+      components:
+        - source-controller
+        - kustomize-controller
+        - helm-controller
+        - notification-controller
+        - source-watcher
       cluster:
         networkPolicy: false
       sync:

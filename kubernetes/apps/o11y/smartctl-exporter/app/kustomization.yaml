@@ -7,3 +7,9 @@ resources:
   - ./helmrelease.yaml
   - ./ocirepository.yaml
   - ./prometheusrule.yaml
+configMapGenerator:
+  - name: smartctl-exporter-wrapper
+    files:
+      - smartctl.sh=./resources/smartctl.sh
+generatorOptions:
+  disableNameSuffixHash: true

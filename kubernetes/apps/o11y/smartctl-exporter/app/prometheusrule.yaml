@@ -70,6 +70,19 @@ spec:
           labels:
             severity: warning
 
+        # The ATA error log counts commands the drive itself failed (aborted writes, timeouts).
+        # osd.1's ESSENCORE logged 229 of them with no metric showing it, so alert on any growth.
+        - alert: SmartDeviceErrorLogGrowing
+          expr: |-
+            (increase(smartctl_device_error_log_count[1h]) > 0)
+              * on (instance, device) group_left (model_name, serial_number) smartctl_device
+          annotations:
+            summary: >-
+              {{ $labels.model_name }} ({{ $labels.serial_number }}) logged {{ $value | humanize }} new ATA errors
+              in its {{ $labels.error_log_type }} error log in the last hour
+          labels:
+            severity: warning
+
         - alert: SmartDeviceInterfaceSlow
           expr: |-
             smartctl_device_interface_speed{speed_type="current"} != on(device, instance, namespace, pod) smartctl_device_interface_speed{speed_type="max"}

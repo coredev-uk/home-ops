@@ -38,7 +38,7 @@ clusterSecret: pass://Kubernetes/Talos/Cluster.SECRET
 apiVersion: v1alpha1
 kind: UnattendedInstallConfig
 installer:
-  image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.6
+  image: factory.talos.dev/metal-installer/{{ schematic }}:v1.14.7
 provisioning:
   diskSelector:
     match: disk.model == "MK000480GWCEV"

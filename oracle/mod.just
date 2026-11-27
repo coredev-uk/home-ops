@@ -6,7 +6,7 @@ set shell := ['bash', '-euo', 'pipefail', '-c']
 
 host := "ubuntu@130.162.183.212"
 # renovate: datasource=github-releases depName=juanfont/headscale
-headscale_version := "0.29.7"
+headscale_version := "0.29.8"
 
 [confirm('Deploy Headscale and Caddy to the Oracle VPS [y|N] ?')]
 [doc('Install or upgrade Headscale on the Oracle VPS and push its config')]

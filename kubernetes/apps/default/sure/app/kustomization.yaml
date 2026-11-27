@@ -13,5 +13,8 @@ configMapGenerator:
   - name: sure-initials-avatar
     files:
       - ./resources/initials_avatar.rb
+  - name: sure-pcp-schedule
+    files:
+      - ./resources/pcp-schedule.rb
 generatorOptions:
   disableNameSuffixHash: true

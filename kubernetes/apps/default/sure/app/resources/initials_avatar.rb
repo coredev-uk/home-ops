@@ -1,6 +1,6 @@
 # Mounted into Sure's config/initializers. Where Sure has no logo to show it
 # draws a letter avatar (DS::FilledIcon, text variant); this makes that avatar
-# use a name's initials ("Admiral Insurance" -> "AI") and a colour derived from
+# use a name's initials ("Acme Insurance" -> "AI") and a colour derived from
 # the name, so different merchants and bills are told apart at a glance and the
 # same name always gets the same colour. Avatars given an explicit colour
 # (accounts, categories) keep it; only the initials change for them.

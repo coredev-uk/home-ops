@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/kopiur.home-operations.com/snapshotschedule_v1alpha1.json
+apiVersion: kopiur.home-operations.com/v1alpha1
+kind: SnapshotSchedule
+metadata:
+  name: attic-postgres-1
+spec:
+  policyRef:
+    name: attic-postgres-1
+  # Daily: the index only changes when CI pushes, and losing a day of it just
+  # means CI pushing those paths again. Losing all of it orphans every chunk on
+  # the NAS until the whole cache is rebuilt.
+  schedule:
+    cron: H H * * *
+    runOnCreate: true

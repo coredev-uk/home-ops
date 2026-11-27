@@ -6,6 +6,8 @@ resources:
   - ./cluster.yaml
   - ./externalsecret.yaml
   - ./podmonitor.yaml
+  - ./snapshotpolicy.yaml
+  - ./snapshotschedule.yaml
 configMapGenerator:
   - name: attic-postgres-metrics
     files:

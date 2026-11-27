@@ -77,6 +77,6 @@ spec:
       media:
         type: nfs
         server: expanse.internal
-        path: /var/nfs/shared/Media
+        path: /Media
       tmp:
         type: emptyDir

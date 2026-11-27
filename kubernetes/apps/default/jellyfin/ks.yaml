@@ -14,6 +14,7 @@ spec:
     substitute:
       APP: jellyfin
       KOPIUR_CAPACITY: 20Gi
+      KOPIUR_SCHEDULE: "H H * * *"
   prune: true
   sourceRef:
     kind: GitRepository

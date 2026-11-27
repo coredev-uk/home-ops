@@ -8,5 +8,5 @@ spec:
   policyRef:
     name: atuin-postgres-1
   schedule:
-    cron: H */12 * * *
+    cron: H */2 * * *
     runOnCreate: true

@@ -13,6 +13,7 @@ spec:
   postBuild:
     substitute:
       APP: bazarr
+      KOPIUR_SCHEDULE: "H H * * *"
   prune: true
   sourceRef:
     kind: GitRepository

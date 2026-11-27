@@ -16,6 +16,7 @@ spec:
   postBuild:
     substitute:
       APP: maintainerr
+      KOPIUR_SCHEDULE: "H H * * *"
   prune: true
   sourceRef:
     kind: GitRepository

@@ -36,7 +36,7 @@
   "mergeMethod": "squash",
   "eligibleUpdateTypes": ["digest"],
   "notesOptional": ["digest"],
-  "requiredChecks": ["evaluate", "flake-checker", "atlas", "poseidon"],
+  "requiredChecks": ["evaluate", "flake-checker", "atlas", "poseidon", "hermes"],
   "requiredContexts": [],
   "stabilityContext": "",
   "minimumReleaseAgeHours": 72,
@@ -47,7 +47,7 @@
   "verify": {
     "timeoutMinutes": 360,
     "maxInFlight": 1,
-    "mainChecks": ["evaluate", "flake-checker", "atlas", "poseidon"]
+    "mainChecks": ["evaluate", "flake-checker", "atlas", "poseidon", "hermes"]
   },
   "notes": {
     "minBytes": 40,

@@ -15,24 +15,7 @@ apiVersion: v1alpha1
 kind: UnattendedInstallConfig
 provisioning:
   diskSelector:
-    match: disk.serial == "P300NDBB2510091860"
----
-apiVersion: v1alpha1
-kind: KubeletConfig
-config:
-  # TODO: Remove once upgraded storage
-  imageGCHighThresholdPercent: 60
-  imageGCLowThresholdPercent: 50
----
-apiVersion: v1alpha1
-kind: CRICustomizationConfig
-name: containerd
-content: |
-  [plugins."io.containerd.cri.v1.images"]
-    # Same storage constraint as the imageGC thresholds above.
-    discard_unpacked_layers = true
-  [plugins."io.containerd.cri.v1.runtime"]
-    device_ownership_from_security_context = true
+    match: disk.serial == "PSBC36050102099"
 ---
 apiVersion: v1alpha1
 kind: LinkAliasConfig

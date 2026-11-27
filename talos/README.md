@@ -62,6 +62,11 @@ whose hardware diverges from the fleet. No overrides exist today.
   `HEADSCALE_TALOS_AUTHKEY`, a 24h key, and keeps its state in `/var/lib/tailscale` afterwards.
   Before re-provisioning a wiped node, mint a fresh key with `just oracle talos-authkey`, then
   `just talos apply-node <node>`.
+- tuppr will not roll out a schematic change. After `apply-node` moves the install image to a new
+  schematic, tuppr sees it differ from the running one and stops with `does not embed the runtime
+  schematic`, because it guards against reinstalls that drop extensions. Roll the change out with
+  `just talos upgrade-node <node>` one node at a time. Once the running schematic matches the install
+  image, tuppr resumes handling version bumps.
 
 ## Common tasks
 

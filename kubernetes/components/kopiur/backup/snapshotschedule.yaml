@@ -7,5 +7,9 @@ metadata:
 spec:
   policyRef:
     name: ${APP}
+  # Every 6 hours unless the app's Kustomization sets KOPIUR_SCHEDULE: hourly
+  # where the volume holds data that changes through the day, daily for apps
+  # whose volume is configuration and metadata. Apps that keep their data in
+  # Postgres are covered by the database's own, more frequent schedule.
   schedule:
-    cron: H * * * *
+    cron: ${KOPIUR_SCHEDULE:=H */6 * * *}

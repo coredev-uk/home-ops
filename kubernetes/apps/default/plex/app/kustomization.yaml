@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./backendtrafficpolicy.yaml
   - ./helmrelease.yaml
-  - ./ocirepository.yaml
   - ./resourceclaimtemplate.yaml
 # Back up Plex's database and settings, not what it regenerates: thumbnails and previews (Media),
 # posters and metadata (Metadata) and downloads. After a restore Plex refetches these over a few

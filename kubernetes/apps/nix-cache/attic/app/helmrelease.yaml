@@ -13,9 +13,12 @@ kind: HelmRelease
 metadata:
   name: attic
 spec:
-  chartRef:
+  chart:
     kind: OCIRepository
-    name: attic
+    spec:
+      url: oci://ghcr.io/bjw-s-labs/helm/app-template
+      ref:
+        tag: 5.3.0
   interval: 1h
   values:
     controllers:

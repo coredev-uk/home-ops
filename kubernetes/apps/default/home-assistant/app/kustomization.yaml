@@ -6,7 +6,6 @@ resources:
   - ./externalsecret.yaml
   - ./pvc.yaml
   - ./helmrelease.yaml
-  - ./ocirepository.yaml
 configMapGenerator:
   - name: home-assistant-configmap
     files:

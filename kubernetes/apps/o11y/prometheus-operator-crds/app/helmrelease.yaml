@@ -5,9 +5,12 @@ kind: HelmRelease
 metadata:
   name: prometheus-operator-crds
 spec:
-  chartRef:
+  chart:
     kind: OCIRepository
-    name: prometheus-operator-crds
+    spec:
+      url: oci://ghcr.io/prometheus-community/charts/prometheus-operator-crds
+      ref:
+        tag: 33.0.2
   interval: 1h
   # The Prometheus operator is gone, but its monitor CRDs (ServiceMonitor, PodMonitor, PrometheusRule,
   # Probe, ScrapeConfig) are what most apps here ship their scrape config and rules as; the

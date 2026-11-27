@@ -32,8 +32,10 @@ on:
         required: false
 
 env:
+  # 45.2.0 is the first release whose flux manager reads HelmRelease `chart.kind: OCIRepository`
+  # templates; older ones would stop proposing chart updates.
   # renovate: datasource=docker depName=ghcr.io/renovatebot/renovate
-  RENOVATE_VERSION: 45.1.2
+  RENOVATE_VERSION: 45.2.0
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}

@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./ocirepository.yaml
   - ./prometheusrule.yaml
 configMapGenerator:
   - name: seerr-exporter-configmap

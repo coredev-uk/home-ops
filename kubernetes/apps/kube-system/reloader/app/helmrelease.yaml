@@ -13,5 +13,8 @@ spec:
     fullnameOverride: reloader
     reloader:
       readOnlyRootFileSystem: true
+      # Restarts a workload by stamping an annotation on its pod template instead of adding an
+      # env var, so the rendered spec Flux/Helm manage doesn't drift on every reload.
+      reloadStrategy: annotations
       podMonitor:
         enabled: true

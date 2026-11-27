@@ -72,6 +72,13 @@
   "mergeMethod": "squash",
   "eligibleUpdateTypes": ["minor", "patch", "digest", "lockFileMaintenance"],
   "notesOptional": ["digest", "lockFileMaintenance"],
+  "updateRules": [
+    {
+      "paths": ["kubernetes/apps/**/grafanadashboard.yaml"],
+      "eligible": true,
+      "notesOptional": true
+    }
+  ],
   "lockfiles": ["flake.lock"],
   "requiredChecks": ["Build Success"],
   "requiredContexts": [],

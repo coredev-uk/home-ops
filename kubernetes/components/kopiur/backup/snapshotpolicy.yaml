@@ -23,9 +23,13 @@ spec:
       - /MediaCover/
       - /Sentry/
   mover:
+    # Created for each run and deleted after: every app caching the same
+    # repository's index in a volume of its own cost more Ceph space than the
+    # repository itself. Sized for the repository's cache budgets
+    # (clusterrepository.yaml), not the app, so not KOPIUR_CAPACITY.
     cache:
-      capacity: ${KOPIUR_CAPACITY:=5Gi}
-      mode: Persistent
+      capacity: 4Gi
+      mode: Ephemeral
       storageClassName: ceph-block
     securityContext:
       runAsUser: ${KOPIUR_PUID:=1000}

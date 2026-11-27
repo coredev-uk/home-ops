@@ -15,7 +15,7 @@ set -euo pipefail
 ulimit -n 1048576
 
 STORE_IMG=/store/store.img # /store is the nixos-runner-store claim
-STORE_SIZE=110G            # sparse: Ceph only holds what the store uses
+STORE_SIZE=55G             # sparse: Ceph only holds what the store uses; fits the 60Gi claim
 CLEAN_MARKER=/mnt/store/.stopped-cleanly
 GCROOTS=/nix/var/nix/gcroots/nixos-runner
 

@@ -39,7 +39,24 @@ spec:
     envoy:
       enabled: false
     hubble:
-      enabled: false
+      # Flows each agent keeps for Relay and UI queries (chart default 4095).
+      eventBufferCapacity: "65535"
+      metrics:
+        dashboards:
+          enabled: true
+        # Source and destination are named by namespace and app label only: workload-name
+        # turns every Job and CronJob run into new series.
+        enabled:
+          - drop:labelsContext=source_namespace,destination_namespace;sourceContext=app|reserved-identity;destinationContext=app|reserved-identity
+          - flow:labelsContext=source_namespace,destination_namespace;sourceContext=app|reserved-identity;destinationContext=app|reserved-identity
+          - icmp:labelsContext=source_namespace,destination_namespace;sourceContext=app|reserved-identity;destinationContext=app|reserved-identity
+          - tcp:labelsContext=source_namespace,destination_namespace;sourceContext=app|reserved-identity;destinationContext=app|reserved-identity
+        serviceMonitor:
+          enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true
     ipam:
       mode: kubernetes
     ipv4NativeRoutingCIDR: 10.42.0.0/16

@@ -6,7 +6,6 @@ resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
   - ./networkpolicy.yaml
-  - ./ocirepository.yaml
   - ./pvc.yaml
 configMapGenerator:
   - name: nixos-runner

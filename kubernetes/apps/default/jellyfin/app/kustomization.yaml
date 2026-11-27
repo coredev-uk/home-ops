@@ -5,7 +5,6 @@ kind: Kustomization
 resources:
   - ./externalsecret.yaml
   - ./helmrelease.yaml
-  - ./ocirepository.yaml
   - ./resourceclaimtemplate.yaml
 # Back up Jellyfin's database and settings, not what it regenerates: images and metadata
 # (metadata) and seek previews (trickplay), refetched after a restore. The SnapshotPolicy comes

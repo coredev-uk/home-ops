@@ -5,9 +5,12 @@ kind: HelmRelease
 metadata:
   name: grafana-operator
 spec:
-  chartRef:
+  chart:
     kind: OCIRepository
-    name: grafana-operator
+    spec:
+      url: oci://ghcr.io/grafana/helm-charts/grafana-operator
+      ref:
+        tag: 5.26.0
   interval: 1h
   values:
     # Watch unlabelled ConfigMaps so a configMapRef dashboard edit reconciles at once, not at the next resync

@@ -1,0 +1,74 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/monitoring.coreos.com/prometheusrule_v1.json
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: hermes-rules
+spec:
+  groups:
+    - name: hermes.rules
+      rules:
+        # hermes is Home Assistant's Bluetooth proxy and the watchdog for this cluster.
+        - alert: HermesDown
+          expr: |-
+            up{job="hermes"} == 0
+          for: 10m
+          annotations:
+            summary: >-
+              hermes (Raspberry Pi) hasn't answered a scrape for 10 minutes: no Bluetooth for Home
+              Assistant and no watchdog outside the cluster
+          labels:
+            severity: critical
+
+        # Consumer SD cards report no wear level: filesystem and kernel errors are the first sign
+        # of a failing card.
+        - alert: HermesSdCardFilesystemErrors
+          expr: |-
+            sdcard_ext4_errors{job="hermes"} > 0
+          annotations:
+            summary: >-
+              hermes' root filesystem has recorded {{ $value }} errors: the SD card may be failing
+          labels:
+            severity: critical
+
+        - alert: HermesSdCardKernelErrors
+          expr: |-
+            sdcard_kernel_errors{job="hermes"} > 0
+          annotations:
+            summary: >-
+              hermes' kernel logged {{ $value }} SD card errors since boot
+          labels:
+            severity: warning
+
+        # Flash wears with writes. The steady state is far below this; more points at a runaway
+        # log or a service writing to the card.
+        - alert: HermesSdCardWritesHigh
+          expr: |-
+            increase(sdcard_ext4_written_bytes_total{job="hermes"}[1d]) > 2e9
+          annotations:
+            summary: >-
+              hermes wrote {{ $value | humanize1024 }}B to its SD card in the last day
+          labels:
+            severity: warning
+
+        # get_throttled: bit 0 under-voltage now, bit 16 under-voltage since boot. Low PoE power
+        # corrupts SD cards and drops Bluetooth.
+        - alert: HermesUnderVoltage
+          expr: |-
+            rpi_throttled_flags{job="hermes"} % 2 == 1
+              or floor(rpi_throttled_flags{job="hermes"} / 65536) % 2 == 1
+          annotations:
+            summary: >-
+              hermes has seen under-voltage since boot: check its PoE power
+          labels:
+            severity: warning
+
+        - alert: HermesHot
+          expr: |-
+            max by (instance) (node_thermal_zone_temp{job="hermes"}) > 75
+          for: 15m
+          annotations:
+            summary: >-
+              hermes has been above 75°C for 15 minutes: check the PoE+ HAT's fan
+          labels:
+            severity: warning

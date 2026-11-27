@@ -12,7 +12,7 @@ spec:
       path: /repo
       volume:
         nfs:
-          path: /var/nfs/shared/Kopiur
+          path: /Kopiur
           server: expanse.internal
   encryption:
     passwordSecretRef:

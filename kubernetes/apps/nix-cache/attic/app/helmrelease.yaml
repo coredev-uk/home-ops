@@ -109,7 +109,7 @@ spec:
       chunks:
         type: nfs
         server: expanse.internal
-        path: /var/nfs/shared/NixCache
+        path: /NixCache
         advancedMounts:
           attic:
             app:

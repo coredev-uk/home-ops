@@ -24,7 +24,7 @@ ARG NIXPKGS_REV=2074cc672349f14240fb7ea90d509e0b643e9dd4
 # T3 Code, oh-my-pi and Claude Code: release versions that Renovate moves (.renovaterc.json5).
 # The build checks T3's and omp's downloads against the SHA-256 sums their releases publish.
 ARG T3_VERSION=0.1.12
-ARG OMP_VERSION=19.1.1
+ARG OMP_VERSION=19.2.1
 ARG CLAUDE_CODE_VERSION=2.1.332
 
 # The design skills, each a tag and its commit (the build fetches the commit; Renovate moves both:

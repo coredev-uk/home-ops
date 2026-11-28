@@ -28,9 +28,15 @@ spec:
         # first 52 GB store pushed commits past 5 s (866 slow operations in an hour) and raised
         # BLUESTORE_SLOW_OP_ALERT. Discards tell it, issued by a background thread so a write
         # never waits on one.
+        # The drive takes ~10 ms a discard, so the thread drains ~100 a second, and a large
+        # delete queues hours of them (up to 1M extents by default). The disk then spent ~98% of
+        # its time discarding from 21:00 (2026-11-27) to 02:00 and from 05:30 to 07:00, and
+        # writes landing in those windows took up to 5 s (548 slow ops at 05:51). A 10k cap
+        # bounds the backlog to ~100 s; extents freed while it is full go back without a discard.
         osd.1:
           bdev_enable_discard: "true"
           bdev_async_discard_threads: "1"
+          bdev_async_discard_max_pending: "10000"
       cleanupPolicy:
         wipeDevicesFromOtherClusters: false
       csi:

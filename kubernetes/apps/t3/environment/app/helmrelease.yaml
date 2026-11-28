@@ -37,7 +37,7 @@ spec:
           nix-seed:
             image:
               repository: ghcr.io/coredev-uk/t3
-              tag: 338117807812827dce96a49c772d7ca50b700978@sha256:84c4e107ec58b72914605de865462c513a5bfff5781e27cbb8e371a2be2d80cc
+              tag: 0374a82982f77d6ded1f4877985e98910e390dda@sha256:244db38a83e782eafb2e4afd5829dfd665f086edf9f7539048b9c4f3dc74827c
             command: ["t3-nix-seed"]
             env:
               SEED_ROOT: /mnt/seed
@@ -57,7 +57,7 @@ spec:
               # Built from containers/t3 by .github/workflows/t3.yaml and tagged with the commit
               # SHA; Clarence proposes each new main build (its privatePins job), in both places.
               repository: ghcr.io/coredev-uk/t3
-              tag: 338117807812827dce96a49c772d7ca50b700978@sha256:84c4e107ec58b72914605de865462c513a5bfff5781e27cbb8e371a2be2d80cc
+              tag: 0374a82982f77d6ded1f4877985e98910e390dda@sha256:244db38a83e782eafb2e4afd5829dfd665f086edf9f7539048b9c4f3dc74827c
             env:
               HOME: /data/home
               T3CODE_HOME: /data/t3

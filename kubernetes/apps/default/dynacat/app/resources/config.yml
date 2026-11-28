@@ -494,6 +494,9 @@ pages:
                   - title: Alertmanager
                     url: https://alertmanager.hera.ac
                     icon: di:alertmanager
+                  - title: Kopiur
+                    url: https://kopiur.hera.ac
+                    icon: di:kopia
                   - title: Change Detection
                     url: https://changes.hera.ac
                     icon: di:changedetection

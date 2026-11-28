@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://k8s-schemas.home-operations.com/gateway.envoyproxy.io/securitypolicy_v1alpha1.json
+# Sign-in to the kopiur console through Pocket ID (client "Kopiur", cluster_admin only). Pocket ID
+# turns away everyone outside the group, so the console itself runs as one fixed admin identity
+# (helmrelease.yaml); its NetworkPolicy keeps everything but envoy-internal off the port.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: kopiur-ui
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: kopiur-ui
+  oidc:
+    provider:
+      issuer: https://id.hera.ac
+    clientID: d90ed7f6-7a5e-413d-8ed0-345dee08aa3a
+    clientSecret:
+      name: kopiur-ui-oidc
+    scopes: ["openid", "profile", "email", "groups"]
+    redirectURL: https://kopiur.hera.ac/oauth2/callback
+    refreshToken: true
+    # Clears Envoy's session and ends the Pocket ID one, which returns to https://kopiur.hera.ac/.
+    logoutPath: /oauth2/logout

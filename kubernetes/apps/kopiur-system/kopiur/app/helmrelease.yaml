@@ -36,9 +36,10 @@ spec:
         memory: 240Mi
       limits:
         memory: 2Gi
-    # Web console at kopiur.hera.ac (envoy-internal only). Every request runs as one fixed,
-    # read-only identity: browsing policies, snapshots and restores needs no sign-in, and the
-    # action buttons stay off until the console sits behind Pocket ID in header mode.
+    # Web console at kopiur.hera.ac (envoy-internal only), behind Pocket ID: Envoy signs people in
+    # (securitypolicy.yaml; client "Kopiur", cluster_admin only) and the NetworkPolicy below admits
+    # only envoy-internal, so whoever reaches the console is an admin. Every request runs as that
+    # one identity, with the user role: browsing and the action buttons (snapshot, restore, verify).
     ui:
       enabled: true
       # Chart's requests; the limit leaves room for streaming downloads (1Gi max file, chunked).
@@ -51,7 +52,7 @@ spec:
       auth:
         anonymous:
           enabled: true
-          user: &uiUser kopiur-ui-anonymous
+          user: &uiUser kopiur-ui-admin
       networkPolicy:
         enabled: true
         proxySelector:
@@ -63,7 +64,7 @@ spec:
               gateway.envoyproxy.io/owning-gateway-name: envoy-internal
       rbac:
         bindings:
-          - role: viewer
+          - role: user
             users:
               - *uiUser
       serviceMonitor:

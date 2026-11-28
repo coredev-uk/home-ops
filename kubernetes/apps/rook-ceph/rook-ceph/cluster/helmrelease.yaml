@@ -30,7 +30,7 @@ spec:
         # never waits on one.
         # The drive takes ~10 ms a discard, so the thread drains ~100 a second, and a large
         # delete queues hours of them (up to 1M extents by default). The disk then spent ~98% of
-        # its time discarding from 21:00 (2026-11-27) to 02:00 and from 05:30 to 07:00, and
+        # its time discarding from 20:00 (2026-11-27) to 01:00 and from 05:00 to 06:00, and
         # writes landing in those windows took up to 5 s (548 slow ops at 05:51). A 10k cap
         # bounds the backlog to ~100 s; extents freed while it is full go back without a discard.
         osd.1:

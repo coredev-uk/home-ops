@@ -4,8 +4,9 @@
 # run inside these pods with their permission prompts off in Full access mode, so egress is an
 # allowlist: the internet (GitHub, npm, cache.nixos.org, api.anthropic.com) and cluster DNS.
 # Nothing else in the cluster, the home network or the nodes.
-# The selector is the environments' pod label, not every pod: kopiur's mover pods run in this
-# namespace and need egress of their own (to the backup repository and the Kubernetes API).
+# The selector is the environments' pod label, not every pod: kopiur's backup movers run in
+# kopiur-system, but a restore into an existing claim still runs its mover in this namespace, and
+# that needs egress of its own (to the backup repository and the Kubernetes API).
 # A LoadBalancer address such as t3-hyperion-0.hera.ac's 192.168.110.247 reaches a gateway pod, because
 # Cilium translates it before policy applies, and the deny below keeps these pods from reaching
 # it: envoy-internal's apps and every other pod and Service stay out of reach.
